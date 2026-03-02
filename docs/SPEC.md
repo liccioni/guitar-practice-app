@@ -41,6 +41,45 @@ A mobile-first guitar practice app that helps musicians build structured practic
 - Dashboard metrics: total practice minutes, sessions completed, weekly minutes, today minutes, average BPM, goal progress.
 - Daily goal settings, current streak, and optional daily reminder scheduling.
 
+6. Gamification Layer
+- XP awarded per drill completion.
+- Level progression based on cumulative XP.
+- Daily streak counter with flame indicator.
+- Achievement badges with unlocked/locked states.
+- Reward animation on session completion.
+
+## 2.1 UX & Visual Direction (Locked)
+
+1. Visual System
+- Dark mode only.
+- Base background: `#121212`.
+- Accent palette: electric blue / neon green.
+- Rounded cards (`16px` radius) and soft glow elevation.
+- No tables or admin dashboard visual patterns.
+
+2. Interaction Quality
+- Large touch targets (`>=44px` height).
+- UI transitions target `200ms`.
+- Reward-oriented microcopy in active practice and completion moments.
+
+3. Screen Contracts
+- Home Dashboard:
+  - Level at top, XP progress bar, streak counter, daily goal, primary `Start Practice` CTA.
+- Practice Session Builder:
+  - Drill cards with XP, duration, difficulty.
+  - Drag-to-reorder flow.
+  - Floating add-drill button.
+- Active Practice:
+  - Large countdown timer.
+  - Circular animated progress ring.
+  - Prominent drill title and XP reward.
+  - Pause and skip controls.
+- Session Complete:
+  - XP gain animation.
+  - Optional level-up callout.
+  - Streak confirmation.
+  - Achievement badge reveal.
+
 ## 3. Functional Rules
 
 1. Validation
@@ -126,6 +165,7 @@ A mobile-first guitar practice app that helps musicians build structured practic
 4. TypeScript and lint checks pass in CI.
 5. Core domain logic coverage target: >= 80%.
 6. Accessibility labels are present on primary controls and navigation actions.
+7. Core UI is dark-mode only and adheres to gamified visual style requirements above.
 
 ## 7. Out of Scope (Post-MVP)
 

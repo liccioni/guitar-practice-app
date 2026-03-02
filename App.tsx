@@ -1,1136 +1,1019 @@
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
+  Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { PracticePipeline } from "./src/app/practicePipeline";
-import {
-  disableDailyReminder,
-  parseReminderTime,
-  scheduleDailyReminder,
-} from "./src/app/reminders";
-import type { Drill, DrillTag } from "./src/domain/exercises/types";
-import { calculateDashboardMetrics } from "./src/domain/history/metrics";
-import type { PracticeHistoryEntry } from "./src/domain/history/types";
-import { clampBpm, getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
-import { calculateCurrentStreak } from "./src/domain/goals/streak";
-import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
-import {
-  advanceToNextSegment,
-  createRuntimeState,
-  getCurrentSegment,
-  markCurrentSegmentComplete,
-  pauseRuntime,
-  resumeRuntime,
-  skipCurrentSegment,
-  startRuntime,
-  tickRuntime,
-  type RuntimeState,
-} from "./src/domain/sessions/runtimeState";
-import type { SessionTemplate } from "./src/domain/sessions/sessionTemplate";
-import { InMemoryPracticeRepository } from "./src/persistence/InMemoryPracticeRepository";
-import { loadPersistedState, savePersistedState } from "./src/persistence/LocalStorageGateway";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import DraggableFlatList, { ScaleDecorator } from "react-native-draggable-flatlist";
+import Svg, { Circle } from "react-native-svg";
 
-type ScreenKey = "onboarding" | "home" | "builder" | "run" | "history" | "goals";
+type Screen = "home" | "builder" | "active" | "complete";
+type Difficulty = "Easy" | "Medium" | "Hard";
 
-interface ScreenConfig {
-  key: ScreenKey;
-  title: string;
+interface Drill {
+  id: string;
+  name: string;
+  durationSec: number;
+  difficulty: Difficulty;
+  xp: number;
 }
 
-const SCREENS: ScreenConfig[] = [
-  { key: "onboarding", title: "Onboarding" },
-  { key: "home", title: "Home" },
-  { key: "builder", title: "Session Builder" },
-  { key: "run", title: "Run Session" },
-  { key: "history", title: "History" },
-  { key: "goals", title: "Goals" },
+interface Badge {
+  id: string;
+  label: string;
+  icon: string;
+  unlocked: boolean;
+}
+
+const COLORS = {
+  bg: "#121212",
+  card: "#1d1f24",
+  cardSoft: "#181a1f",
+  text: "#f5f7ff",
+  muted: "#9ba4b5",
+  accent: "#00e5ff",
+  accentAlt: "#39ff14",
+  danger: "#ff6b6b",
+  gold: "#ffd166",
+};
+
+const STARTER_DRILLS: Drill[] = [
+  { id: "d1", name: "Chromatic Warmup", durationSec: 240, difficulty: "Easy", xp: 45 },
+  { id: "d2", name: "Major Scale Ladder", durationSec: 360, difficulty: "Medium", xp: 70 },
+  { id: "d3", name: "Chord Change Sprint", durationSec: 300, difficulty: "Medium", xp: 65 },
+  { id: "d4", name: "Alternate Picking Burst", durationSec: 270, difficulty: "Hard", xp: 85 },
 ];
 
-const TAGS: DrillTag[] = ["warmup", "technique", "scales", "chords", "rhythm", "songs", "improv"];
+const DRILL_POOL: Drill[] = [
+  { id: "p1", name: "Pentatonic Run", durationSec: 300, difficulty: "Medium", xp: 60 },
+  { id: "p2", name: "Rhythm Pocket", durationSec: 240, difficulty: "Easy", xp: 40 },
+  { id: "p3", name: "Arpeggio Climb", durationSec: 360, difficulty: "Hard", xp: 95 },
+  { id: "p4", name: "String Skip Flow", durationSec: 300, difficulty: "Hard", xp: 90 },
+  { id: "p5", name: "Legato Builder", durationSec: 270, difficulty: "Medium", xp: 55 },
+];
 
-interface Snapshot {
-  drills: Drill[];
-  templates: SessionTemplate[];
-  history: PracticeHistoryEntry[];
-}
+const MOTIVATION = [
+  "Lock in. Every rep makes you cleaner.",
+  "Stay relaxed, stay precise.",
+  "Small gains compound fast.",
+  "You are one drill away from momentum.",
+];
 
 export default function App() {
-  const bootStartRef = useRef(Date.now());
-  const repositoryRef = useRef(new InMemoryPracticeRepository());
-  const pipelineRef = useRef(new PracticePipeline(repositoryRef.current));
+  const [screen, setScreen] = useState<Screen>("home");
+  const [drills, setDrills] = useState<Drill[]>(STARTER_DRILLS);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [remainingSec, setRemainingSec] = useState(STARTER_DRILLS[0].durationSec);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const [activeScreen, setActiveScreen] = useState<ScreenKey>("builder");
-  const [snapshot, setSnapshot] = useState<Snapshot>({ drills: [], templates: [], history: [] });
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [totalXp, setTotalXp] = useState(1120);
+  const [todayMinutes, setTodayMinutes] = useState(12);
+  const [streak, setStreak] = useState(9);
+  const [sessionXp, setSessionXp] = useState(0);
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
 
-  const [drillName, setDrillName] = useState("");
-  const [drillMinutes, setDrillMinutes] = useState("5");
-  const [drillBpm, setDrillBpm] = useState("100");
-  const [selectedTags, setSelectedTags] = useState<DrillTag[]>([]);
-
-  const [templateName, setTemplateName] = useState("Daily Session");
-  const [selectedDrillIds, setSelectedDrillIds] = useState<string[]>([]);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
-  const [selectedRunTemplateId, setSelectedRunTemplateId] = useState<string>("");
-  const [runtimeState, setRuntimeState] = useState<RuntimeState | null>(null);
-  const [runtimeBpm, setRuntimeBpm] = useState<number>(100);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
-  const [beatCount, setBeatCount] = useState(0);
-  const [goalSettings, setGoalSettings] = useState<GoalSettings>(DEFAULT_GOAL_SETTINGS);
-  const [goalMinutesInput, setGoalMinutesInput] = useState(
-    String(DEFAULT_GOAL_SETTINGS.dailyMinutesTarget),
-  );
-  const [reminderTimeInput, setReminderTimeInput] = useState(DEFAULT_GOAL_SETTINGS.reminderTime);
-  const [startupMs, setStartupMs] = useState<number | null>(null);
-  const [showTagPicker, setShowTagPicker] = useState(false);
-  const [showAdvancedRunControls, setShowAdvancedRunControls] = useState(false);
-  const runtimeHistorySavedRef = useRef(false);
-
-  const dashboardMetrics = useMemo(
-    () =>
-      calculateDashboardMetrics({
-        entries: snapshot.history,
-        nowIso: new Date().toISOString(),
-        dailyMinutesTarget: goalSettings.dailyMinutesTarget,
-      }),
-    [goalSettings.dailyMinutesTarget, snapshot.history],
-  );
-
-  const currentStreak = useMemo(
-    () => calculateCurrentStreak(snapshot.history, new Date().toISOString()),
-    [snapshot.history],
-  );
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function bootstrap(): Promise<void> {
-      const persisted = await loadPersistedState();
-      repositoryRef.current.importState(persisted);
-      setGoalSettings(persisted.goalSettings);
-      setGoalMinutesInput(String(persisted.goalSettings.dailyMinutesTarget));
-      setReminderTimeInput(persisted.goalSettings.reminderTime);
-      if (!isMounted) return;
-      refreshSnapshot();
-      setStartupMs(Date.now() - bootStartRef.current);
-      setIsReady(true);
-    }
-
-    bootstrap().catch(() => {
-      if (!isMounted) return;
-      setError("Failed to load local data");
-      setStartupMs(Date.now() - bootStartRef.current);
-      setIsReady(true);
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (snapshot.templates.length === 0) {
-      setSelectedRunTemplateId("");
-      return;
-    }
-    if (!snapshot.templates.some((template) => template.id === selectedRunTemplateId)) {
-      setSelectedRunTemplateId(snapshot.templates[0].id);
-    }
-  }, [selectedRunTemplateId, snapshot.templates]);
-
-  useEffect(() => {
-    if (runtimeState?.status !== "running") return;
-
-    const intervalId = setInterval(() => {
-      setRuntimeState((current) => (current ? tickRuntime(current, 1) : current));
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [runtimeState?.status]);
-
-  useEffect(() => {
-    if (!runtimeState || runtimeState.status === "finished") {
-      setMetronomeEnabled(false);
-    }
-  }, [runtimeState, runtimeState?.status]);
-
-  useEffect(() => {
-    if (!runtimeState) return;
-    const currentSegment = getCurrentSegment(runtimeState);
-    if (currentSegment?.targetBpm !== undefined) {
-      setRuntimeBpm(clampBpm(currentSegment.targetBpm));
-    }
-  }, [runtimeState, runtimeState?.templateId, runtimeState?.currentIndex]);
-
-  useEffect(() => {
-    if (!runtimeState || runtimeState.status !== "running" || !metronomeEnabled) return;
-
-    const intervalMs = getBeatIntervalMs(runtimeBpm);
-    const intervalId = setInterval(() => {
-      setBeatCount((current) => current + 1);
-    }, intervalMs);
-
-    return () => clearInterval(intervalId);
-  }, [
-    metronomeEnabled,
-    runtimeBpm,
-    runtimeState,
-    runtimeState?.status,
-    runtimeState?.templateId,
-    runtimeState?.currentIndex,
+  const [badges, setBadges] = useState<Badge[]>([
+    { id: "b1", label: "7-Day Streak", icon: "🔥", unlocked: true },
+    { id: "b2", label: "Rhythm Keeper", icon: "🎵", unlocked: true },
+    { id: "b3", label: "XP Hunter", icon: "⚡", unlocked: false },
+    { id: "b4", label: "Session Beast", icon: "🏆", unlocked: false },
   ]);
 
-  useEffect(() => {
-    async function persistFinishedRuntime(): Promise<void> {
-      if (!runtimeState || runtimeState.status !== "finished" || runtimeHistorySavedRef.current)
-        return;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const rewardScale = useRef(new Animated.Value(0.92)).current;
+  const rewardGlow = useRef(new Animated.Value(0)).current;
+  const completionPulse = useRef(new Animated.Value(0)).current;
+  const handleDrillFinishedRef = useRef<() => void>(() => undefined);
 
-      const entry: PracticeHistoryEntry = {
-        id: `history_${Date.now()}`,
-        sessionTemplateId: runtimeState.templateId,
-        sessionNameSnapshot: runtimeState.templateName,
-        drillsSnapshot: runtimeState.segments.map((segment) => ({
-          id: segment.drillId,
-          name: segment.name,
-          durationSeconds: segment.durationSeconds,
-          targetBpm: segment.targetBpm,
-        })),
-        completedDrillIds: runtimeState.completedDrillIds,
-        startedAt: runtimeState.startedAt,
-        endedAt: new Date().toISOString(),
-        durationCompletedSeconds: runtimeState.durationCompletedSeconds,
-        completed: runtimeState.completedDrillIds.length === runtimeState.segments.length,
-      };
-
-      repositoryRef.current.saveHistory(entry);
-      refreshSnapshot();
-      await savePersistedState({
-        ...repositoryRef.current.exportState(),
-        goalSettings,
-      });
-      runtimeHistorySavedRef.current = true;
-    }
-
-    void persistFinishedRuntime();
-  }, [goalSettings, runtimeState]);
-
-  function refreshSnapshot(): void {
-    setSnapshot(repositoryRef.current.exportState());
-  }
-
-  const persistCurrentState = useCallback(
-    async (nextGoalSettings: GoalSettings = goalSettings): Promise<void> => {
-      try {
-        await savePersistedState({
-          ...repositoryRef.current.exportState(),
-          goalSettings: nextGoalSettings,
-        });
-        setError(null);
-      } catch {
-        setError("Failed to save local data");
-      }
-    },
-    [goalSettings],
+  const activeDrill = drills[activeIndex];
+  const sessionDurationSec = useMemo(
+    () => drills.reduce((sum, d) => sum + d.durationSec, 0),
+    [drills],
   );
+  const elapsedSec = useMemo(() => {
+    const doneBefore = drills
+      .slice(0, activeIndex)
+      .reduce((sum, drill) => sum + drill.durationSec, 0);
+    if (!activeDrill) return doneBefore;
+    return doneBefore + (activeDrill.durationSec - remainingSec);
+  }, [activeDrill, activeIndex, drills, remainingSec]);
 
-  function toggleTag(tag: DrillTag): void {
-    setSelectedTags((current) =>
-      current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag],
-    );
-  }
+  const sessionProgress =
+    sessionDurationSec === 0 ? 0 : Math.min(1, elapsedSec / sessionDurationSec);
+  const drillProgress =
+    !activeDrill || activeDrill.durationSec === 0
+      ? 0
+      : Math.min(1, (activeDrill.durationSec - remainingSec) / activeDrill.durationSec);
 
-  function toggleDrillSelection(id: string): void {
-    setSelectedDrillIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  }
+  const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
+  const dailyGoalMinutes = 30;
+  const dailyGoalProgress = Math.min(1, todayMinutes / dailyGoalMinutes);
 
-  async function createDrill(): Promise<void> {
-    try {
-      repositoryRef.current.createDrill({
-        name: drillName,
-        durationMinutes: Number(drillMinutes),
-        targetBpm: drillBpm ? Number(drillBpm) : undefined,
-        tags: selectedTags,
-      });
-      setDrillName("");
-      setDrillMinutes("5");
-      setDrillBpm("100");
-      setSelectedTags([]);
-      refreshSnapshot();
-      await persistCurrentState();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create drill");
-    }
-  }
-
-  async function deleteDrill(id: string): Promise<void> {
-    repositoryRef.current.deleteDrill(id);
-    setSelectedDrillIds((current) => current.filter((item) => item !== id));
-    refreshSnapshot();
-    await persistCurrentState();
-  }
-
-  async function createTemplate(): Promise<void> {
-    try {
-      const selectedDrills = snapshot.drills.filter((drill) => selectedDrillIds.includes(drill.id));
-      if (editingTemplateId) {
-        pipelineRef.current.updateSessionTemplateFromDrills({
-          id: editingTemplateId,
-          name: templateName,
-          drills: selectedDrills,
-        });
-      } else {
-        pipelineRef.current.createSessionTemplateFromDrills({
-          id: `template_${Date.now()}`,
-          name: templateName,
-          drills: selectedDrills,
-        });
-      }
-      setTemplateName("Daily Session");
-      setSelectedDrillIds([]);
-      setEditingTemplateId(null);
-      refreshSnapshot();
-      await persistCurrentState();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create template");
-    }
-  }
-
-  async function deleteTemplate(id: string): Promise<void> {
-    repositoryRef.current.deleteSessionTemplate(id);
-    if (editingTemplateId === id) {
-      setEditingTemplateId(null);
-      setTemplateName("Daily Session");
-      setSelectedDrillIds([]);
-    }
-    refreshSnapshot();
-    await persistCurrentState();
-  }
-
-  async function duplicateTemplate(template: SessionTemplate): Promise<void> {
-    const drills = snapshot.drills.filter((drill) => template.drillIds.includes(drill.id));
-    pipelineRef.current.createSessionTemplateFromDrills({
-      id: `template_${Date.now()}`,
-      name: `${template.name} Copy`,
-      drills,
-      isPreset: false,
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 100,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
     });
-    refreshSnapshot();
-    await persistCurrentState();
-  }
+  }, [fadeAnim, screen]);
 
-  function startSelectedRuntime(): void {
-    const template = snapshot.templates.find((item) => item.id === selectedRunTemplateId);
-    if (!template) {
-      setError("Select a template first");
-      return;
-    }
+  useEffect(() => {
+    if (screen !== "active" || isPaused || !activeDrill) return;
 
-    const drills = snapshot.drills.filter((drill) => template.drillIds.includes(drill.id));
-    try {
-      const createdState = createRuntimeState({
-        template,
-        drills,
-        nowIso: new Date().toISOString(),
+    const timer = setInterval(() => {
+      setRemainingSec((current) => {
+        if (current <= 1) {
+          clearInterval(timer);
+          handleDrillFinishedRef.current();
+          return 0;
+        }
+        return current - 1;
       });
-      const startedState = startRuntime(createdState);
-      const currentSegment = getCurrentSegment(startedState);
+    }, 1000);
 
-      runtimeHistorySavedRef.current = false;
-      setRuntimeBpm(clampBpm(currentSegment?.targetBpm ?? 100));
-      setMetronomeEnabled(false);
-      setBeatCount(0);
-      setShowAdvancedRunControls(false);
-      setRuntimeState(startedState);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start runtime");
-    }
+    return () => clearInterval(timer);
+  }, [activeDrill, isPaused, screen]);
+
+  useEffect(() => {
+    if (screen !== "complete") return;
+
+    rewardScale.setValue(0.9);
+    rewardGlow.setValue(0);
+    Animated.parallel([
+      Animated.timing(rewardScale, {
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(rewardGlow, {
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [rewardGlow, rewardScale, screen]);
+
+  function triggerCompletionPulse(): void {
+    completionPulse.setValue(0);
+    Animated.sequence([
+      Animated.timing(completionPulse, {
+        toValue: 1,
+        duration: 120,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(completionPulse, {
+        toValue: 0,
+        duration: 120,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start();
   }
 
-  function clearRuntime(): void {
-    setRuntimeState(null);
-    runtimeHistorySavedRef.current = false;
-    setMetronomeEnabled(false);
-    setBeatCount(0);
-    setShowAdvancedRunControls(false);
-  }
+  function handleDrillFinished(): void {
+    if (!activeDrill) return;
 
-  function adjustRuntimeBpm(delta: number): void {
-    setRuntimeBpm((current) => stepBpm(current, delta));
-  }
+    triggerCompletionPulse();
 
-  function toggleMetronome(): void {
-    if (!runtimeState) {
-      setError("Start a session before enabling the metronome");
+    const gainedXp = activeDrill.xp;
+    const nextTotalXp = totalXp + gainedXp;
+    const oldLevel = getLevelState(totalXp).level;
+    const newLevel = getLevelState(nextTotalXp).level;
+
+    setSessionXp((current) => current + gainedXp);
+    setTotalXp(nextTotalXp);
+    setLeveledUp(newLevel > oldLevel);
+
+    if (activeIndex < drills.length - 1) {
+      const nextIndex = activeIndex + 1;
+      setActiveIndex(nextIndex);
+      setRemainingSec(drills[nextIndex].durationSec);
+      setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
       return;
     }
 
-    setMetronomeEnabled((current) => !current);
+    finishSession();
   }
 
-  async function saveGoalMinutes(): Promise<void> {
-    const parsed = Number(goalMinutesInput);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setError("Daily goal must be a positive number");
-      return;
-    }
+  handleDrillFinishedRef.current = handleDrillFinished;
 
-    const next: GoalSettings = {
-      ...goalSettings,
-      dailyMinutesTarget: Math.round(parsed),
-    };
+  function finishSession(): void {
+    const totalSec = drills.reduce((sum, drill) => sum + drill.durationSec, 0);
+    const earnedMinutes = Math.max(1, Math.round(totalSec / 60));
 
-    setGoalSettings(next);
-    await persistCurrentState(next);
-  }
-
-  async function toggleReminder(): Promise<void> {
-    try {
-      parseReminderTime(reminderTimeInput);
-      const nextEnabled = !goalSettings.reminderEnabled;
-      const next: GoalSettings = {
-        ...goalSettings,
-        reminderEnabled: nextEnabled,
-        reminderTime: reminderTimeInput,
-      };
-
-      if (nextEnabled) {
-        await scheduleDailyReminder(reminderTimeInput);
-      } else {
-        await disableDailyReminder();
-      }
-
-      setGoalSettings(next);
-      await persistCurrentState(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update reminder");
-    }
-  }
-
-  function beginEditTemplate(template: SessionTemplate): void {
-    setEditingTemplateId(template.id);
-    setTemplateName(template.name);
-    setSelectedDrillIds(template.drillIds);
-    setActiveScreen("builder");
-  }
-
-  if (!isReady) {
-    return (
-      <SafeAreaView style={styles.root}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Loading local data...</Text>
-        </View>
-      </SafeAreaView>
+    setTodayMinutes((current) => current + earnedMinutes);
+    setStreak((current) => current + 1);
+    setBadges((current) =>
+      current.map((badge) => {
+        if (badge.id === "b3" && sessionXp >= 150) return { ...badge, unlocked: true };
+        if (badge.id === "b4" && drills.length >= 4) return { ...badge, unlocked: true };
+        return badge;
+      }),
     );
+    setScreen("complete");
+  }
+
+  function startPracticeFlow(): void {
+    setScreen("builder");
+  }
+
+  function startSession(): void {
+    if (drills.length === 0) return;
+    setActiveIndex(0);
+    setRemainingSec(drills[0].durationSec);
+    setIsPaused(false);
+    setSessionXp(0);
+    setLeveledUp(false);
+    setCurrentMicrocopy(MOTIVATION[0]);
+    setScreen("active");
+  }
+
+  function skipDrill(): void {
+    if (activeIndex >= drills.length - 1) {
+      finishSession();
+      return;
+    }
+
+    const nextIndex = activeIndex + 1;
+    setActiveIndex(nextIndex);
+    setRemainingSec(drills[nextIndex].durationSec);
+    setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
+  }
+
+  function addDrillFromPool(): void {
+    const next = DRILL_POOL[Math.floor(Math.random() * DRILL_POOL.length)];
+    const uniqueId = `${next.id}_${Date.now()}`;
+    setDrills((current) => [...current, { ...next, id: uniqueId }]);
+  }
+
+  function resetToHome(): void {
+    setScreen("home");
   }
 
   return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.badge}>Phase 3</Text>
-        <Text style={styles.title}>Guitar Practice</Text>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {activeScreen === "onboarding" ? (
-          <Text style={styles.subtitle}>
-            Onboarding will collect skill level and daily minutes goal.
-          </Text>
-        ) : null}
-
-        {activeScreen === "home" ? (
-          <>
-            <View style={styles.heroCard}>
-              <Text style={styles.heroLabel}>Today</Text>
-              <Text style={styles.heroValue}>
-                {dashboardMetrics.todayMinutes} / {goalSettings.dailyMinutesTarget} min
-              </Text>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${Math.max(2, dashboardMetrics.goalProgressPercent)}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.line}>
-                Streak {currentStreak} day(s) • Goal {dashboardMetrics.goalProgressPercent}%
-              </Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Quick Stats</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statCell}>
-                  <Text style={styles.statValue}>{snapshot.drills.length}</Text>
-                  <Text style={styles.listSub}>Drills</Text>
-                </View>
-                <View style={styles.statCell}>
-                  <Text style={styles.statValue}>{snapshot.templates.length}</Text>
-                  <Text style={styles.listSub}>Templates</Text>
-                </View>
-                <View style={styles.statCell}>
-                  <Text style={styles.statValue}>{dashboardMetrics.weeklyMinutes}</Text>
-                  <Text style={styles.listSub}>Weekly Min</Text>
-                </View>
-                <View style={styles.statCell}>
-                  <Text style={styles.statValue}>{dashboardMetrics.sessionsCompleted}</Text>
-                  <Text style={styles.listSub}>Completed</Text>
-                </View>
-              </View>
-              <Text style={styles.listSub}>
-                Startup to interactive: {startupMs !== null ? `${startupMs}ms` : "-"}
-              </Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Quick Actions</Text>
-              <View style={styles.rowWrap}>
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => setActiveScreen("run")}
-                  accessibilityRole="button"
-                  accessibilityLabel="Go to run session"
-                >
-                  <Text style={styles.primaryButtonText}>Run Session</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => setActiveScreen("builder")}
-                  accessibilityRole="button"
-                  accessibilityLabel="Go to session builder"
-                >
-                  <Text style={styles.secondaryButtonText}>Build Template</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        ) : null}
-
-        {activeScreen === "builder" ? (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Step 1: Add Drill</Text>
-              <TextInput
-                style={styles.input}
-                value={drillName}
-                onChangeText={setDrillName}
-                placeholder="Drill name"
-                accessibilityLabel="Drill name"
-              />
-              <TextInput
-                style={styles.input}
-                value={drillMinutes}
-                onChangeText={setDrillMinutes}
-                keyboardType="number-pad"
-                placeholder="Duration minutes"
-                accessibilityLabel="Drill duration in minutes"
-              />
-              <TextInput
-                style={styles.input}
-                value={drillBpm}
-                onChangeText={setDrillBpm}
-                keyboardType="number-pad"
-                placeholder="Target BPM"
-                accessibilityLabel="Drill target BPM"
-              />
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => setShowTagPicker((current) => !current)}
-                accessibilityRole="button"
-                accessibilityLabel="Toggle drill tags panel"
-              >
-                <Text style={styles.secondaryButtonText}>
-                  {showTagPicker ? "Hide Tags" : "Add Tags"}
-                </Text>
-              </TouchableOpacity>
-
-              {showTagPicker ? (
-                <View style={styles.rowWrap}>
-                  {TAGS.map((tag) => (
-                    <TouchableOpacity
-                      key={tag}
-                      style={[styles.pill, selectedTags.includes(tag) ? styles.pillActive : null]}
-                      onPress={() => toggleTag(tag)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Toggle tag ${tag}`}
-                    >
-                      <Text style={styles.pillText}>{tag}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : null}
-
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => void createDrill()}
-                accessibilityRole="button"
-                accessibilityLabel="Add drill"
-              >
-                <Text style={styles.primaryButtonText}>Add Drill</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Step 2: Select Drills</Text>
-              {snapshot.drills.length === 0 ? (
-                <Text style={styles.line}>No drills yet. Add your first drill above.</Text>
-              ) : (
-                snapshot.drills.map((drill) => (
-                  <View key={drill.id} style={styles.listItem}>
-                    <TouchableOpacity
-                      onPress={() => toggleDrillSelection(drill.id)}
-                      style={styles.listTextWrap}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select drill ${drill.name}`}
-                    >
-                      <Text style={styles.listTitle}>
-                        {selectedDrillIds.includes(drill.id) ? "[x]" : "[ ]"} {drill.name}
-                      </Text>
-                      <Text style={styles.listSub}>
-                        {Math.round(drill.durationSeconds / 60)}m @ {drill.targetBpm ?? "-"} BPM
-                      </Text>
-                      <Text style={styles.listSub}>tags: {drill.tags.join(", ") || "none"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => void deleteDrill(drill.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Delete drill ${drill.name}`}
-                    >
-                      <Text style={styles.delete}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))
-              )}
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Step 3: Save Template</Text>
-              {editingTemplateId ? (
-                <Text style={styles.line}>Editing template: {editingTemplateId}</Text>
-              ) : null}
-              <TextInput
-                style={styles.input}
-                value={templateName}
-                onChangeText={setTemplateName}
-                placeholder="Template name"
-                accessibilityLabel="Template name"
-              />
-              <Text style={styles.line}>Selected drills: {selectedDrillIds.length}</Text>
-              <TouchableOpacity
-                style={[
-                  styles.primaryButton,
-                  selectedDrillIds.length === 0 ? styles.primaryButtonDisabled : null,
-                ]}
-                onPress={() => {
-                  if (selectedDrillIds.length === 0) {
-                    setError("Select at least one drill before saving a template");
-                    return;
-                  }
-                  void createTemplate();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={editingTemplateId ? "Update template" : "Save template"}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {editingTemplateId ? "Update Template" : "Save Template"}
-                </Text>
-              </TouchableOpacity>
-              {editingTemplateId ? (
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => {
-                    setEditingTemplateId(null);
-                    setTemplateName("Daily Session");
-                    setSelectedDrillIds([]);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Cancel template edit"
-                >
-                  <Text style={styles.secondaryButtonText}>Cancel Edit</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </>
-        ) : null}
-
-        {activeScreen === "run" ? (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Run Session</Text>
-              {runtimeState ? null : <Text style={styles.line}>Select template:</Text>}
-              {!runtimeState ? (
-                <>
-                  <View style={styles.rowWrap}>
-                    {snapshot.templates.map((template) => (
-                      <TouchableOpacity
-                        key={template.id}
-                        style={[
-                          styles.pill,
-                          selectedRunTemplateId === template.id ? styles.pillActive : null,
-                        ]}
-                        onPress={() => setSelectedRunTemplateId(template.id)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Select run template ${template.name}`}
-                      >
-                        <Text style={styles.pillText}>{template.name}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={startSelectedRuntime}
-                    accessibilityRole="button"
-                    accessibilityLabel="Start session runtime"
-                  >
-                    <Text style={styles.primaryButtonText}>Start Session</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <View style={styles.runtimeHero}>
-                    <Text style={styles.runtimeSegmentName}>
-                      {getCurrentSegment(runtimeState)?.name ?? "No segment"}
-                    </Text>
-                    <Text style={styles.runtimePrimaryTime}>
-                      {formatSeconds(getCurrentSegment(runtimeState)?.remainingSeconds ?? 0)}
-                    </Text>
-                    <Text style={styles.runtimeSubTime}>
-                      Session left {formatSeconds(runtimeState.totalRemainingSeconds)} • Status{" "}
-                      {runtimeState.status}
-                    </Text>
-                  </View>
-
-                  <View style={styles.rowWrap}>
-                    <TouchableOpacity
-                      style={styles.primaryButton}
-                      onPress={() =>
-                        setRuntimeState((current) =>
-                          current?.status === "running"
-                            ? pauseRuntime(current)
-                            : current
-                              ? resumeRuntime(current)
-                              : current,
-                        )
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        runtimeState.status === "running" ? "Pause session" : "Resume session"
-                      }
-                    >
-                      <Text style={styles.primaryButtonText}>
-                        {runtimeState.status === "running" ? "Pause" : "Resume"}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.secondaryButton}
-                      onPress={() =>
-                        setRuntimeState((current) =>
-                          current ? markCurrentSegmentComplete(current) : current,
-                        )
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel="Mark segment complete"
-                    >
-                      <Text style={styles.secondaryButtonText}>Complete</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.secondaryButton}
-                      onPress={() =>
-                        setRuntimeState((current) =>
-                          current ? skipCurrentSegment(current) : current,
-                        )
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel="Skip current segment"
-                    >
-                      <Text style={styles.secondaryButtonText}>Skip</Text>
-                    </TouchableOpacity>
-                    {runtimeState.status === "segmentComplete" ? (
-                      <TouchableOpacity
-                        style={styles.secondaryButton}
-                        onPress={() =>
-                          setRuntimeState((current) =>
-                            current ? advanceToNextSegment(current) : current,
-                          )
-                        }
-                        accessibilityRole="button"
-                        accessibilityLabel="Advance to next segment"
-                      >
-                        <Text style={styles.secondaryButtonText}>Next</Text>
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.textButton}
-                    onPress={() => setShowAdvancedRunControls((current) => !current)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Toggle advanced run controls"
-                  >
-                    <Text style={styles.link}>
-                      {showAdvancedRunControls
-                        ? "Hide Advanced Controls"
-                        : "Show Advanced Controls"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {showAdvancedRunControls ? (
-                    <View style={styles.cardMuted}>
-                      <Text style={styles.line}>Runtime BPM: {runtimeBpm}</Text>
-                      <View style={styles.rowWrap}>
-                        <TouchableOpacity
-                          style={styles.secondaryButton}
-                          onPress={() => adjustRuntimeBpm(-5)}
-                          accessibilityRole="button"
-                          accessibilityLabel="Decrease runtime BPM"
-                        >
-                          <Text style={styles.secondaryButtonText}>BPM -5</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.secondaryButton}
-                          onPress={() => adjustRuntimeBpm(5)}
-                          accessibilityRole="button"
-                          accessibilityLabel="Increase runtime BPM"
-                        >
-                          <Text style={styles.secondaryButtonText}>BPM +5</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.secondaryButton}
-                          onPress={toggleMetronome}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            metronomeEnabled ? "Disable metronome" : "Enable metronome"
-                          }
-                        >
-                          <Text style={styles.secondaryButtonText}>
-                            {metronomeEnabled ? "Metronome Off" : "Metronome On"}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.secondaryButton}
-                          onPress={clearRuntime}
-                          accessibilityRole="button"
-                          accessibilityLabel="Clear runtime session"
-                        >
-                          <Text style={styles.secondaryButtonText}>Clear Session</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.metronomeRow}>
-                        <View
-                          style={[
-                            styles.metronomeDot,
-                            metronomeEnabled &&
-                            runtimeState.status === "running" &&
-                            beatCount % 2 === 1
-                              ? styles.metronomeDotActive
-                              : null,
-                          ]}
-                        />
-                        <Text style={styles.line}>
-                          Beat: {metronomeEnabled ? ((beatCount % 4) + 1).toString() : "-"}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : null}
-                </>
-              )}
-            </View>
-          </>
-        ) : null}
-
-        {activeScreen === "history" ? (
-          <>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>History Summary</Text>
-              <Text style={styles.line}>Today: {dashboardMetrics.todayMinutes}m</Text>
-              <Text style={styles.line}>Weekly: {dashboardMetrics.weeklyMinutes}m</Text>
-              <Text style={styles.line}>Total: {dashboardMetrics.totalMinutes}m</Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Sessions</Text>
-              {snapshot.history.length === 0 ? (
-                <Text style={styles.line}>No sessions yet. Run a template to create history.</Text>
-              ) : (
-                snapshot.history.map((entry) => (
-                  <View key={entry.id} style={styles.listItemVertical}>
-                    <Text style={styles.listTitle}>{entry.sessionNameSnapshot}</Text>
-                    <Text style={styles.listSub}>
-                      {Math.round(entry.durationCompletedSeconds / 60)}m -{" "}
-                      {entry.completed ? "completed" : "incomplete"}
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
-          </>
-        ) : null}
-
-        {activeScreen === "goals" ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Goals</Text>
-            <Text style={styles.line}>Current streak: {currentStreak} day(s)</Text>
-            <TextInput
-              style={styles.input}
-              value={goalMinutesInput}
-              onChangeText={setGoalMinutesInput}
-              keyboardType="number-pad"
-              placeholder="Daily minutes target"
-              accessibilityLabel="Daily minutes target"
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+          {screen === "home" ? (
+            <HomeDashboard
+              levelState={levelState}
+              streak={streak}
+              goalProgress={dailyGoalProgress}
+              todayMinutes={todayMinutes}
+              dailyGoalMinutes={dailyGoalMinutes}
+              badges={badges}
+              onStartPractice={startPracticeFlow}
             />
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => void saveGoalMinutes()}
-              accessibilityRole="button"
-              accessibilityLabel="Save daily goal"
-            >
-              <Text style={styles.primaryButtonText}>Save Daily Goal</Text>
-            </TouchableOpacity>
+          ) : null}
 
-            <TextInput
-              style={styles.input}
-              value={reminderTimeInput}
-              onChangeText={setReminderTimeInput}
-              placeholder="Reminder time (HH:MM)"
-              accessibilityLabel="Reminder time in HH colon MM format"
+          {screen === "builder" ? (
+            <SessionBuilder
+              drills={drills}
+              onBack={resetToHome}
+              onStartSession={startSession}
+              onSetDrills={setDrills}
+              onAddDrill={addDrillFromPool}
             />
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => void toggleReminder()}
-              accessibilityRole="button"
-              accessibilityLabel={
-                goalSettings.reminderEnabled ? "Disable reminder" : "Enable reminder"
-              }
-            >
-              <Text style={styles.secondaryButtonText}>
-                {goalSettings.reminderEnabled ? "Disable Reminder" : "Enable Reminder"}
-              </Text>
-            </TouchableOpacity>
-            <Text style={styles.listSub}>
-              Reminder:{" "}
-              {goalSettings.reminderEnabled ? `on at ${goalSettings.reminderTime}` : "off"}
-            </Text>
-          </View>
-        ) : null}
+          ) : null}
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Templates</Text>
-          {snapshot.templates.map((template) => (
-            <View key={template.id} style={styles.listItem}>
-              <View style={styles.listTextWrap}>
-                <Text style={styles.listTitle}>{template.name}</Text>
-                <Text style={styles.listSub}>
-                  {Math.round(template.totalDurationSeconds / 60)}m - {template.drillIds.length}{" "}
-                  drills
-                </Text>
-              </View>
-              <View style={styles.rowWrap}>
-                <TouchableOpacity
-                  onPress={() => beginEditTemplate(template)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Edit template ${template.name}`}
-                >
-                  <Text style={styles.link}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => void duplicateTemplate(template)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Duplicate template ${template.name}`}
-                >
-                  <Text style={styles.link}>Duplicate</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => void deleteTemplate(template.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Delete template ${template.name}`}
-                >
-                  <Text style={styles.delete}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+          {screen === "active" && activeDrill ? (
+            <ActivePractice
+              drill={activeDrill}
+              drillProgress={drillProgress}
+              sessionProgress={sessionProgress}
+              remainingSec={remainingSec}
+              isPaused={isPaused}
+              microcopy={currentMicrocopy}
+              completionPulse={completionPulse}
+              onPauseToggle={() => setIsPaused((current) => !current)}
+              onSkip={skipDrill}
+            />
+          ) : null}
 
-      <View style={styles.tabBar}>
-        {SCREENS.map((screen) => {
-          const isActive = screen.key === activeScreen;
-          return (
-            <TouchableOpacity
-              key={screen.key}
-              style={[styles.tab, isActive ? styles.tabActive : null]}
-              onPress={() => setActiveScreen(screen.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${screen.title} screen`}
-            >
-              <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
-                {screen.title}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      <StatusBar style="auto" />
-    </SafeAreaView>
+          {screen === "complete" ? (
+            <SessionComplete
+              sessionXp={sessionXp}
+              leveledUp={leveledUp}
+              level={levelState.level}
+              streak={streak}
+              badges={badges.filter((badge) => badge.unlocked)}
+              rewardGlow={rewardGlow}
+              rewardScale={rewardScale}
+              onContinue={resetToHome}
+            />
+          ) : null}
+        </Animated.View>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
-function formatSeconds(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+function HomeDashboard(props: {
+  levelState: LevelState;
+  streak: number;
+  goalProgress: number;
+  todayMinutes: number;
+  dailyGoalMinutes: number;
+  badges: Badge[];
+  onStartPractice: () => void;
+}) {
+  const {
+    levelState,
+    streak,
+    goalProgress,
+    todayMinutes,
+    dailyGoalMinutes,
+    badges,
+    onStartPractice,
+  } = props;
+
+  return (
+    <View style={styles.screenBody}>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Level {levelState.level}</Text>
+        <Text style={styles.levelChip}>
+          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
+        </Text>
+      </View>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>XP Progress</Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${Math.max(6, (levelState.currentLevelXp / levelState.nextLevelXp) * 100)}%`,
+              },
+            ]}
+          />
+        </View>
+      </GlowCard>
+
+      <View style={styles.rowTwoCol}>
+        <GlowCard style={styles.flexCard}>
+          <Text style={styles.cardLabel}>🔥 Streak</Text>
+          <Text style={styles.bigValue}>{streak} days</Text>
+        </GlowCard>
+
+        <GlowCard style={styles.flexCard}>
+          <Text style={styles.cardLabel}>Today Goal</Text>
+          <View style={{ alignItems: "center", marginTop: 8 }}>
+            <ProgressRing
+              size={84}
+              strokeWidth={8}
+              progress={goalProgress}
+              color={COLORS.accentAlt}
+            />
+            <Text style={styles.ringText}>
+              {todayMinutes}/{dailyGoalMinutes}m
+            </Text>
+          </View>
+        </GlowCard>
+      </View>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Achievements</Text>
+        <View style={styles.badgeRow}>
+          {badges.map((badge) => (
+            <View
+              key={badge.id}
+              style={[styles.badge, !badge.unlocked ? styles.badgeLocked : null]}
+            >
+              <Text style={styles.badgeIcon}>{badge.icon}</Text>
+              <Text style={styles.badgeLabel}>{badge.label}</Text>
+            </View>
+          ))}
+        </View>
+      </GlowCard>
+
+      <TouchableOpacity
+        style={styles.primaryCta}
+        onPress={onStartPractice}
+        accessibilityRole="button"
+      >
+        <Text style={styles.primaryCtaText}>Start Practice</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function SessionBuilder(props: {
+  drills: Drill[];
+  onBack: () => void;
+  onStartSession: () => void;
+  onSetDrills: (drills: Drill[]) => void;
+  onAddDrill: () => void;
+}) {
+  const { drills, onBack, onStartSession, onSetDrills, onAddDrill } = props;
+  const totalXp = drills.reduce((sum, drill) => sum + drill.xp, 0);
+
+  return (
+    <View style={styles.screenBody}>
+      <View style={styles.topRow}>
+        <Pressable onPress={onBack} style={styles.topActionButton}>
+          <Text style={styles.topActionText}>Back</Text>
+        </Pressable>
+        <Text style={styles.title}>Session Builder</Text>
+        <Text style={styles.levelChip}>{totalXp} XP</Text>
+      </View>
+
+      <Text style={styles.helperText}>Long-press a drill card and drag to reorder.</Text>
+
+      <DraggableFlatList
+        data={drills}
+        keyExtractor={(item) => item.id}
+        onDragEnd={({ data }) => onSetDrills(data)}
+        contentContainerStyle={{ gap: 12, paddingBottom: 120 }}
+        renderItem={({ item, drag, isActive, getIndex }) => (
+          <ScaleDecorator>
+            <TouchableOpacity
+              onLongPress={drag}
+              activeOpacity={0.9}
+              style={[styles.drillCard, isActive ? styles.drillCardActive : null]}
+            >
+              <View style={styles.drillLeft}>
+                <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
+                <View>
+                  <Text style={styles.drillName}>{item.name}</Text>
+                  <Text style={styles.drillMeta}>
+                    {item.durationSec / 60} min • {item.difficulty}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.drillReward}>
+                <Text style={styles.drillXp}>+{item.xp} XP</Text>
+              </View>
+            </TouchableOpacity>
+          </ScaleDecorator>
+        )}
+      />
+
+      <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
+        <Text style={styles.primaryCtaText}>Start This Session</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.fab} onPress={onAddDrill} accessibilityRole="button">
+        <Text style={styles.fabText}>＋</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function ActivePractice(props: {
+  drill: Drill;
+  drillProgress: number;
+  sessionProgress: number;
+  remainingSec: number;
+  isPaused: boolean;
+  microcopy: string;
+  completionPulse: Animated.Value;
+  onPauseToggle: () => void;
+  onSkip: () => void;
+}) {
+  const {
+    drill,
+    drillProgress,
+    sessionProgress,
+    remainingSec,
+    isPaused,
+    microcopy,
+    completionPulse,
+    onPauseToggle,
+    onSkip,
+  } = props;
+
+  const pulseScale = completionPulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.07],
+  });
+
+  return (
+    <View style={styles.screenBody}>
+      <Text style={styles.cardLabel}>Session Progress</Text>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
+      </View>
+
+      <Animated.View style={[styles.activeCard, { transform: [{ scale: pulseScale }] }]}>
+        <ProgressRing size={240} strokeWidth={14} progress={drillProgress} color={COLORS.accent} />
+        <View style={styles.timerOverlay}>
+          <Text style={styles.timerValue}>{formatClock(remainingSec)}</Text>
+          <Text style={styles.timerLabel}>{drill.name}</Text>
+          <Text style={styles.xpInline}>Reward +{drill.xp} XP</Text>
+        </View>
+      </Animated.View>
+
+      <Text style={styles.microcopy}>{microcopy}</Text>
+
+      <View style={styles.controlsRow}>
+        <TouchableOpacity style={styles.controlButton} onPress={onPauseToggle}>
+          <Text style={styles.controlButtonText}>{isPaused ? "Resume" : "Pause"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.controlButton, styles.controlButtonSecondary]}
+          onPress={onSkip}
+        >
+          <Text style={styles.controlButtonText}>Skip</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function SessionComplete(props: {
+  sessionXp: number;
+  leveledUp: boolean;
+  level: number;
+  streak: number;
+  badges: Badge[];
+  rewardGlow: Animated.Value;
+  rewardScale: Animated.Value;
+  onContinue: () => void;
+}) {
+  const { sessionXp, leveledUp, level, streak, badges, rewardGlow, rewardScale, onContinue } =
+    props;
+
+  const glowOpacity = rewardGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
+
+  return (
+    <View style={styles.screenBody}>
+      <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
+
+      <Animated.View style={[styles.completeCard, { transform: [{ scale: rewardScale }] }]}>
+        <Text style={styles.completeTitle}>Session Complete</Text>
+        <Text style={styles.completeXp}>+{sessionXp} XP</Text>
+        <Text style={styles.completeSubtext}>
+          Great work. You moved your playing forward today.
+        </Text>
+
+        {leveledUp ? (
+          <Text style={styles.levelUp}>Level Up! You are now Level {level}.</Text>
+        ) : null}
+        <Text style={styles.streakLine}>🔥 Streak confirmed: {streak} days</Text>
+
+        <View style={styles.badgeRow}>
+          {badges.slice(0, 4).map((badge) => (
+            <View key={badge.id} style={styles.badge}>
+              <Text style={styles.badgeIcon}>{badge.icon}</Text>
+              <Text style={styles.badgeLabel}>{badge.label}</Text>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
+
+      <TouchableOpacity style={styles.primaryCta} onPress={onContinue}>
+        <Text style={styles.primaryCtaText}>Back to Dashboard</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function ProgressRing(props: {
+  size: number;
+  strokeWidth: number;
+  progress: number;
+  color: string;
+}) {
+  const { size, strokeWidth, progress, color } = props;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const animated = useRef(new Animated.Value(progress)).current;
+
+  useEffect(() => {
+    Animated.timing(animated, {
+      toValue: progress,
+      duration: 200,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
+  }, [animated, progress]);
+
+  const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+  const dashOffset = animated.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
+
+  return (
+    <Svg width={size} height={size}>
+      <Circle
+        stroke="#2a2d35"
+        fill="none"
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={strokeWidth}
+      />
+      <AnimatedCircle
+        stroke={color}
+        fill="none"
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={`${circumference} ${circumference}`}
+        strokeDashoffset={dashOffset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </Svg>
+  );
+}
+
+function GlowCard(props: { children: React.ReactNode; style?: object }) {
+  return <View style={[styles.glowCard, props.style]}>{props.children}</View>;
+}
+
+interface LevelState {
+  level: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+}
+
+function xpForNextLevel(level: number): number {
+  return 220 + (level - 1) * 90;
+}
+
+function getLevelState(totalXp: number): LevelState {
+  let level = 1;
+  let remaining = totalXp;
+  let needed = xpForNextLevel(level);
+
+  while (remaining >= needed) {
+    remaining -= needed;
+    level += 1;
+    needed = xpForNextLevel(level);
+  }
+
+  return {
+    level,
+    currentLevelXp: remaining,
+    nextLevelXp: needed,
+  };
+}
+
+function formatClock(seconds: number): string {
+  const mm = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const ss = (seconds % 60).toString().padStart(2, "0");
+  return `${mm}:${ss}`;
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f4f7f8" },
-  header: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
-  content: { flex: 1 },
-  contentContainer: { padding: 16, gap: 10 },
-  badge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#1f7a8c",
-    color: "#fff",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    fontWeight: "600",
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  },
+  screenBody: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    gap: 16,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  title: {
+    color: COLORS.text,
+    fontSize: 28,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  levelChip: {
+    color: COLORS.bg,
     fontSize: 12,
-  },
-  title: { fontSize: 30, fontWeight: "700", color: "#102a43" },
-  subtitle: { fontSize: 16, color: "#334e68", lineHeight: 22 },
-  error: { color: "#b42318", fontSize: 13 },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    gap: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#d9e2ec",
-  },
-  cardMuted: {
-    backgroundColor: "#f0f4f8",
-    borderRadius: 10,
-    padding: 10,
-    gap: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#d9e2ec",
-  },
-  heroCard: {
-    backgroundColor: "#102a43",
-    borderRadius: 14,
-    padding: 14,
-    gap: 8,
-  },
-  heroLabel: { color: "#9fb3c8", fontSize: 12, textTransform: "uppercase", fontWeight: "700" },
-  heroValue: { color: "#ffffff", fontSize: 28, fontWeight: "700" },
-  cardTitle: { fontSize: 18, fontWeight: "700", color: "#102a43" },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  statCell: {
-    minWidth: "47%",
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: "#f0f4f8",
-    gap: 2,
-  },
-  statValue: { color: "#102a43", fontSize: 22, fontWeight: "700" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#bcccdc",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-  },
-  rowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  pill: {
+    fontWeight: "700",
+    backgroundColor: COLORS.accent,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#bcccdc",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  pillActive: { backgroundColor: "#d9e2ec" },
-  pillText: { color: "#334e68", fontSize: 12 },
-  primaryButton: {
-    borderRadius: 8,
-    backgroundColor: "#1f7a8c",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 7,
+    overflow: "hidden",
   },
-  primaryButtonDisabled: {
-    backgroundColor: "#7b8794",
+  helperText: {
+    color: COLORS.muted,
+    fontSize: 13,
   },
-  primaryButtonText: { color: "#fff", fontWeight: "700", textAlign: "center" },
-  secondaryButton: {
-    borderRadius: 8,
-    backgroundColor: "#d9e2ec",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  glowCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  secondaryButtonText: { color: "#102a43", fontWeight: "700", textAlign: "center" },
-  line: { color: "#334e68", fontSize: 14 },
+  rowTwoCol: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  flexCard: {
+    flex: 1,
+  },
+  cardLabel: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  bigValue: {
+    color: COLORS.text,
+    fontSize: 30,
+    fontWeight: "700",
+    marginTop: 2,
+  },
   progressTrack: {
-    height: 10,
+    marginTop: 8,
+    height: 12,
     borderRadius: 999,
-    backgroundColor: "#d9e2ec",
+    backgroundColor: "#282c34",
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#1f7a8c",
+    borderRadius: 999,
+    backgroundColor: COLORS.accent,
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
-  listItem: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
-  listItemVertical: { gap: 2, paddingVertical: 4 },
-  listTextWrap: { flex: 1, gap: 2 },
-  listTitle: { color: "#102a43", fontWeight: "600" },
-  listSub: { color: "#627d98", fontSize: 12 },
-  delete: { color: "#b42318", fontWeight: "600" },
-  link: { color: "#1f7a8c", fontWeight: "600" },
-  metronomeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  textButton: { paddingVertical: 4, alignSelf: "flex-start" },
-  runtimeHero: {
+  ringText: {
+    color: COLORS.text,
+    marginTop: -48,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  badgeRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  badge: {
+    minWidth: 88,
     borderRadius: 12,
-    backgroundColor: "#f0f4f8",
-    padding: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: "#30333b",
     gap: 4,
   },
-  runtimeSegmentName: { color: "#102a43", fontSize: 18, fontWeight: "700" },
-  runtimePrimaryTime: { color: "#102a43", fontSize: 42, fontWeight: "700" },
-  runtimeSubTime: { color: "#486581", fontSize: 13 },
-  metronomeDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#bcccdc",
+  badgeLocked: {
+    opacity: 0.45,
   },
-  metronomeDotActive: {
-    backgroundColor: "#1f7a8c",
+  badgeIcon: {
+    fontSize: 18,
   },
-  tabBar: {
+  badgeLabel: {
+    color: COLORS.text,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  primaryCta: {
+    marginTop: "auto",
+    minHeight: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.accent,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  primaryCtaText: {
+    color: COLORS.bg,
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  topActionButton: {
+    minHeight: 44,
+    minWidth: 70,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.card,
+  },
+  topActionText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  drillCard: {
+    minHeight: 88,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: "#2d323a",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+  },
+  drillCardActive: {
+    borderColor: COLORS.accent,
+    backgroundColor: "#1a242c",
+  },
+  drillLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexShrink: 1,
+  },
+  drillOrder: {
+    color: COLORS.accentAlt,
+    fontWeight: "700",
+    fontSize: 14,
+    width: 28,
+  },
+  drillName: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  drillMeta: {
+    color: COLORS.muted,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  drillReward: {
+    borderRadius: 999,
     paddingHorizontal: 10,
-    paddingBottom: 10,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#bcccdc",
-    backgroundColor: "#fff",
+    paddingVertical: 6,
+    backgroundColor: "#102936",
   },
-  tab: {
-    borderRadius: 10,
+  drillXp: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 92,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.accentAlt,
+    shadowColor: COLORS.accentAlt,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  fabText: {
+    color: COLORS.bg,
+    fontSize: 30,
+    marginTop: -2,
+    fontWeight: "500",
+  },
+  activeCard: {
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timerOverlay: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 180,
+    gap: 4,
+  },
+  timerValue: {
+    color: COLORS.text,
+    fontSize: 54,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  timerLabel: {
+    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  xpInline: {
+    color: COLORS.accentAlt,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  microcopy: {
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+    marginTop: 4,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginVertical: 2,
   },
-  tabActive: { backgroundColor: "#d9e2ec" },
-  tabLabel: { fontSize: 14, color: "#486581" },
-  tabLabelActive: { color: "#102a43", fontWeight: "700" },
+  controlsRow: {
+    marginTop: "auto",
+    flexDirection: "row",
+    gap: 12,
+  },
+  controlButton: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.accent,
+  },
+  controlButtonSecondary: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: "#2f333b",
+  },
+  controlButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  rewardGlow: {
+    position: "absolute",
+    top: 130,
+    left: 80,
+    right: 80,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: COLORS.accent,
+  },
+  completeCard: {
+    marginTop: 40,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "#2d323a",
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  completeTitle: {
+    color: COLORS.text,
+    fontSize: 30,
+    fontWeight: "700",
+  },
+  completeXp: {
+    color: COLORS.accentAlt,
+    fontSize: 44,
+    fontWeight: "700",
+  },
+  completeSubtext: {
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  levelUp: {
+    color: COLORS.gold,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  streakLine: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PracticePipeline } from "../src/app/practicePipeline";
+import { PracticePipeline } from "../src/application/practicePipeline";
 import { InMemoryPracticeRepository } from "../src/persistence/InMemoryPracticeRepository";
 
 describe("practice pipeline template CRUD", () => {

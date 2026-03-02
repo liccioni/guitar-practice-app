@@ -23,16 +23,25 @@
     "expo-notifications": "~0.32.16",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-draggable-flatlist": "^4.0.3",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-svg": "15.12.1",
+    "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "babel-preset-expo": "~54.0.10",
     "eslint": "^9.39.3",
     "eslint-config-expo": "^55.0.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "react-native-worklets": "0.5.1"
   },
   "private": true
 }

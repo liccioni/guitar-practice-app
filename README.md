@@ -1,6 +1,6 @@
 # Guitar Practice App
 
-Mobile guitar practice app scaffolded with Expo + TypeScript, with spec-driven docs in `docs/`.
+Mobile guitar practice coach app (dark mode, gamified UX) built with Expo + TypeScript, with spec-driven docs in `docs/`.
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`

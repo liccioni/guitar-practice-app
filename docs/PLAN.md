@@ -7,6 +7,7 @@ Deliver an MVP mobile guitar practice app that lets users plan sessions, run gui
 1. Completed: Phases 0-4.
 2. In progress: Phase 5 (store onboarding and beta distribution).
 3. Pending: Phase 6 (production submission).
+4. UX direction updated to gamified coach experience (Duolingo/fitness style), dark-mode only.
 
 ## Delivery Strategy
 1. Work in small increments.
@@ -84,6 +85,7 @@ Deliver an MVP mobile guitar practice app that lets users plan sessions, run gui
 2. Offline reliability pass and data migration/versioning safeguards.
 3. Performance verification on a representative mid-tier device.
 4. Beta release candidate build and release notes preparation.
+5. Gamified UX redesign pass across Home, Builder, Active, and Complete screens.
 
 **Tests**
 1. Regression suite across template management, runtime flow, and progress tracking.

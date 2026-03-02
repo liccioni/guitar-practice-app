@@ -11,6 +11,10 @@ This mirrors `docs/ACCEPTANCE_CRITERIA.md`.
 - [x] 6. Dashboard shows daily goal progress and streak.
 - [x] 7. Daily reminder settings and local notification toggles work.
 - [ ] 8. App is installable on physical iOS and Android devices via beta channels.
+- [x] 9. Home dashboard has level/XP/streak/goal + primary Start Practice CTA.
+- [x] 10. Builder uses draggable drill cards and add-drill FAB.
+- [x] 11. Active screen uses large timer + circular progress ring + pause/skip.
+- [x] 12. Completion screen shows XP gain, streak confirmation, badges, and level-up state.
 
 ## Non-Functional Requirements
 - [x] 1. TDD workflow followed.
@@ -20,6 +24,9 @@ This mirrors `docs/ACCEPTANCE_CRITERIA.md`.
 - [x] 5. MVP features work offline.
 - [x] 6. App IDs configured as `net.liccioni.guitarpractice`.
 - [x] 7. EAS build profiles include development/preview/production.
+- [x] 8. UI is dark-mode only with `#121212` base background.
+- [x] 9. Primary control touch targets are >=44px.
+- [x] 10. Core transitions/animations target ~200ms.
 
 ## Edge Cases
 - [x] 1. Invalid duration/BPM blocks save with actionable messaging.
@@ -28,6 +35,7 @@ This mirrors `docs/ACCEPTANCE_CRITERIA.md`.
 - [x] 4. Midnight boundary uses local timezone for streak logic.
 - [x] 5. Empty history state has clear guidance.
 - [ ] 6. Signing/build misconfiguration is caught before submission.
+- [x] 7. Empty builder/runtime states provide clear next actions.
 
 ## Tests
 - [ ] 1. Unit tests per production class.

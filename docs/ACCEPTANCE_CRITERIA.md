@@ -12,6 +12,10 @@
 6. Dashboard shows daily goal progress and streak based on local calendar day completion.
 7. User can configure daily reminder time and enable/disable local reminder notifications.
 8. App can be installed on physical iOS and Android devices using beta distribution channels.
+9. Home dashboard shows level, XP progress, streak, goal progress, and primary `Start Practice` CTA.
+10. Session Builder presents drills as reorderable visual cards with XP/duration/difficulty and an add-drill FAB.
+11. Active Practice screen shows large timer, animated circular progress ring, drill title, XP reward, and pause/skip controls.
+12. Session Complete screen shows session XP gain, streak confirmation, unlocked badges, and level-up state when applicable.
 
 ## Non‑Functional Requirements
 1. TDD required.
@@ -23,6 +27,9 @@
    - iOS bundle ID: `net.liccioni.guitarpractice`
    - Android package: `net.liccioni.guitarpractice`
 7. EAS build profiles exist for `development`, `preview`, and `production`.
+8. Core app experience is dark-mode only with base background `#121212`.
+9. Touch targets for primary controls are at least 44px high.
+10. Primary state transitions and micro-animations target ~200ms interaction timing.
 
 ## Edge Cases
 1. Invalid duration or BPM values block save and show actionable error messages.
@@ -31,6 +38,7 @@
 4. Crossing midnight follows local timezone rules for streak updates.
 5. Empty history state is rendered with clear guidance for first session creation.
 6. Build/signing misconfiguration is detected before store submission.
+7. Empty builder/runtime states present guided, non-admin-like messaging and clear next action.
 
 ## Tests
 1. Unit tests per production class.

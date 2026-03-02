@@ -6,6 +6,7 @@
 3. Release candidate quality gate script (`npm run check`).
 4. Release notes draft prepared for RC1.
 5. Focused UX pass for Home, Session Builder, and Run Session flow hierarchy.
+6. Full gamified visual direction pass (dark mode, XP/level/streak/badges, reward moments).
 
 ## Reliability Safeguards
 - Persistence now uses schema envelope with versioning.

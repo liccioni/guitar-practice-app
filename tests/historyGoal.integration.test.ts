@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PracticePipeline } from "../src/app/practicePipeline";
+import { PracticePipeline } from "../src/application/practicePipeline";
 import { calculateDashboardMetrics } from "../src/domain/history/metrics";
 import { calculateCurrentStreak } from "../src/domain/goals/streak";
 import { InMemoryPracticeRepository } from "../src/persistence/InMemoryPracticeRepository";
