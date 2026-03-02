@@ -1,28 +1,32 @@
-# Project Spec Template
+# Guitar Practice App
 
-This folder is a reusable template for a spec‑driven, TDD‑first workflow. It includes:
+Mobile guitar practice app scaffolded with Expo + TypeScript, with spec-driven docs in `docs/`.
 
-- `docs/SPEC.md` — Single source of truth for behavior
-- `docs/ACCEPTANCE_CRITERIA.md` — Definition of done
-- `docs/PLAN.md` — Implementation roadmap
-- `docs/PROGRESS.md` — Checklist mirroring the plan
-- `docs/AUDIT_CHECKLIST.md` — Acceptance criteria audit checklist
-- `docs/RELEASE_NOTES.md` — Tag summaries
-- `docs/STARTUP_PROMPT.md` — Prompts for the next agent to fill in missing info
-- `docs/EXAMPLE_FILLED.md` — A small filled example
-- `docs/FIRST_TESTS_CHECKLIST.md` — TDD gate for the first tests
+## App Identity
+- iOS bundle identifier: `net.liccioni.guitarpractice`
+- Android package: `net.liccioni.guitarpractice`
 
-## How to Use
-1. Copy the `spec_template` folder into your new project.
-2. Fill out `docs/STARTUP_PROMPT.md` first to clarify intent and constraints.
-3. Complete `docs/SPEC.md`, then `docs/ACCEPTANCE_CRITERIA.md`.
-4. Break work into phases in `docs/PLAN.md`.
-5. Track progress in `docs/PROGRESS.md` and audits in `docs/AUDIT_CHECKLIST.md`.
+## Quick Start
+1. Install dependencies (already installed by scaffold): `npm install`
+2. Run iOS simulator (stable localhost mode): `npm run ios:local`
+3. Or start Expo normally: `npm run start`
+4. Test on phone with Expo Go by scanning the QR code.
 
-## Workflow Rules (Non‑Functional)
-- TDD is mandatory: tests before implementation.
-- Never loosen tests to accommodate broken behavior.
-- Prefer design patterns where they clarify structure.
-- Non‑generated code should use modern language features (e.g., Optional/Streams).
-- Generated code should prioritize efficiency and minimal overhead.
-- Keep docs in sync with implementation changes.
+## Build Profiles
+EAS profiles are defined in `eas.json`:
+- `development`
+- `preview`
+- `production`
+
+## Quality Gate
+- Run full release-candidate checks: `npm run check`
+
+## Documentation
+- Product spec: `docs/SPEC.md`
+- Spec/code alignment checklist: `docs/SPEC_ALIGNMENT.md`
+- Phase 4 verification: `docs/PHASE4_VERIFICATION.md`
+- Acceptance criteria: `docs/ACCEPTANCE_CRITERIA.md`
+- Implementation plan: `docs/PLAN.md`
+- Progress tracking: `docs/PROGRESS.md`
+- Audit checklist: `docs/AUDIT_CHECKLIST.md`
+- Release notes: `docs/RELEASE_NOTES.md`

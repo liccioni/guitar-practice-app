@@ -1,0 +1,38 @@
+{
+  "name": "guitar-practice-app",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "ios:local": "expo start --host localhost --ios",
+    "web": "expo start --web",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier \"App.tsx\" \"index.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{json,js}\" --write",
+    "format:check": "prettier \"App.tsx\" \"index.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{json,js}\" --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~54.0.33",
+    "expo-notifications": "~0.32.16",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "eslint": "^9.39.3",
+    "eslint-config-expo": "^55.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.18"
+  },
+  "private": true
+}
