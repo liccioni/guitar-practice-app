@@ -4,10 +4,11 @@
 Deliver an MVP mobile guitar practice app that lets users plan sessions, run guided practice with timers/metronome, and track daily progress and streaks.
 
 ## Execution Status
-1. Completed: Phases 0-4.
-2. In progress: Phase 5 (store onboarding and beta distribution).
-3. Pending: Phase 6 (production submission).
-4. UX direction updated to gamified coach experience (Duolingo/fitness style), dark-mode only.
+1. Completed: Phase 0 (foundation) and core domain/persistence modules from Phases 1-3.
+2. In progress: UI parity recovery for Phases 1-3 features after gamified UX refactor.
+3. Pending: Phase 5 (store onboarding and beta distribution) after parity recovery.
+4. Pending: Phase 6 (production submission).
+5. UX direction is locked to gamified coach experience (dark-mode only).
 
 ## Delivery Strategy
 1. Work in small increments.

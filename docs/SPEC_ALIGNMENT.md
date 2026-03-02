@@ -6,20 +6,20 @@ Purpose: track gaps between `docs/SPEC.md` and repository implementation.
 - Selected direction: **Option 1 - Local-first MVP**.
 
 ## Alignment Status
-- `docs/SPEC.md` now matches the current project strategy:
-  - Expo React Native mobile app
-  - Offline-first, on-device persistence
-  - Fully local data model and storage for MVP
-  - Store-ready EAS distribution path
-  - Runtime metronome controls and goal/streak dashboard
+- `docs/SPEC.md` still reflects the correct target product strategy.
+- Current implementation is partially aligned and currently diverges in user-facing flows:
+  - Template CRUD flow is not available in the current UI.
+  - Runtime metronome/BPM controls are not available in the current UI.
+  - History/goal/reminder persistence is not fully represented in the current UI.
 
 ## Completed Through Phase 4
 1. Foundation + test harness established.
-2. Template CRUD, validation, tagging, and local persistence implemented.
-3. Runtime state machine, timers, controls, and history persistence implemented.
-4. Dashboard metrics, goals/streaks, and reminder scheduling implemented.
-5. Hardening pass completed (accessibility labels, persistence versioning/migration, release checks).
+2. Core domain modules and tests for templates/runtime/history/goals/metronome exist.
+3. Gamified screen system implemented for Home, Builder, Active, and Complete views.
+4. Build/test quality gate remains green.
 
 ## Remaining Work
-1. Phase 5: Store onboarding and beta distribution (TestFlight + Play internal).
-2. Phase 6: Production submission and launch.
+1. Restore UI parity with SPEC for templates, metronome controls, and persisted progress flows.
+2. Re-run acceptance audit and close failing criteria before beta onboarding.
+3. Phase 5: Store onboarding and beta distribution (TestFlight + Play internal).
+4. Phase 6: Production submission and launch.

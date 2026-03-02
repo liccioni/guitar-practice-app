@@ -2,12 +2,14 @@
 
 ## Tags
 - `v0.1.0-rc1` (pending tag)
-  - Local-first MVP foundation completed through Phase 4.
-  - Session template CRUD, runtime flow, history metrics, goals, streaks, and reminders.
-  - Runtime metronome controls with BPM adjustments and beat indicator.
-  - UX refinement pass: clearer Home dashboard hierarchy, simplified Builder steps, focused Run controls.
-  - Accessibility labels added across primary controls and navigation.
-  - Persistence schema versioning and migration safeguards added.
+  - Checkpoint build with gamified dark-mode UX across Home, Builder, Active, and Complete screens.
+  - Added drag-reorder drill cards and animated progress/reward interactions.
+  - Dependencies aligned for Reanimated/Worklets compatibility on Expo SDK 54.
+  - Known regressions in this checkpoint:
+    - Template CRUD UI is not available.
+    - Metronome/BPM runtime controls are not available.
+    - Persisted history/goals/reminders are not fully wired in UI.
+    - Acceptance criteria are not yet fully met.
 
 ## Notes
 - Keep entries short and high‑signal.
