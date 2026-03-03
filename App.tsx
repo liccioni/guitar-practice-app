@@ -5,6 +5,7 @@ import {
   Easing,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -158,7 +159,7 @@ export default function App() {
   const [completedDrillIds, setCompletedDrillIds] = useState<string[]>([]);
   const [completedDurationSec, setCompletedDurationSec] = useState(0);
 
-  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
   const [metronomeBpm, setMetronomeBpm] = useState(100);
   const [beatFlash, setBeatFlash] = useState(false);
 
@@ -494,6 +495,7 @@ export default function App() {
     setLeveledUp(false);
     setCurrentMicrocopy(MOTIVATION[0]);
     setMetronomeBpm(builderDrills[0].targetBpm ?? metronomeBpm);
+    setMetronomeEnabled(true);
     setScreen("active");
   }
 
@@ -1039,131 +1041,139 @@ function SessionBuilder(props: {
 
   return (
     <View style={styles.screenBody}>
-      <View style={styles.topRow}>
-        <Pressable onPress={onBack} style={styles.topActionButton}>
-          <Text style={styles.topActionText}>Back</Text>
-        </Pressable>
-        <Text style={styles.title}>Session Builder</Text>
-        <Text style={styles.levelChip}>{totalXp} XP</Text>
-      </View>
-
-      <GlowCard>
-        <View style={styles.inlineRow}>
-          <TouchableOpacity style={styles.smallActionButton} onPress={onCreateTemplate}>
-            <Text style={styles.smallActionText}>New</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
-            <Text style={styles.smallActionText}>Duplicate</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.smallActionButton} onPress={onSaveTemplate}>
-            <Text style={styles.smallActionText}>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.smallDangerButton} onPress={onDeleteTemplate}>
-            <Text style={styles.smallActionText}>Delete</Text>
-          </TouchableOpacity>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.builderScrollBody}
+      >
+        <View style={styles.topRow}>
+          <Pressable onPress={onBack} style={styles.topActionButton}>
+            <Text style={styles.topActionText}>Back</Text>
+          </Pressable>
+          <Text style={styles.title}>Session Builder</Text>
+          <Text style={styles.levelChip}>{totalXp} XP</Text>
         </View>
 
-        <View style={styles.templatePillsRow}>
-          {templates.map((template) => (
-            <TouchableOpacity
-              key={template.id}
-              style={[
-                styles.templatePill,
-                template.id === selectedTemplateId ? styles.templatePillActive : null,
-              ]}
-              onPress={() => onSelectTemplate(template.id)}
-            >
-              <Text style={styles.templatePillText}>{template.name}</Text>
+        <GlowCard>
+          <View style={styles.inlineRow}>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onCreateTemplate}>
+              <Text style={styles.smallActionText}>New</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <TextInput
-          value={templateNameInput}
-          onChangeText={onTemplateNameInput}
-          placeholder="Session name"
-          placeholderTextColor={COLORS.muted}
-          style={styles.templateInput}
-        />
-
-        {builderError ? <Text style={styles.errorText}>{builderError}</Text> : null}
-      </GlowCard>
-
-      <Text style={styles.helperText}>Long-press a drill card and drag to reorder.</Text>
-
-      <DraggableFlatList
-        data={drills}
-        keyExtractor={(item) => item.id}
-        onDragEnd={({ data }) => onReorderDrills(data)}
-        contentContainerStyle={{ gap: 12, paddingBottom: 120 }}
-        renderItem={({ item, drag, isActive, getIndex }) => (
-          <ScaleDecorator>
-            <TouchableOpacity
-              onLongPress={drag}
-              activeOpacity={0.9}
-              onPress={() => onSelectDrill(item.id)}
-              style={[
-                styles.drillCard,
-                selectedDrillId === item.id ? styles.drillCardSelected : null,
-                isActive ? styles.drillCardActive : null,
-              ]}
-            >
-              <View style={styles.drillLeft}>
-                <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
-                <View>
-                  <Text style={styles.drillName}>{item.name}</Text>
-                  <Text style={styles.drillMeta}>
-                    {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.inlineRow}>
-                <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
-                <TouchableOpacity style={styles.removeChip} onPress={() => onRemoveDrill(item.id)}>
-                  <Text style={styles.removeChipText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
+              <Text style={styles.smallActionText}>Duplicate</Text>
             </TouchableOpacity>
-          </ScaleDecorator>
-        )}
-      />
+            <TouchableOpacity style={styles.smallActionButton} onPress={onSaveTemplate}>
+              <Text style={styles.smallActionText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.smallDangerButton} onPress={onDeleteTemplate}>
+              <Text style={styles.smallActionText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
 
-      <GlowCard>
-        <Text style={styles.cardLabel}>Edit Drill</Text>
-        <TextInput
-          value={drillNameInput}
-          onChangeText={onDrillNameInput}
-          placeholder="Drill name"
-          placeholderTextColor={COLORS.muted}
-          style={styles.templateInput}
-        />
-        <View style={styles.inlineRow}>
+          <View style={styles.templatePillsRow}>
+            {templates.map((template) => (
+              <TouchableOpacity
+                key={template.id}
+                style={[
+                  styles.templatePill,
+                  template.id === selectedTemplateId ? styles.templatePillActive : null,
+                ]}
+                onPress={() => onSelectTemplate(template.id)}
+              >
+                <Text style={styles.templatePillText}>{template.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <TextInput
-            value={drillDurationInput}
-            onChangeText={onDrillDurationInput}
-            keyboardType="number-pad"
-            placeholder="Minutes (1-30)"
+            value={templateNameInput}
+            onChangeText={onTemplateNameInput}
+            placeholder="Session name"
             placeholderTextColor={COLORS.muted}
-            style={styles.timeInput}
+            style={styles.templateInput}
           />
-          <TextInput
-            value={drillBpmInput}
-            onChangeText={onDrillBpmInput}
-            keyboardType="number-pad"
-            placeholder="BPM (40-240)"
-            placeholderTextColor={COLORS.muted}
-            style={styles.timeInput}
-          />
-        </View>
-        <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
-          <Text style={styles.smallActionText}>Save Drill</Text>
+
+          {builderError ? <Text style={styles.errorText}>{builderError}</Text> : null}
+        </GlowCard>
+
+        <Text style={styles.helperText}>Long-press a drill card and drag to reorder.</Text>
+
+        <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
+          <Text style={styles.primaryCtaText}>Start This Session</Text>
         </TouchableOpacity>
-      </GlowCard>
 
-      <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
-        <Text style={styles.primaryCtaText}>Start This Session</Text>
-      </TouchableOpacity>
+        <DraggableFlatList
+          data={drills}
+          style={styles.builderList}
+          keyExtractor={(item) => item.id}
+          onDragEnd={({ data }) => onReorderDrills(data)}
+          nestedScrollEnabled
+          contentContainerStyle={{ gap: 12, paddingBottom: 12 }}
+          renderItem={({ item, drag, isActive, getIndex }) => (
+            <ScaleDecorator>
+              <TouchableOpacity
+                onLongPress={drag}
+                activeOpacity={0.9}
+                onPress={() => onSelectDrill(item.id)}
+                style={[
+                  styles.drillCard,
+                  selectedDrillId === item.id ? styles.drillCardSelected : null,
+                  isActive ? styles.drillCardActive : null,
+                ]}
+              >
+                <View style={styles.drillLeft}>
+                  <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
+                  <View>
+                    <Text style={styles.drillName}>{item.name}</Text>
+                    <Text style={styles.drillMeta}>
+                      {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.inlineRow}>
+                  <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
+                  <TouchableOpacity style={styles.removeChip} onPress={() => onRemoveDrill(item.id)}>
+                    <Text style={styles.removeChipText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </ScaleDecorator>
+          )}
+        />
+
+        <GlowCard>
+          <Text style={styles.cardLabel}>Edit Drill</Text>
+          <TextInput
+            value={drillNameInput}
+            onChangeText={onDrillNameInput}
+            placeholder="Drill name"
+            placeholderTextColor={COLORS.muted}
+            style={styles.templateInput}
+          />
+          <View style={styles.inlineRow}>
+            <TextInput
+              value={drillDurationInput}
+              onChangeText={onDrillDurationInput}
+              keyboardType="number-pad"
+              placeholder="Minutes (1-30)"
+              placeholderTextColor={COLORS.muted}
+              style={styles.timeInput}
+            />
+            <TextInput
+              value={drillBpmInput}
+              onChangeText={onDrillBpmInput}
+              keyboardType="number-pad"
+              placeholder="BPM (40-240)"
+              placeholderTextColor={COLORS.muted}
+              style={styles.timeInput}
+            />
+          </View>
+          <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
+            <Text style={styles.smallActionText}>Save Drill</Text>
+          </TouchableOpacity>
+        </GlowCard>
+      </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={onAddDrill} accessibilityRole="button">
         <Text style={styles.fabText}>＋</Text>
@@ -1550,6 +1560,14 @@ const styles = StyleSheet.create({
   helperText: {
     color: COLORS.muted,
     fontSize: 13,
+  },
+  builderScrollBody: {
+    gap: 18,
+    paddingBottom: 108,
+  },
+  builderList: {
+    minHeight: 180,
+    maxHeight: 320,
   },
   drillCard: {
     minHeight: 76,
