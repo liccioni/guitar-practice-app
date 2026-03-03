@@ -564,44 +564,59 @@ export default function App() {
   }
 
   function createTemplate(): void {
-    const now = new Date().toISOString();
-    const baseDrill = createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now);
+    try {
+      const now = new Date().toISOString();
+      const createdDrills: Drill[] = [
+        createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now),
+      ];
 
-    const template = createSessionTemplate({
-      id: makeId("template"),
-      name: `Session ${templates.length + 1}`,
-      drillIds: [baseDrill.id],
-      totalDurationSeconds: baseDrill.durationSeconds,
-      nowIso: now,
-    });
+      // Ensure new template satisfies 5-minute minimum and never hard-crashes the app.
+      while (calculateTotalDurationSeconds(createdDrills) < 5 * 60) {
+        createdDrills.push(createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now));
+      }
 
-    setAllDrills((current) => [...current, baseDrill]);
-    setTemplates((current) => [...current, template]);
-    setActiveTemplateId(template.id);
-    setTemplateNameInput(template.name);
-    setSelectedDrillId(baseDrill.id);
-    setBuilderError(null);
+      const template = createSessionTemplate({
+        id: makeId("template"),
+        name: `Session ${templates.length + 1}`,
+        drillIds: createdDrills.map((drill) => drill.id),
+        totalDurationSeconds: calculateTotalDurationSeconds(createdDrills),
+        nowIso: now,
+      });
+
+      setAllDrills((current) => [...current, ...createdDrills]);
+      setTemplates((current) => [...current, template]);
+      setActiveTemplateId(template.id);
+      setTemplateNameInput(template.name);
+      setSelectedDrillId(createdDrills[0]?.id ?? null);
+      setBuilderError(null);
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not create template");
+    }
   }
 
   function duplicateTemplate(): void {
     if (!selectedTemplate) return;
-    const now = new Date().toISOString();
-    const copyName = `${selectedTemplate.name} Copy`;
+    try {
+      const now = new Date().toISOString();
+      const copyName = `${selectedTemplate.name} Copy`;
 
-    const duplicated = createSessionTemplate({
-      id: makeId("template"),
-      name: copyName,
-      drillIds: [...selectedTemplate.drillIds],
-      totalDurationSeconds: selectedTemplate.totalDurationSeconds,
-      isPreset: false,
-      nowIso: now,
-    });
+      const duplicated = createSessionTemplate({
+        id: makeId("template"),
+        name: copyName,
+        drillIds: [...selectedTemplate.drillIds],
+        totalDurationSeconds: selectedTemplate.totalDurationSeconds,
+        isPreset: false,
+        nowIso: now,
+      });
 
-    setTemplates((current) => [...current, duplicated]);
-    setActiveTemplateId(duplicated.id);
-    setTemplateNameInput(duplicated.name);
-    setSelectedDrillId(duplicated.drillIds[0] ?? null);
-    setBuilderError(null);
+      setTemplates((current) => [...current, duplicated]);
+      setActiveTemplateId(duplicated.id);
+      setTemplateNameInput(duplicated.name);
+      setSelectedDrillId(duplicated.drillIds[0] ?? null);
+      setBuilderError(null);
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not duplicate template");
+    }
   }
 
   function saveTemplate(): void {
