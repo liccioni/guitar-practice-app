@@ -13,9 +13,10 @@
     "format": "prettier \"App.tsx\" \"index.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{json,js}\" --write",
     "format:check": "prettier \"App.tsx\" \"index.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{json,js}\" --check",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run test"
+    "check": "npm run lint && npm run typecheck && npm run test:coverage"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "babel-preset-expo": "~54.0.10",
     "eslint": "^9.39.3",
     "eslint-config-expo": "^55.0.0",
