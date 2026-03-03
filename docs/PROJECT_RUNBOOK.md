@@ -118,6 +118,7 @@ This runs:
 - end-to-end pipeline integration
 - session builder UI-state interaction tests (add drill paths and template fallback/error handling)
 - session builder reorder interaction tests (up/down and boundary behavior)
+- session builder negative-path tests for missing/invalid active template ids
 
 ## 7. Acceptance Gate
 ### Functional acceptance

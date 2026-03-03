@@ -1036,7 +1036,7 @@ function HomeDashboard(props: {
   );
 }
 
-function SessionBuilder(props: {
+export function SessionBuilder(props: {
   templates: SessionTemplate[];
   selectedTemplateId: string | null;
   templateNameInput: string;
@@ -1148,11 +1148,11 @@ function SessionBuilder(props: {
 
         <Text style={styles.helperText}>Tap a drill card to edit. Use ↑/↓ to reorder.</Text>
 
-        <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
+        <TouchableOpacity style={styles.primaryCta} onPress={onStartSession} testID="builder-start-session">
           <Text style={styles.primaryCtaText}>Start This Session</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill}>
+        <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
           <Text style={styles.secondaryCtaText}>Add Drill</Text>
         </TouchableOpacity>
       </View>
@@ -1200,7 +1200,7 @@ function SessionBuilder(props: {
         }
         ListEmptyComponent={
           <GlowCard>
-            <Text style={styles.cardLabel}>No Drills Yet</Text>
+            <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
             <Text style={styles.completeSubtext}>
               Add a drill with the + button, then start your session.
             </Text>
@@ -1210,6 +1210,7 @@ function SessionBuilder(props: {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => onSelectDrill(item.id)}
+            testID={`builder-drill-card-${item.id}`}
             style={[
               styles.drillCard,
               selectedDrillId === item.id ? styles.drillCardSelected : null,
@@ -1229,17 +1230,23 @@ function SessionBuilder(props: {
               <TouchableOpacity
                 style={styles.moveChip}
                 onPress={() => onMoveDrill(item.id, "up")}
+                testID={`builder-move-up-${item.id}`}
               >
                 <Text style={styles.removeChipText}>↑</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.moveChip}
                 onPress={() => onMoveDrill(item.id, "down")}
+                testID={`builder-move-down-${item.id}`}
               >
                 <Text style={styles.removeChipText}>↓</Text>
               </TouchableOpacity>
               <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
-              <TouchableOpacity style={styles.removeChip} onPress={() => onRemoveDrill(item.id)}>
+              <TouchableOpacity
+                style={styles.removeChip}
+                onPress={() => onRemoveDrill(item.id)}
+                testID={`builder-remove-${item.id}`}
+              >
                 <Text style={styles.removeChipText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -1249,12 +1256,17 @@ function SessionBuilder(props: {
 
       {drills.length === 0 ? (
         <GlowCard style={styles.builderEmptyCard}>
-          <Text style={styles.cardLabel}>No Drills Yet</Text>
+          <Text style={styles.cardLabel} testID="builder-empty-title-fallback">No Drills Yet</Text>
           <Text style={styles.completeSubtext}>Tap + to add your first drill to this template.</Text>
         </GlowCard>
       ) : null}
 
-      <TouchableOpacity style={styles.fab} onPress={onAddDrill} accessibilityRole="button">
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={onAddDrill}
+        accessibilityRole="button"
+        testID="builder-fab-add-drill"
+      >
         <Text style={styles.fabText}>＋</Text>
       </TouchableOpacity>
     </View>

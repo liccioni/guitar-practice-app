@@ -70,6 +70,17 @@ describe("session builder UI state", () => {
     ).toThrow("No session template available. Create a template first.");
   });
 
+  it("throws when active template id does not exist during add", () => {
+    expect(() =>
+      appendDrillToTemplate({
+        templates: [makeTemplate("t1", [], 0)],
+        activeTemplateId: "missing-template",
+        drill: makeDrill("d404", 300),
+        nowIso: "2026-03-03T10:00:00.000Z",
+      }),
+    ).toThrow("Selected template could not be found.");
+  });
+
   it("moves a drill down within the active template", () => {
     const templates = [makeTemplate("t1", ["d1", "d2", "d3"], 900)];
     const result = reorderDrillInTemplate({
@@ -106,5 +117,17 @@ describe("session builder UI state", () => {
         nowIso: "2026-03-03T11:00:00.000Z",
       }),
     ).toThrow("No session template available. Create a template first.");
+  });
+
+  it("throws when active template id does not exist during reorder", () => {
+    expect(() =>
+      reorderDrillInTemplate({
+        templates: [makeTemplate("t1", ["d1"], 300)],
+        activeTemplateId: "missing-template",
+        drillId: "d1",
+        direction: "down",
+        nowIso: "2026-03-03T11:00:00.000Z",
+      }),
+    ).toThrow("Selected template could not be found.");
   });
 });
