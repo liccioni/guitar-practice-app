@@ -4,7 +4,8 @@ Mobile guitar practice coach app (dark mode, gamified UX) built with Expo + Type
 
 ## Current Status
 - UI checkpoint is focused on gamified UX flow (Home, Builder, Active, Complete).
-- Feature parity recovery is in progress for template CRUD, metronome controls, and persisted history/goals/reminders.
+- Feature parity recovery restored metronome controls and local history/goals/reminders wiring.
+- Remaining functional gaps are concentrated in duplicate template action and validation UX breadth.
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`

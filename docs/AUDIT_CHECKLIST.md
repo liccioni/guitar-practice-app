@@ -2,16 +2,16 @@
 
 This mirrors `docs/ACCEPTANCE_CRITERIA.md`.
 
-Snapshot date: 2026-03-02 (post gamified UI checkpoint).
+Snapshot date: 2026-03-02 (post parity-recovery pass).
 
 ## Core Behavior
 - [ ] 1. Session template CRUD works with one or more segments.
 - [ ] 2. Validation enforces duration 1-30, BPM 40-240, total >= 5 minutes.
-- [ ] 3. Guided runtime includes timers and metronome controls.
+- [x] 3. Guided runtime includes timers and metronome controls.
 - [x] 4. Pause/resume/skip/complete controls work correctly.
-- [ ] 5. Completed sessions are stored and visible with accurate minutes.
-- [ ] 6. Dashboard shows daily goal progress and streak.
-- [ ] 7. Daily reminder settings and local notification toggles work.
+- [x] 5. Completed sessions are stored and visible with accurate minutes.
+- [x] 6. Dashboard shows daily goal progress and streak.
+- [x] 7. Daily reminder settings and local notification toggles work.
 - [ ] 8. App is installable on physical iOS and Android devices via beta channels.
 - [x] 9. Home dashboard has level/XP/streak/goal + primary Start Practice CTA.
 - [x] 10. Builder uses draggable drill cards and add-drill FAB.
@@ -23,7 +23,7 @@ Snapshot date: 2026-03-02 (post gamified UI checkpoint).
 - [x] 2. No TypeScript/lint errors in CI.
 - [ ] 3. Core domain coverage >= 80% with exclusions documented.
 - [ ] 4. Core controls respond within performance target.
-- [ ] 5. MVP features work offline.
+- [x] 5. MVP features work offline.
 - [x] 6. App IDs configured as `net.liccioni.guitarpractice`.
 - [x] 7. EAS build profiles include development/preview/production.
 - [x] 8. UI is dark-mode only with `#121212` base background.
@@ -33,11 +33,11 @@ Snapshot date: 2026-03-02 (post gamified UI checkpoint).
 ## Edge Cases
 - [ ] 1. Invalid duration/BPM blocks save with actionable messaging.
 - [ ] 2. Background/resume keeps active session timing correct.
-- [ ] 3. Skipped segments do not inflate completed minutes.
-- [ ] 4. Midnight boundary uses local timezone for streak logic.
-- [ ] 5. Empty history state has clear guidance.
+- [x] 3. Skipped segments do not inflate completed minutes.
+- [x] 4. Midnight boundary uses local timezone for streak logic.
+- [x] 5. Empty history state has clear guidance.
 - [ ] 6. Signing/build misconfiguration is caught before submission.
-- [ ] 7. Empty builder/runtime states provide clear next actions.
+- [x] 7. Empty builder/runtime states provide clear next actions.
 
 ## Tests
 - [ ] 1. Unit tests per production class.

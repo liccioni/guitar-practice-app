@@ -5,11 +5,14 @@
   - Checkpoint build with gamified dark-mode UX across Home, Builder, Active, and Complete screens.
   - Added drag-reorder drill cards and animated progress/reward interactions.
   - Dependencies aligned for Reanimated/Worklets compatibility on Expo SDK 54.
-  - Known regressions in this checkpoint:
-    - Template CRUD UI is not available.
-    - Metronome/BPM runtime controls are not available.
-    - Persisted history/goals/reminders are not fully wired in UI.
-    - Acceptance criteria are not yet fully met.
+  - Parity recovery updates:
+    - Restored Builder template create/select/rename/save/delete flow.
+    - Restored runtime metronome controls (toggle + BPM step controls + beat indicator).
+    - Restored persisted history/goals/reminders wiring in UI.
+    - Fixed skip path minute accounting to avoid counting skipped drills as completed.
+  - Remaining gaps before release:
+    - Duplicate template action not yet surfaced.
+    - Full validation UX coverage for drill/session creation flows still incomplete.
 
 ## Notes
 - Keep entries short and high‑signal.

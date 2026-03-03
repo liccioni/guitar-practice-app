@@ -4,8 +4,12 @@ This checklist mirrors `docs/PLAN.md`.
 
 ## Current Checkpoint (2026-03-02)
 - Gamified UI shell is implemented.
+- Runtime parity has been substantially restored:
+  - Template create/select/rename/save/delete flow is available in Builder.
+  - Metronome controls (+/- BPM, toggle, beat indicator) are available in Active session.
+  - History/goals/reminders are wired through local persistence in the UI.
+  - Skip no longer inflates completed minutes in session history accounting.
 - Core domain tests still pass.
-- User-facing feature parity regressed in the UI for template CRUD, metronome, persisted history/goals, and reminders.
 
 ## Phase 0 — Foundation
 - [x] 0.1 Initialize Expo React Native TypeScript app with lint/format/tests.
@@ -18,20 +22,20 @@ This checklist mirrors `docs/PLAN.md`.
 - [ ] 1.1 Implement template CRUD with segment list support.
 - [ ] 1.2 Add validation rules for duration/BPM/minimum session length.
 - [ ] 1.3 Implement exercise tagging and picker.
-- [ ] 1.4 Persist templates locally and load at startup.
+- [x] 1.4 Persist templates locally and load at startup.
 
 ## Phase 2 — Feature B
 - [ ] 2.1 Implement session runtime state machine.
 - [x] 2.2 Add segment and total countdown timers.
-- [ ] 2.3 Add metronome controls and runtime BPM adjustments.
+- [x] 2.3 Add metronome controls and runtime BPM adjustments.
 - [x] 2.4 Implement pause/resume/skip/complete segment actions.
-- [ ] 2.5 Persist completed session records.
+- [x] 2.5 Persist completed session records.
 
 ## Phase 3 — Feature C
-- [ ] 3.1 Build history list and summary metrics cards.
-- [ ] 3.2 Implement daily goal settings and streak logic.
+- [x] 3.1 Build history list and summary metrics cards.
+- [x] 3.2 Implement daily goal settings and streak logic.
 - [x] 3.3 Add dashboard progress widgets.
-- [ ] 3.4 Implement optional local reminder notifications.
+- [x] 3.4 Implement optional local reminder notifications.
 
 ## Phase 4 — Hardening and Release
 - [ ] 4.1 Complete accessibility pass.
