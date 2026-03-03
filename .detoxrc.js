@@ -1,4 +1,6 @@
 /** @type {Detox.DetoxConfig} */
+const iosSimulatorType = process.env.DETOX_DEVICE || "iPhone 16e";
+
 module.exports = {
   testRunner: {
     args: {
@@ -21,7 +23,7 @@ module.exports = {
     simulator: {
       type: "ios.simulator",
       device: {
-        type: "iPhone 15",
+        type: iosSimulatorType,
       },
     },
   },

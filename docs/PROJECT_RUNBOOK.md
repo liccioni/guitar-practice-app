@@ -103,11 +103,16 @@ This runs:
 
 4. E2E smoke (Detox, iOS simulator)
 ```bash
-npm run e2e:prebuild:ios
 npm run e2e:detox:ios
 ```
 Notes:
-- `e2e:prebuild:ios` is required before first Detox run because this repo is Expo managed by default.
+- `e2e:detox:ios` now runs prebuild automatically before build/test.
+- `applesimutils` is required for Detox test execution:
+  - `brew tap wix/brew`
+  - `brew install applesimutils`
+- If Detox cannot find the default simulator type, list available devices and override:
+  - `npm run e2e:list:simulators`
+  - `DETOX_DEVICE=\"<your simulator name>\" npm run e2e:detox:ios`
 - Smoke scenario covers: Home -> Builder -> Add Drill -> Start Session -> Active screen.
 
 ## 6. Testing and Coverage Policy
