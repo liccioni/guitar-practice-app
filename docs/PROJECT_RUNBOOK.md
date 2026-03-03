@@ -101,6 +101,15 @@ This runs:
 - typecheck
 - test coverage gate
 
+4. E2E smoke (Detox, iOS simulator)
+```bash
+npm run e2e:prebuild:ios
+npm run e2e:detox:ios
+```
+Notes:
+- `e2e:prebuild:ios` is required before first Detox run because this repo is Expo managed by default.
+- Smoke scenario covers: Home -> Builder -> Add Drill -> Start Session -> Active screen.
+
 ## 6. Testing and Coverage Policy
 ### Coverage gate is enforced in config
 - `vitest` coverage provider: v8.
@@ -119,6 +128,7 @@ This runs:
 - session builder UI-state interaction tests (add drill paths and template fallback/error handling)
 - session builder reorder interaction tests (up/down and boundary behavior)
 - session builder negative-path tests for missing/invalid active template ids
+- Detox iOS smoke test for end-to-end UI critical path
 
 ## 7. Acceptance Gate
 ### Functional acceptance

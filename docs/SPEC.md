@@ -111,6 +111,8 @@ This document is the implementation contract. It defines what must be built and 
   - fallback add drill behavior when active template id is null
   - explicit error path when no template exists
   - reorder controls (up/down) including boundary behavior
+- E2E smoke coverage is required for critical path:
+  - Home -> Start Practice -> Add Drill -> Start Session -> Active screen visible
 - App IDs:
   - iOS bundle id: `net.liccioni.guitarpractice`
   - Android package: `net.liccioni.guitarpractice`
@@ -119,6 +121,7 @@ This document is the implementation contract. It defines what must be built and 
 ## 7. Done Criteria (MVP)
 Functional done when all required user flows work without runtime crashes (including malformed local state) and domain rules hold.
 Quality done when `npm run check` passes and physical-device smoke tests pass on one iPhone and one Android device.
+Automation done when Detox smoke test passes on iOS simulator for the critical path above.
 
 ## 8. Out of Scope (MVP)
 - Accounts/sync

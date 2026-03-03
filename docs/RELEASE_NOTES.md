@@ -17,8 +17,9 @@
     - Replaced unstable builder drag list path with stable list rendering and explicit up/down reorder controls.
     - Added builder interaction regression tests for add + reorder + template fallback/error paths.
     - Expanded builder regression suite with missing-template-id edge cases to prevent silent add/reorder failures.
+    - Added Detox iOS smoke test scaffolding for critical UI path with deterministic testIDs.
   - Remaining gaps before release:
-    - Full validation UX coverage for drill/session creation flows still incomplete.
+    - Run Detox smoke in CI after prebuild/native project setup.
 
 ## Notes
 - Keep entries short and high‑signal.

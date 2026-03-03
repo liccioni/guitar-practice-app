@@ -1029,7 +1029,12 @@ function HomeDashboard(props: {
 
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
 
-      <TouchableOpacity style={styles.primaryCta} onPress={onStartPractice} accessibilityRole="button">
+      <TouchableOpacity
+        style={styles.primaryCta}
+        onPress={onStartPractice}
+        accessibilityRole="button"
+        testID="home-start-practice"
+      >
         <Text style={styles.primaryCtaText}>Start Practice</Text>
       </TouchableOpacity>
     </View>
@@ -1094,7 +1099,7 @@ export function SessionBuilder(props: {
   const totalXp = drills.reduce((sum, drill) => sum + toXp(drill), 0);
 
   return (
-    <View style={styles.screenBody}>
+    <View style={styles.screenBody} testID="active-screen">
       <View style={styles.builderHeader}>
         <View style={styles.topRow}>
           <Pressable onPress={onBack} style={styles.topActionButton}>
@@ -1312,7 +1317,7 @@ function ActivePractice(props: {
   });
 
   return (
-    <View style={styles.screenBody}>
+    <View style={styles.screenBody} testID="complete-screen">
       <Text style={styles.cardLabel}>Session Progress</Text>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
