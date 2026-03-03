@@ -1,201 +1,104 @@
-# Guitar Practice Tool - Product Specification (MVP)
+# Guitar Practice App - MVP Spec (Lean)
 
-## 1. Product Overview
+This document is the implementation contract. It defines what must be built and what is considered correct.
 
-### Purpose
-A mobile-first guitar practice app that helps musicians build structured practice templates, run timed sessions with metronome support, and track progress over time.
+## 1. Product Contract
+- Platform: Expo React Native mobile app (iOS + Android).
+- Architecture: local-first and offline-first.
+- Data: all MVP user data remains on-device.
+- UX style: dark mode only, gamified coach experience.
 
-### Target Platforms
-- iOS (Expo React Native)
-- Android (Expo React Native)
-- Optional web preview for development
+## 2. Required User Flows
+1. Home dashboard
+- Show level, XP progress, streak, daily goal progress, and achievements.
+- Show primary `Start Practice` CTA.
+- Allow reminder toggle and reminder time save.
 
-### MVP Architecture Decision
-- **MVP is local-first and offline-first.**
-- All user data is stored on-device.
-- Data does not leave the device in MVP.
+2. Session builder
+- Manage templates: create, select, rename, save, delete, duplicate.
+- Manage drills in template: add, remove, reorder.
+- Allow editing drill name, duration, BPM.
 
-## 2. Core Features (MVP)
+3. Active practice
+- Run timed session drill-by-drill.
+- Show current drill timer and session progress.
+- Provide pause/resume/skip controls.
+- Provide metronome toggle and BPM +/- controls.
 
-1. Drill Management
-- Create and delete custom drills (domain supports updates; full drill edit UI is deferred).
-- Drill fields: name, optional description, duration, optional target BPM, tags.
+4. Session complete
+- Show session XP gain.
+- Show level-up state when applicable.
+- Confirm streak and badge state.
 
-2. Session Builder
-- Combine drills into reusable session templates.
-- Provide prebuilt quick-start templates (20m, 30m, 60m).
-
-3. Active Practice Mode
-- Timer-driven segment runtime with `idle/running/paused/segmentComplete/finished` state machine.
-- Segment completion flow supports explicit `Next` action.
-- Pause/resume and skip controls.
-- Real-time timer display for current drill and session total.
-
-4. Integrated Metronome
-- BPM range: 40-240.
-- Runtime BPM adjustment controls (+/- 5).
-- Metronome on/off toggle with visual beat indicator.
-
-5. Practice History & Stats
-- Persist completed and incomplete sessions locally.
-- Dashboard metrics: total practice minutes, sessions completed, weekly minutes, today minutes, average BPM, goal progress.
-- Daily goal settings, current streak, and optional daily reminder scheduling.
-
-6. Gamification Layer
-- XP awarded per drill completion.
-- Level progression based on cumulative XP.
-- Daily streak counter with flame indicator.
-- Achievement badges with unlocked/locked states.
-- Reward animation on session completion.
-
-## 2.1 UX & Visual Direction (Locked)
-
-1. Visual System
-- Dark mode only.
-- Base background: `#121212`.
-- Accent palette: electric blue / neon green.
-- Rounded cards (`16px` radius) and soft glow elevation.
-- No tables or admin dashboard visual patterns.
-
-2. Interaction Quality
-- Large touch targets (`>=44px` height).
-- UI transitions target `200ms`.
-- Reward-oriented microcopy in active practice and completion moments.
-
-3. Screen Contracts
-- Home Dashboard:
-  - Level at top, XP progress bar, streak counter, daily goal, primary `Start Practice` CTA.
-- Practice Session Builder:
-  - Drill cards with XP, duration, difficulty.
-  - Drag-to-reorder flow.
-  - Floating add-drill button.
-- Active Practice:
-  - Large countdown timer.
-  - Circular animated progress ring.
-  - Prominent drill title and XP reward.
-  - Pause and skip controls.
-- Session Complete:
-  - XP gain animation.
-  - Optional level-up callout.
-  - Streak confirmation.
-  - Achievement badge reveal.
-
-## 3. Functional Rules
-
+## 3. Domain Rules (Must Hold)
 1. Validation
 - Drill name is required.
-- Drill duration must be between 1 and 30 minutes.
-- Session total must be at least 5 minutes to save.
-- BPM (if provided) must be between 40 and 240.
+- Drill duration must be 1-30 minutes.
+- Drill BPM must be 40-240 when provided.
+- Session template total duration must be >= 5 minutes.
 
-2. Completion and Time Accounting
-- Completed minutes are counted only for drills that finish naturally or are explicitly marked complete.
-- Skipped drills do not count as completed minutes.
-- Session status is `completed` only when all drills are completed.
+2. Session accounting
+- Only completed drills add to completed minutes.
+- Skipped drills never add to completed minutes.
+- Session `completed=true` only when all drills are completed.
 
-3. History Integrity
-- Editing a template never mutates previously saved history records.
-- History records store a snapshot of session and drill names used at runtime.
+3. Progress logic
+- Goal progress = today completed minutes / daily target.
+- Streak uses local calendar day boundaries.
 
-4. Goal and Streak Rules
-- Goal progress is based on today minutes vs daily target.
-- Streak is calculated from consecutive local calendar days with practiced minutes > 0.
+4. History integrity
+- History entries store snapshots used at runtime.
+- Template edits do not mutate past history entries.
 
-## 4. Data Model (Local Storage)
+## 4. Data Contract
+## 4.1 drills
+- `id`, `name`, `description?`, `durationSeconds`, `targetBpm?`, `tags[]`, `createdAt`, `updatedAt`
 
-### `drills`
-- `id: string`
-- `name: string`
-- `description?: string`
-- `durationSeconds: number`
-- `targetBpm?: number`
-- `tags: ("warmup" | "technique" | "scales" | "chords" | "rhythm" | "songs" | "improv")[]`
-- `createdAt: string (ISO)`
-- `updatedAt: string (ISO)`
+## 4.2 sessionTemplates
+- `id`, `name`, `drillIds[]`, `totalDurationSeconds`, `isPreset`, `createdAt`, `updatedAt`
 
-### `sessionTemplates`
-- `id: string`
-- `name: string`
-- `drillIds: string[]`
-- `totalDurationSeconds: number`
-- `isPreset: boolean`
-- `createdAt: string (ISO)`
-- `updatedAt: string (ISO)`
+## 4.3 practiceHistory
+- `id`, `sessionTemplateId?`, `sessionNameSnapshot`, `drillsSnapshot[]`, `completedDrillIds[]`, `startedAt`, `endedAt?`, `durationCompletedSeconds`, `completed`
 
-### `practiceHistory`
-- `id: string`
-- `sessionTemplateId?: string`
-- `sessionNameSnapshot: string`
-- `drillsSnapshot: { id: string; name: string; durationSeconds: number; targetBpm?: number }[]`
-- `completedDrillIds: string[]`
-- `startedAt: string (ISO)`
-- `endedAt?: string (ISO)`
-- `durationCompletedSeconds: number`
-- `completed: boolean`
+## 4.4 goalSettings
+- `dailyMinutesTarget`, `reminderEnabled`, `reminderTime`
 
-### `goalSettings`
-- `dailyMinutesTarget: number`
-- `reminderEnabled: boolean`
-- `reminderTime: string` (`HH:MM`)
+## 4.5 Persistence envelope
+- versioned envelope: `{ version, state }`
+- migrate legacy unversioned payloads on load
 
-### Persistence Envelope
-- `version: number`
-- `state: { drills, sessionTemplates, practiceHistory, goalSettings }`
-- Legacy unversioned payloads are migrated on load.
+## 5. UI Contract (Locked)
+1. Visual system
+- Dark mode only.
+- Base background `#121212`.
+- Rounded cards (16px).
+- Accent family: electric blue / neon green.
+- No admin/table style layouts.
 
-## 5. Technical Stack (MVP)
+2. Interaction quality
+- Primary touch targets >= 44px.
+- Primary transitions/micro-animations around 200ms.
 
-### Frontend
-- Expo SDK 54 / React Native 0.81.5 / TypeScript
-- React state/hooks for MVP state management
-- Local persistence via on-device storage abstraction
-- Notifications via `expo-notifications`
+3. Required screens
+- Home Dashboard
+- Session Builder
+- Active Practice
+- Session Complete
 
-### Build and Distribution
-- EAS build profiles: `development`, `preview`, `production`
-- iOS bundle ID: `net.liccioni.guitarpractice`
-- Android package: `net.liccioni.guitarpractice`
-- Beta distribution: TestFlight (iOS), Play Internal Testing (Android)
+## 6. Non-Functional Contract
+- Must run offline for MVP flows.
+- `npm run check` must pass (lint, typecheck, coverage tests).
+- Coverage thresholds are enforced in test config.
+- App IDs:
+  - iOS bundle id: `net.liccioni.guitarpractice`
+  - Android package: `net.liccioni.guitarpractice`
+- EAS profiles required: `development`, `preview`, `production`.
 
-## 6. Non-Functional Requirements
+## 7. Done Criteria (MVP)
+Functional done when all required user flows work without runtime crashes and domain rules hold.
+Quality done when `npm run check` passes and physical-device smoke tests pass on one iPhone and one Android device.
 
-1. App start to interactive state under 2s on a mid-tier device.
-2. Session controls (pause/resume/skip) respond in under 100ms.
-3. MVP remains fully usable without internet.
-4. TypeScript and lint checks pass in CI.
-5. Core domain logic coverage target: >= 80%.
-6. Accessibility labels are present on primary controls and navigation actions.
-7. Core UI is dark-mode only and adheres to gamified visual style requirements above.
-
-## 7. Out of Scope (Post-MVP)
-
-1. User accounts and multi-device sync.
-2. Social features and leaderboards.
-3. Advanced metronome features (all subdivisions/time signatures from full spec).
-4. Cloud/backend API.
-
-## 8. Canonical Examples
-
-### Example A: Valid session flow
-Input:
-- Session template: Warmup 5m, Scales 10m, Song 15m.
-
-Output:
-- Total 30m session runs drill-by-drill.
-- History record saved with `completed=true` and `durationCompletedSeconds=1800`.
-
-### Example B: Invalid save blocked
-Input:
-- Drill duration = 0 minutes.
-- Target BPM = 300.
-
-Output:
-- Save blocked with validation errors for duration and BPM range.
-
-### Example C: Goal progress and streak
-Input:
-- Daily goal is 30 minutes.
-- User completes one 15-minute session today.
-
-Output:
-- Dashboard shows `todayMinutes=15`, `goalProgress=50%`, and streak increments for today.
+## 8. Out of Scope (MVP)
+- Accounts/sync
+- Social/leaderboards
+- Cloud/backend API
