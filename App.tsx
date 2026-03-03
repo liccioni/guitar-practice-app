@@ -43,16 +43,31 @@ interface Badge {
   unlocked: boolean;
 }
 
+const TOKENS = {
+  background: "#121212",
+  surface: "#1A1A1A",
+  elevated: "#222222",
+  divider: "#2A2A2A",
+  primaryAccent: "#D97706",
+  secondaryAccent: "#E6B980",
+  xpHighlight: "#EAB308",
+  textPrimary: "#F5F5F5",
+  textSecondary: "#B3B3B3",
+  disabled: "#6B7280",
+};
+
 const COLORS = {
-  bg: "#121212",
-  card: "#1d1f24",
-  cardSoft: "#181a1f",
-  text: "#f5f7ff",
-  muted: "#9ba4b5",
-  accent: "#00e5ff",
-  accentAlt: "#39ff14",
-  danger: "#ff6b6b",
-  gold: "#ffd166",
+  bg: TOKENS.background,
+  card: TOKENS.surface,
+  cardSoft: TOKENS.elevated,
+  text: TOKENS.textPrimary,
+  muted: TOKENS.textSecondary,
+  accent: TOKENS.primaryAccent,
+  accentAlt: TOKENS.secondaryAccent,
+  xp: TOKENS.xpHighlight,
+  divider: TOKENS.divider,
+  danger: "#B45309",
+  disabled: TOKENS.disabled,
 };
 
 const DRILL_POOL: CreateDrillInput[] = [
@@ -272,14 +287,14 @@ export default function App() {
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 0,
-      duration: 100,
-      easing: Easing.out(Easing.quad),
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: true,
     }).start(() => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 200,
-        easing: Easing.out(Easing.quad),
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }).start();
     });
@@ -326,13 +341,13 @@ export default function App() {
       Animated.timing(rewardScale, {
         toValue: 1,
         duration: 200,
-        easing: Easing.out(Easing.cubic),
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(rewardGlow, {
         toValue: 1,
         duration: 200,
-        easing: Easing.out(Easing.quad),
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
@@ -368,14 +383,14 @@ export default function App() {
     Animated.sequence([
       Animated.timing(completionPulse, {
         toValue: 1,
-        duration: 120,
-        easing: Easing.out(Easing.quad),
+        duration: 200,
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(completionPulse, {
         toValue: 0,
-        duration: 120,
-        easing: Easing.in(Easing.quad),
+        duration: 200,
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
@@ -1202,7 +1217,7 @@ function ActivePractice(props: {
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
       </View>
 
-      <Animated.View style={[styles.activeCard, { transform: [{ scale: pulseScale }] }]}> 
+      <Animated.View style={[styles.activeCard, styles.activeCardHighlight, { transform: [{ scale: pulseScale }] }]}>
         <ProgressRing size={240} strokeWidth={14} progress={drillProgress} color={COLORS.accent} />
         <View style={styles.timerOverlay}>
           <Text style={styles.timerValue}>{formatClock(remainingSec)}</Text>
@@ -1267,7 +1282,7 @@ function SessionComplete(props: {
     <View style={styles.screenBody}>
       <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
 
-      <Animated.View style={[styles.completeCard, { transform: [{ scale: rewardScale }] }]}> 
+      <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>
         <Text style={styles.completeTitle}>Session Complete</Text>
         <Text style={styles.completeXp}>+{sessionXp} XP</Text>
         <Text style={styles.completeSubtext}>Great work. You moved your playing forward today.</Text>
@@ -1307,7 +1322,7 @@ function ProgressRing(props: {
     Animated.timing(animated, {
       toValue: progress,
       duration: 200,
-      easing: Easing.out(Easing.quad),
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: false,
     }).start();
   }, [animated, progress]);
@@ -1324,7 +1339,7 @@ function ProgressRing(props: {
         cx={size / 2}
         cy={size / 2}
         r={radius}
-        stroke="#2a2f3a"
+        stroke={COLORS.divider}
         strokeWidth={strokeWidth}
         fill="none"
       />
@@ -1392,9 +1407,9 @@ const styles = StyleSheet.create({
   screenBody: {
     flex: 1,
     paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 24,
-    gap: 14,
+    paddingTop: 16,
+    paddingBottom: 28,
+    gap: 18,
   },
   topRow: {
     flexDirection: "row",
@@ -1406,30 +1421,30 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 28,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   levelChip: {
-    color: COLORS.accent,
+    color: COLORS.xp,
     fontSize: 13,
     fontWeight: "700",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "rgba(0,229,255,0.14)",
+    backgroundColor: "rgba(234,179,8,0.16)",
     borderRadius: 999,
     overflow: "hidden",
   },
   glowCard: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
-    padding: 14,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(0,229,255,0.12)",
-    shadowColor: COLORS.accent,
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-    gap: 8,
+    borderColor: COLORS.divider,
+    shadowColor: "#000000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    gap: 10,
   },
   cardLabel: {
     color: COLORS.muted,
@@ -1442,16 +1457,16 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 12,
     borderRadius: 999,
-    backgroundColor: "#2a2f3a",
+    backgroundColor: COLORS.divider,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
     backgroundColor: COLORS.accent,
     borderRadius: 999,
-    shadowColor: COLORS.accent,
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
+    shadowColor: "#000000",
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
   rowTwoCol: {
     flexDirection: "row",
@@ -1461,7 +1476,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bigValue: {
-    color: COLORS.text,
+    color: COLORS.accent,
     fontSize: 30,
     fontWeight: "800",
     marginTop: 4,
@@ -1482,12 +1497,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: "rgba(57,255,20,0.22)",
+    borderColor: COLORS.divider,
     minWidth: 96,
   },
   badgeLocked: {
-    opacity: 0.4,
-    borderColor: "rgba(155,164,181,0.3)",
+    opacity: 0.45,
+    borderColor: COLORS.divider,
   },
   badgeIcon: {
     fontSize: 18,
@@ -1500,19 +1515,19 @@ const styles = StyleSheet.create({
   },
   primaryCta: {
     marginTop: "auto",
-    backgroundColor: COLORS.accentAlt,
+    backgroundColor: COLORS.accent,
     minHeight: 52,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: COLORS.accentAlt,
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
   primaryCtaText: {
-    color: "#0e130d",
+    color: COLORS.text,
     fontSize: 17,
     fontWeight: "800",
     letterSpacing: 0.4,
@@ -1521,13 +1536,15 @@ const styles = StyleSheet.create({
     minHeight: 44,
     minWidth: 64,
     borderRadius: 12,
-    backgroundColor: "rgba(0,229,255,0.15)",
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
   topActionText: {
-    color: COLORS.accent,
+    color: COLORS.text,
     fontWeight: "700",
   },
   helperText: {
@@ -1539,7 +1556,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
+    borderColor: COLORS.divider,
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: "row",
@@ -1552,7 +1569,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.01 }],
   },
   drillCardSelected: {
-    borderColor: COLORS.accentAlt,
+    borderColor: COLORS.accent,
   },
   drillLeft: {
     flexDirection: "row",
@@ -1561,7 +1578,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   drillOrder: {
-    color: COLORS.accent,
+    color: COLORS.muted,
     fontWeight: "800",
     width: 28,
   },
@@ -1576,7 +1593,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   drillXp: {
-    color: COLORS.accentAlt,
+    color: COLORS.xp,
     fontWeight: "800",
     fontSize: 13,
   },
@@ -1587,16 +1604,18 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: COLORS.accent,
-    shadowOpacity: 0.42,
-    shadowRadius: 12,
+    shadowColor: "#000000",
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
     elevation: 7,
   },
   fabText: {
-    color: "#04151a",
+    color: COLORS.text,
     fontSize: 34,
     lineHeight: 34,
     marginTop: -2,
@@ -1605,6 +1624,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
+  },
+  activeCardHighlight: {
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   timerOverlay: {
     position: "absolute",
@@ -1626,7 +1652,7 @@ const styles = StyleSheet.create({
     maxWidth: 220,
   },
   xpInline: {
-    color: COLORS.accentAlt,
+    color: COLORS.xp,
     fontWeight: "700",
   },
   microcopy: {
@@ -1644,14 +1670,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 50,
     borderRadius: 14,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     alignItems: "center",
     justifyContent: "center",
   },
   controlButtonSecondary: {
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: COLORS.divider,
   },
   controlButtonText: {
     color: COLORS.text,
@@ -1673,7 +1701,7 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: "rgba(0,229,255,0.2)",
+    borderColor: COLORS.divider,
     gap: 8,
   },
   completeTitle: {
@@ -1682,7 +1710,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   completeXp: {
-    color: COLORS.accentAlt,
+    color: COLORS.xp,
     fontSize: 40,
     fontWeight: "900",
   },
@@ -1691,13 +1719,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   levelUp: {
-    color: COLORS.gold,
+    color: COLORS.text,
     fontWeight: "800",
     fontSize: 16,
     marginTop: 6,
   },
   streakLine: {
-    color: COLORS.text,
+    color: COLORS.accent,
     fontWeight: "700",
     marginTop: 4,
   },
@@ -1715,14 +1743,16 @@ const styles = StyleSheet.create({
   pillButton: {
     minHeight: 36,
     minWidth: 64,
-    backgroundColor: "rgba(57,255,20,0.2)",
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14,
   },
   pillButtonText: {
-    color: COLORS.accentAlt,
+    color: COLORS.text,
     fontWeight: "800",
   },
   templatePillsRow: {
@@ -1735,13 +1765,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
+    borderColor: COLORS.divider,
     justifyContent: "center",
     paddingHorizontal: 12,
   },
   templatePillActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: "rgba(0,229,255,0.2)",
+    borderColor: COLORS.text,
+    backgroundColor: COLORS.cardSoft,
   },
   templatePillText: {
     color: COLORS.text,
@@ -1753,7 +1783,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: COLORS.divider,
     color: COLORS.text,
     paddingHorizontal: 12,
   },
@@ -1763,14 +1793,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: COLORS.divider,
     color: COLORS.text,
     paddingHorizontal: 12,
   },
   smallActionButton: {
     minHeight: 38,
     borderRadius: 10,
-    backgroundColor: "rgba(0,229,255,0.16)",
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1778,7 +1810,9 @@ const styles = StyleSheet.create({
   smallDangerButton: {
     minHeight: 38,
     borderRadius: 10,
-    backgroundColor: "rgba(255,107,107,0.18)",
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1792,17 +1826,17 @@ const styles = StyleSheet.create({
     minHeight: 30,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,107,107,0.6)",
+    borderColor: COLORS.divider,
     paddingHorizontal: 10,
     justifyContent: "center",
   },
   removeChipText: {
-    color: COLORS.danger,
+    color: COLORS.disabled,
     fontWeight: "700",
     fontSize: 11,
   },
   errorText: {
-    color: COLORS.danger,
+    color: COLORS.muted,
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1817,10 +1851,10 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.24)",
+    borderColor: COLORS.divider,
   },
   beatDotActive: {
-    backgroundColor: COLORS.accentAlt,
-    borderColor: COLORS.accentAlt,
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
 });

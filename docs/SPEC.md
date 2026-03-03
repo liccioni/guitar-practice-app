@@ -70,14 +70,26 @@ This document is the implementation contract. It defines what must be built and 
 ## 5. UI Contract (Locked)
 1. Visual system
 - Dark mode only.
-- Base background `#121212`.
+- Token palette is locked:
+  - Background: `#121212`
+  - Surface: `#1A1A1A`
+  - Elevated: `#222222`
+  - Divider: `#2A2A2A`
+  - Primary Accent: `#D97706`
+  - Secondary Accent: `#E6B980`
+  - XP Highlight: `#EAB308`
+  - Primary Text: `#F5F5F5`
+  - Secondary Text: `#B3B3B3`
+  - Disabled: `#6B7280`
 - Rounded cards (16px).
-- Accent family: electric blue / neon green.
 - No admin/table style layouts.
+- Accent colors are restricted to CTA, XP, progress ring, active drill state, and streak indicator.
+- All cards use Surface color; elevated controls use Elevated color.
+- Subtle glow is allowed for active state only.
 
 2. Interaction quality
 - Primary touch targets >= 44px.
-- Primary transitions/micro-animations around 200ms.
+- Primary transitions/micro-animations are 180-220ms `ease-in-out`.
 
 3. Required screens
 - Home Dashboard

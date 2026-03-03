@@ -7,6 +7,12 @@ This is the operational guide to rebuild the project from scratch and reach the 
 - Platforms: iOS + Android (Expo React Native).
 - Data model: local-first, offline-first, on-device persistence only.
 - Visual direction: dark mode only (`#121212`), gamified UX, no admin/table UI patterns.
+- Locked design tokens:
+  - Background `#121212`, Surface `#1A1A1A`, Elevated `#222222`, Divider `#2A2A2A`
+  - Primary Accent `#D97706`, Secondary Accent `#E6B980`, XP `#EAB308`
+  - Primary Text `#F5F5F5`, Secondary Text `#B3B3B3`, Disabled `#6B7280`
+- Accent usage is restricted to CTA, XP, progress ring, active drill, and streak indicator.
+- Motion timing target is 180-220ms ease-in-out.
 
 ## 2. Current Delivered Scope
 ### Core flows implemented
