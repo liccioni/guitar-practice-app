@@ -10,10 +10,10 @@ Purpose: track gaps between `docs/SPEC.md` and repository implementation.
 - Current implementation is partially aligned.
 - Recent parity recovery restored major user-facing flows:
   - Template create/select/rename/save/delete in Builder.
+  - Template duplicate action in Builder.
   - Runtime metronome toggle with BPM step controls.
   - History/goals/reminders persistence surfaced in UI.
 - Remaining divergences:
-  - Duplicate template action is not yet exposed.
   - Full drill validation UX (1-30 minutes, BPM 40-240 on user input) is not yet fully surfaced.
 
 ## Completed Through Phase 4
@@ -24,7 +24,7 @@ Purpose: track gaps between `docs/SPEC.md` and repository implementation.
 5. Build/test quality gate remains green.
 
 ## Remaining Work
-1. Close remaining Phase 1 gaps (duplicate template action and richer drill input validation UX).
+1. Close remaining Phase 1 UX polish around validation messaging depth and drill authoring ergonomics.
 2. Re-run acceptance audit and close failing criteria before beta onboarding.
 3. Phase 5: Store onboarding and beta distribution (TestFlight + Play internal).
 4. Phase 6: Production submission and launch.

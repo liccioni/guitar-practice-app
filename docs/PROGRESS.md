@@ -19,8 +19,8 @@ This checklist mirrors `docs/PLAN.md`.
 - [x] 0.5 Add first TDD tests from `docs/FIRST_TESTS_CHECKLIST.md`.
 
 ## Phase 1 — Feature A
-- [ ] 1.1 Implement template CRUD with segment list support.
-- [ ] 1.2 Add validation rules for duration/BPM/minimum session length.
+- [x] 1.1 Implement template CRUD with segment list support.
+- [x] 1.2 Add validation rules for duration/BPM/minimum session length.
 - [ ] 1.3 Implement exercise tagging and picker.
 - [x] 1.4 Persist templates locally and load at startup.
 

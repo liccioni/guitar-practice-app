@@ -16,7 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import DraggableFlatList, { ScaleDecorator } from "react-native-draggable-flatlist";
 import Svg, { Circle } from "react-native-svg";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
-import { createDrillFromInput } from "./src/domain/exercises/drill";
+import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
 import { calculateCurrentStreak } from "./src/domain/goals/streak";
@@ -130,6 +130,10 @@ export default function App() {
   const [templateNameInput, setTemplateNameInput] = useState("");
   const [builderError, setBuilderError] = useState<string | null>(null);
   const [reminderError, setReminderError] = useState<string | null>(null);
+  const [selectedDrillId, setSelectedDrillId] = useState<string | null>(null);
+  const [drillNameInput, setDrillNameInput] = useState("");
+  const [drillDurationInput, setDrillDurationInput] = useState("");
+  const [drillBpmInput, setDrillBpmInput] = useState("");
 
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [activeDrillIds, setActiveDrillIds] = useState<string[]>([]);
@@ -173,6 +177,11 @@ export default function App() {
       .map((id) => allDrills.find((drill) => drill.id === id))
       .filter((drill): drill is Drill => Boolean(drill));
   }, [allDrills, selectedTemplate]);
+
+  const selectedBuilderDrill = useMemo(
+    () => builderDrills.find((drill) => drill.id === selectedDrillId) ?? builderDrills[0],
+    [builderDrills, selectedDrillId],
+  );
 
   const activeDrill = useMemo(() => {
     const id = activeDrillIds[activeIndex];
@@ -230,6 +239,7 @@ export default function App() {
         setGoalSettings(seed.goalSettings);
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
+        setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
       } catch {
         setStorageError("Failed to load local data. Using a fresh local session.");
         const seed = createSeedState(new Date().toISOString());
@@ -239,6 +249,7 @@ export default function App() {
         setGoalSettings(seed.goalSettings);
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
+        setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
       } finally {
         setIsHydrated(true);
       }
@@ -331,6 +342,26 @@ export default function App() {
     if (!selectedTemplate) return;
     setTemplateNameInput(selectedTemplate.name);
   }, [selectedTemplate]);
+
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    const exists = selectedTemplate.drillIds.includes(selectedDrillId ?? "");
+    if (!exists) {
+      setSelectedDrillId(selectedTemplate.drillIds[0] ?? null);
+    }
+  }, [selectedDrillId, selectedTemplate]);
+
+  useEffect(() => {
+    if (!selectedBuilderDrill) {
+      setDrillNameInput("");
+      setDrillDurationInput("");
+      setDrillBpmInput("");
+      return;
+    }
+    setDrillNameInput(selectedBuilderDrill.name);
+    setDrillDurationInput(String(Math.max(1, Math.round(selectedBuilderDrill.durationSeconds / 60))));
+    setDrillBpmInput(selectedBuilderDrill.targetBpm ? String(selectedBuilderDrill.targetBpm) : "");
+  }, [selectedBuilderDrill]);
 
   function triggerCompletionPulse(): void {
     completionPulse.setValue(0);
@@ -504,6 +535,7 @@ export default function App() {
         };
       }),
     );
+    setSelectedDrillId(created.id);
   }
 
   function removeDrillFromTemplate(drillId: string): void {
@@ -525,6 +557,10 @@ export default function App() {
         };
       }),
     );
+    if (selectedDrillId === drillId) {
+      const nextId = selectedTemplate.drillIds.find((id) => id !== drillId) ?? null;
+      setSelectedDrillId(nextId);
+    }
   }
 
   function createTemplate(): void {
@@ -543,6 +579,28 @@ export default function App() {
     setTemplates((current) => [...current, template]);
     setActiveTemplateId(template.id);
     setTemplateNameInput(template.name);
+    setSelectedDrillId(baseDrill.id);
+    setBuilderError(null);
+  }
+
+  function duplicateTemplate(): void {
+    if (!selectedTemplate) return;
+    const now = new Date().toISOString();
+    const copyName = `${selectedTemplate.name} Copy`;
+
+    const duplicated = createSessionTemplate({
+      id: makeId("template"),
+      name: copyName,
+      drillIds: [...selectedTemplate.drillIds],
+      totalDurationSeconds: selectedTemplate.totalDurationSeconds,
+      isPreset: false,
+      nowIso: now,
+    });
+
+    setTemplates((current) => [...current, duplicated]);
+    setActiveTemplateId(duplicated.id);
+    setTemplateNameInput(duplicated.name);
+    setSelectedDrillId(duplicated.drillIds[0] ?? null);
     setBuilderError(null);
   }
 
@@ -590,7 +648,51 @@ export default function App() {
     setTemplates(remaining);
     setActiveTemplateId(remaining[0]?.id ?? null);
     setTemplateNameInput(remaining[0]?.name ?? "");
+    setSelectedDrillId(remaining[0]?.drillIds[0] ?? null);
     setBuilderError(null);
+  }
+
+  function saveSelectedDrillEdits(): void {
+    if (!selectedBuilderDrill || !selectedTemplate) return;
+
+    try {
+      const durationMinutes = Number(drillDurationInput);
+      const nextBpm =
+        drillBpmInput.trim().length === 0 ? undefined : Number(drillBpmInput.trim());
+
+      const updated = updateDrillFromInput(
+        selectedBuilderDrill,
+        {
+          name: drillNameInput,
+          durationMinutes,
+          targetBpm: nextBpm,
+        },
+        new Date().toISOString(),
+      );
+
+      setAllDrills((current) =>
+        current.map((drill) => (drill.id === selectedBuilderDrill.id ? updated : drill)),
+      );
+
+      setTemplates((current) =>
+        current.map((template) => {
+          if (template.id !== selectedTemplate.id) return template;
+          const nextDrills = template.drillIds
+            .map((id) => (id === updated.id ? updated : allDrills.find((drill) => drill.id === id)))
+            .filter((drill): drill is Drill => Boolean(drill));
+
+          return {
+            ...template,
+            totalDurationSeconds: calculateTotalDurationSeconds(nextDrills),
+            updatedAt: new Date().toISOString(),
+          };
+        }),
+      );
+
+      setBuilderError(null);
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not update drill");
+    }
   }
 
   async function toggleReminder(): Promise<void> {
@@ -670,8 +772,18 @@ export default function App() {
               onSelectTemplate={setActiveTemplateId}
               onTemplateNameInput={setTemplateNameInput}
               onCreateTemplate={createTemplate}
+              onDuplicateTemplate={duplicateTemplate}
               onSaveTemplate={saveTemplate}
               onDeleteTemplate={deleteTemplate}
+              selectedDrillId={selectedBuilderDrill?.id ?? null}
+              drillNameInput={drillNameInput}
+              drillDurationInput={drillDurationInput}
+              drillBpmInput={drillBpmInput}
+              onSelectDrill={setSelectedDrillId}
+              onDrillNameInput={setDrillNameInput}
+              onDrillDurationInput={setDrillDurationInput}
+              onDrillBpmInput={setDrillBpmInput}
+              onSaveDrill={saveSelectedDrillEdits}
               onReorderDrills={onBuilderReorder}
               onRemoveDrill={removeDrillFromTemplate}
               onAddDrill={addDrillToTemplate}
@@ -848,8 +960,18 @@ function SessionBuilder(props: {
   onSelectTemplate: (id: string) => void;
   onTemplateNameInput: (value: string) => void;
   onCreateTemplate: () => void;
+  onDuplicateTemplate: () => void;
   onSaveTemplate: () => void;
   onDeleteTemplate: () => void;
+  selectedDrillId: string | null;
+  drillNameInput: string;
+  drillDurationInput: string;
+  drillBpmInput: string;
+  onSelectDrill: (id: string) => void;
+  onDrillNameInput: (value: string) => void;
+  onDrillDurationInput: (value: string) => void;
+  onDrillBpmInput: (value: string) => void;
+  onSaveDrill: () => void;
   onReorderDrills: (drills: Drill[]) => void;
   onRemoveDrill: (id: string) => void;
   onAddDrill: () => void;
@@ -865,8 +987,18 @@ function SessionBuilder(props: {
     onSelectTemplate,
     onTemplateNameInput,
     onCreateTemplate,
+    onDuplicateTemplate,
     onSaveTemplate,
     onDeleteTemplate,
+    selectedDrillId,
+    drillNameInput,
+    drillDurationInput,
+    drillBpmInput,
+    onSelectDrill,
+    onDrillNameInput,
+    onDrillDurationInput,
+    onDrillBpmInput,
+    onSaveDrill,
     onReorderDrills,
     onRemoveDrill,
     onAddDrill,
@@ -889,6 +1021,9 @@ function SessionBuilder(props: {
         <View style={styles.inlineRow}>
           <TouchableOpacity style={styles.smallActionButton} onPress={onCreateTemplate}>
             <Text style={styles.smallActionText}>New</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
+            <Text style={styles.smallActionText}>Duplicate</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.smallActionButton} onPress={onSaveTemplate}>
             <Text style={styles.smallActionText}>Save</Text>
@@ -936,7 +1071,12 @@ function SessionBuilder(props: {
             <TouchableOpacity
               onLongPress={drag}
               activeOpacity={0.9}
-              style={[styles.drillCard, isActive ? styles.drillCardActive : null]}
+              onPress={() => onSelectDrill(item.id)}
+              style={[
+                styles.drillCard,
+                selectedDrillId === item.id ? styles.drillCardSelected : null,
+                isActive ? styles.drillCardActive : null,
+              ]}
             >
               <View style={styles.drillLeft}>
                 <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
@@ -958,6 +1098,38 @@ function SessionBuilder(props: {
           </ScaleDecorator>
         )}
       />
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Edit Drill</Text>
+        <TextInput
+          value={drillNameInput}
+          onChangeText={onDrillNameInput}
+          placeholder="Drill name"
+          placeholderTextColor={COLORS.muted}
+          style={styles.templateInput}
+        />
+        <View style={styles.inlineRow}>
+          <TextInput
+            value={drillDurationInput}
+            onChangeText={onDrillDurationInput}
+            keyboardType="number-pad"
+            placeholder="Minutes (1-30)"
+            placeholderTextColor={COLORS.muted}
+            style={styles.timeInput}
+          />
+          <TextInput
+            value={drillBpmInput}
+            onChangeText={onDrillBpmInput}
+            keyboardType="number-pad"
+            placeholder="BPM (40-240)"
+            placeholderTextColor={COLORS.muted}
+            style={styles.timeInput}
+          />
+        </View>
+        <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
+          <Text style={styles.smallActionText}>Save Drill</Text>
+        </TouchableOpacity>
+      </GlowCard>
 
       <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
         <Text style={styles.primaryCtaText}>Start This Session</Text>
@@ -1363,6 +1535,9 @@ const styles = StyleSheet.create({
   drillCardActive: {
     borderColor: COLORS.accent,
     transform: [{ scale: 1.01 }],
+  },
+  drillCardSelected: {
+    borderColor: COLORS.accentAlt,
   },
   drillLeft: {
     flexDirection: "row",

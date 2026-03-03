@@ -5,8 +5,8 @@ This mirrors `docs/ACCEPTANCE_CRITERIA.md`.
 Snapshot date: 2026-03-02 (post parity-recovery pass).
 
 ## Core Behavior
-- [ ] 1. Session template CRUD works with one or more segments.
-- [ ] 2. Validation enforces duration 1-30, BPM 40-240, total >= 5 minutes.
+- [x] 1. Session template CRUD works with one or more segments.
+- [x] 2. Validation enforces duration 1-30, BPM 40-240, total >= 5 minutes.
 - [x] 3. Guided runtime includes timers and metronome controls.
 - [x] 4. Pause/resume/skip/complete controls work correctly.
 - [x] 5. Completed sessions are stored and visible with accurate minutes.
@@ -31,7 +31,7 @@ Snapshot date: 2026-03-02 (post parity-recovery pass).
 - [x] 10. Core transitions/animations target ~200ms.
 
 ## Edge Cases
-- [ ] 1. Invalid duration/BPM blocks save with actionable messaging.
+- [x] 1. Invalid duration/BPM blocks save with actionable messaging.
 - [ ] 2. Background/resume keeps active session timing correct.
 - [x] 3. Skipped segments do not inflate completed minutes.
 - [x] 4. Midnight boundary uses local timezone for streak logic.
