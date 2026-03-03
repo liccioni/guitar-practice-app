@@ -1,18 +1,13 @@
 # Guitar Practice App
 
-Mobile guitar practice coach app (dark mode, gamified UX) built with Expo + TypeScript, with spec-driven docs in `docs/`.
-
-## Current Status
-- UI checkpoint is focused on gamified UX flow (Home, Builder, Active, Complete).
-- Feature parity recovery restored metronome controls and local history/goals/reminders wiring.
-- Remaining functional gaps are concentrated in validation UX breadth and final production hardening.
+Mobile guitar practice coach app (dark mode, gamified UX) built with Expo + TypeScript.
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`
 - Android package: `net.liccioni.guitarpractice`
 
 ## Quick Start
-1. Install dependencies (already installed by scaffold): `npm install`
+1. Install dependencies: `npm install`
 2. Run iOS simulator (stable localhost mode): `npm run ios:local`
 3. Or start Expo normally: `npm run start`
 4. Test on phone with Expo Go by scanning the QR code.
@@ -24,14 +19,10 @@ EAS profiles are defined in `eas.json`:
 - `production`
 
 ## Quality Gate
-- Run full release-candidate checks: `npm run check`
+- Run full quality gate: `npm run check`
 
 ## Documentation
-- Product spec: `docs/SPEC.md`
-- Spec/code alignment checklist: `docs/SPEC_ALIGNMENT.md`
-- Phase 4 verification: `docs/PHASE4_VERIFICATION.md`
-- Acceptance criteria: `docs/ACCEPTANCE_CRITERIA.md`
-- Implementation plan: `docs/PLAN.md`
-- Progress tracking: `docs/PROGRESS.md`
-- Audit checklist: `docs/AUDIT_CHECKLIST.md`
-- Release notes: `docs/RELEASE_NOTES.md`
+Use this minimal set:
+1. Product spec: `docs/SPEC.md`
+2. Rebuild/runbook (single source of execution truth): `docs/PROJECT_RUNBOOK.md`
+3. Release history: `docs/RELEASE_NOTES.md`
