@@ -92,4 +92,96 @@ describe("LocalStorageGateway", () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it("sanitizes malformed persisted payloads", () => {
+    const parsed = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [
+            "bad-shape",
+            {
+              id: "bad-duration",
+              name: "Bad",
+              durationSeconds: 0,
+              tags: [],
+              createdAt: "",
+              updatedAt: "",
+            },
+            {
+              id: "good-drill",
+              name: "  Good Drill ",
+              durationSeconds: 300,
+              targetBpm: 300,
+              tags: ["warmup", 42],
+              createdAt: "",
+              updatedAt: "",
+            },
+          ],
+          templates: [
+            { id: "", name: "Invalid", drillIds: ["good-drill"] },
+            {
+              id: "t1",
+              name: "  Template One ",
+              drillIds: ["good-drill", "missing-id"],
+              totalDurationSeconds: 999,
+              isPreset: 1,
+            },
+          ],
+          history: [
+            "invalid-entry",
+            {
+              id: "h-invalid",
+              sessionNameSnapshot: "No duration",
+              startedAt: "2026-03-03T12:00:00.000Z",
+              durationCompletedSeconds: -1,
+              completed: true,
+            },
+            {
+              id: "h1",
+              sessionTemplateId: "",
+              sessionNameSnapshot: "  Session ",
+              drillsSnapshot: [
+                { id: "snap-bad", name: "", durationSeconds: 60 },
+                { id: "snap-1", name: " Snap ", durationSeconds: 120, targetBpm: 1000 },
+              ],
+              completedDrillIds: ["good-drill", "", 25],
+              startedAt: "2026-03-03T12:00:00.000Z",
+              endedAt: "",
+              durationCompletedSeconds: 120,
+              completed: 1,
+            },
+          ],
+          goalSettings: {
+            dailyMinutesTarget: 999,
+            reminderEnabled: 1,
+            reminderTime: "bad-time",
+          },
+        },
+      }),
+    );
+
+    expect(parsed.drills).toHaveLength(1);
+    expect(parsed.drills[0]?.name).toBe("Good Drill");
+    expect(parsed.drills[0]?.targetBpm).toBeUndefined();
+
+    expect(parsed.templates).toHaveLength(1);
+    expect(parsed.templates[0]?.name).toBe("Template One");
+    expect(parsed.templates[0]?.drillIds).toEqual(["good-drill"]);
+    expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
+
+    expect(parsed.history).toHaveLength(1);
+    expect(parsed.history[0]?.sessionTemplateId).toBeUndefined();
+    expect(parsed.history[0]?.sessionNameSnapshot).toBe("Session");
+    expect(parsed.history[0]?.drillsSnapshot).toEqual([
+      { id: "snap-1", name: "Snap", durationSeconds: 120, targetBpm: undefined },
+    ]);
+    expect(parsed.history[0]?.completedDrillIds).toEqual(["good-drill"]);
+    expect(parsed.history[0]?.endedAt).toBeUndefined();
+    expect(parsed.history[0]?.completed).toBe(true);
+
+    expect(parsed.goalSettings.dailyMinutesTarget).toBe(30);
+    expect(parsed.goalSettings.reminderEnabled).toBe(true);
+    expect(parsed.goalSettings.reminderTime).toBe("18:00");
+  });
 });

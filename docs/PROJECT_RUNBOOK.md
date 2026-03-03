@@ -22,9 +22,10 @@ This is the operational guide to rebuild the project from scratch and reach the 
 
 2. Session Builder
 - Template create/select/rename/save/delete/duplicate.
-- Drill cards with drag reorder.
+- Drill cards with reorder controls (up/down).
 - Drill add/remove.
 - Drill edit form with domain validation (name, duration, BPM).
+- Stable list rendering path is required (regression-safe fallback over drag-only behavior).
 
 3. Active practice
 - Countdown timer and session progress.
@@ -40,6 +41,7 @@ This is the operational guide to rebuild the project from scratch and reach the 
 5. Persistence
 - Drills, templates, history, goal settings stored via local storage gateway.
 - Versioned persistence envelope + migration handling.
+- Load-time data sanitization removes malformed drills/history entries, repairs template drill references, and normalizes invalid goal settings.
 
 ## 3. Canonical Rules
 1. Validation
@@ -114,6 +116,8 @@ This runs:
 - reminders behavior
 - repository behavior
 - end-to-end pipeline integration
+- session builder UI-state interaction tests (add drill paths and template fallback/error handling)
+- session builder reorder interaction tests (up/down and boundary behavior)
 
 ## 7. Acceptance Gate
 ### Functional acceptance
@@ -125,7 +129,7 @@ This runs:
 
 ### Quality acceptance
 1. `npm run check` passes.
-2. No red-screen runtime crashes for invalid template/drill input paths.
+2. No red-screen/black-screen runtime crashes for invalid template/drill input or malformed persisted local state paths.
 
 ## 8. Remaining Work to Reach Store Submission
 1. Validation UX polish and drill authoring ergonomics.

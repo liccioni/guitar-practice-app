@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  FlatList,
   Pressable,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,16 +13,17 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import DraggableFlatList, { ScaleDecorator } from "react-native-draggable-flatlist";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
+import { appendDrillToTemplate, reorderDrillInTemplate } from "./src/application/sessionBuilder";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
 import { calculateCurrentStreak } from "./src/domain/goals/streak";
 import { calculateDashboardMetrics } from "./src/domain/history/metrics";
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
-import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
+import { getBeatIntervalMs, isValidBpm, stepBpm } from "./src/domain/metronome/metronome";
 import {
   calculateTotalDurationSeconds,
   createSessionTemplate,
@@ -110,6 +110,15 @@ function toSnapshot(drill: Drill): DrillSnapshot {
     durationSeconds: drill.durationSeconds,
     targetBpm: drill.targetBpm,
   };
+}
+
+function isValidRuntimeDrill(drill: Drill): boolean {
+  return drill.name.trim().length > 0 && Number.isFinite(drill.durationSeconds) && drill.durationSeconds > 0;
+}
+
+function clampUnit(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
 }
 
 function createSeedState(nowIso: string): PersistedPracticeState {
@@ -221,11 +230,11 @@ export default function App() {
     return doneBefore + (activeDrill.durationSeconds - remainingSec);
   }, [activeDrill, activeDrillIds, activeIndex, allDrills, remainingSec]);
 
-  const sessionProgress = sessionDurationSec === 0 ? 0 : Math.min(1, elapsedSec / sessionDurationSec);
+  const sessionProgress = sessionDurationSec === 0 ? 0 : clampUnit(elapsedSec / sessionDurationSec);
   const drillProgress =
     !activeDrill || activeDrill.durationSeconds === 0
       ? 0
-      : Math.min(1, (activeDrill.durationSeconds - remainingSec) / activeDrill.durationSeconds);
+      : clampUnit((activeDrill.durationSeconds - remainingSec) / activeDrill.durationSeconds);
 
   const metrics = useMemo(
     () =>
@@ -247,7 +256,16 @@ export default function App() {
         const persisted = await loadPersistedState();
         const hasData =
           persisted.drills.length > 0 || persisted.templates.length > 0 || persisted.history.length > 0;
-        const seed = hasData ? persisted : createSeedState(new Date().toISOString());
+        let seed = hasData ? persisted : createSeedState(new Date().toISOString());
+
+        const needsRecovery =
+          seed.drills.length === 0 ||
+          seed.templates.length === 0 ||
+          seed.templates.every((template) => template.drillIds.length === 0);
+        if (needsRecovery) {
+          seed = createSeedState(new Date().toISOString());
+          setStorageError("Local data was invalid and has been reset to a safe starter session.");
+        }
 
         setAllDrills(seed.drills);
         setTemplates(seed.templates);
@@ -327,7 +345,11 @@ export default function App() {
     const intervalMs = getBeatIntervalMs(metronomeBpm);
     const beatTimer = setInterval(() => {
       setBeatFlash((current) => !current);
-      Vibration.vibrate(10);
+      try {
+        Vibration.vibrate(10);
+      } catch {
+        // Ignore vibration capability failures (e.g. simulator), keep visual beat running.
+      }
     }, intervalMs);
 
     return () => clearInterval(beatTimer);
@@ -481,20 +503,42 @@ export default function App() {
   }
 
   function startSession(): void {
-    if (!selectedTemplate) return;
-    if (builderDrills.length === 0) return;
+    if (!selectedTemplate) {
+      setBuilderError("No session template available. Create a template first.");
+      return;
+    }
+    if (builderDrills.length === 0) {
+      setBuilderError("This template has no drills. Add at least one drill to start.");
+      return;
+    }
+
+    const resolvedDrills = selectedTemplate.drillIds.reduce<Drill[]>((acc, id) => {
+      const drill = allDrills.find((item) => item.id === id);
+      if (drill && isValidRuntimeDrill(drill)) {
+        acc.push(drill);
+      }
+      return acc;
+    }, []);
+
+    if (resolvedDrills.length === 0) {
+      setBuilderError("Selected template has no valid drills. Edit drills and try again.");
+      return;
+    }
 
     setBuilderError(null);
-    setActiveDrillIds(selectedTemplate.drillIds);
+    setActiveDrillIds(resolvedDrills.map((drill) => drill.id));
     setActiveIndex(0);
-    setRemainingSec(builderDrills[0].durationSeconds);
+    setRemainingSec(Math.max(1, resolvedDrills[0].durationSeconds));
     setIsPaused(false);
     setCompletedDrillIds([]);
     setCompletedDurationSec(0);
     setSessionXp(0);
     setLeveledUp(false);
     setCurrentMicrocopy(MOTIVATION[0]);
-    setMetronomeBpm(builderDrills[0].targetBpm ?? metronomeBpm);
+    const firstDrillBpm = resolvedDrills[0].targetBpm;
+    setMetronomeBpm(
+      firstDrillBpm !== undefined && isValidBpm(firstDrillBpm) ? firstDrillBpm : metronomeBpm,
+    );
     setMetronomeEnabled(true);
     setScreen("active");
   }
@@ -512,47 +556,41 @@ export default function App() {
     setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
   }
 
-  function onBuilderReorder(nextDrills: Drill[]): void {
-    if (!selectedTemplate) return;
+  function addDrillToTemplate(): void {
+    try {
+      const nowIso = new Date().toISOString();
+      const created = createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), nowIso);
+      const result = appendDrillToTemplate({
+        templates,
+        activeTemplateId: activeTemplateId ?? null,
+        drill: created,
+        nowIso,
+      });
 
-    const nextTemplates = templates.map((template) =>
-      template.id === selectedTemplate.id
-        ? {
-            ...template,
-            drillIds: nextDrills.map((drill) => drill.id),
-            totalDurationSeconds: calculateTotalDurationSeconds(nextDrills),
-            updatedAt: new Date().toISOString(),
-          }
-        : template,
-    );
-
-    setTemplates(nextTemplates);
+      setAllDrills((current) => [...current, created]);
+      setTemplates(result.templates);
+      setActiveTemplateId(result.targetTemplateId);
+      setSelectedDrillId(created.id);
+      setBuilderError(null);
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not add drill");
+    }
   }
 
-  function addDrillToTemplate(): void {
-    if (!selectedTemplate) return;
-
-    const nowIso = new Date().toISOString();
-    const created = createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), nowIso);
-
-    setAllDrills((current) => [...current, created]);
-    setTemplates((current) =>
-      current.map((template) => {
-        if (template.id !== selectedTemplate.id) return template;
-        const nextDrillIds = [...template.drillIds, created.id];
-        const nextDrills = nextDrillIds
-          .map((id) => (id === created.id ? created : allDrills.find((drill) => drill.id === id)))
-          .filter((drill): drill is Drill => Boolean(drill));
-
-        return {
-          ...template,
-          drillIds: nextDrillIds,
-          totalDurationSeconds: calculateTotalDurationSeconds(nextDrills),
-          updatedAt: nowIso,
-        };
-      }),
-    );
-    setSelectedDrillId(created.id);
+  function moveDrillInTemplate(drillId: string, direction: "up" | "down"): void {
+    try {
+      const nextState = reorderDrillInTemplate({
+        templates,
+        activeTemplateId: activeTemplateId ?? null,
+        drillId,
+        direction,
+        nowIso: new Date().toISOString(),
+      });
+      setTemplates(nextState.templates);
+      setBuilderError(null);
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not reorder drill");
+    }
   }
 
   function removeDrillFromTemplate(drillId: string): void {
@@ -772,9 +810,10 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="light" />
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}> 
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <StatusBar style="light" />
+          <Animated.View style={[styles.container, { opacity: fadeAnim }]}> 
           {screen === "home" ? (
             <HomeDashboard
               levelState={levelState}
@@ -816,8 +855,8 @@ export default function App() {
               onDrillDurationInput={setDrillDurationInput}
               onDrillBpmInput={setDrillBpmInput}
               onSaveDrill={saveSelectedDrillEdits}
-              onReorderDrills={onBuilderReorder}
               onRemoveDrill={removeDrillFromTemplate}
+              onMoveDrill={moveDrillInTemplate}
               onAddDrill={addDrillToTemplate}
               onStartSession={startSession}
             />
@@ -842,6 +881,20 @@ export default function App() {
             />
           ) : null}
 
+          {screen === "active" && !activeDrill ? (
+            <View style={styles.screenBody}>
+              <GlowCard>
+                <Text style={styles.cardLabel}>Session Error</Text>
+                <Text style={styles.completeSubtext}>
+                  Could not load the selected drill. Return to Builder and start again.
+                </Text>
+                <TouchableOpacity style={styles.smallActionButton} onPress={() => setScreen("builder")}>
+                  <Text style={styles.smallActionText}>Back to Builder</Text>
+                </TouchableOpacity>
+              </GlowCard>
+            </View>
+          ) : null}
+
           {screen === "complete" ? (
             <SessionComplete
               sessionXp={sessionXp}
@@ -854,8 +907,9 @@ export default function App() {
               onContinue={resetToHome}
             />
           ) : null}
-        </Animated.View>
-      </SafeAreaView>
+          </Animated.View>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
@@ -1004,8 +1058,8 @@ function SessionBuilder(props: {
   onDrillDurationInput: (value: string) => void;
   onDrillBpmInput: (value: string) => void;
   onSaveDrill: () => void;
-  onReorderDrills: (drills: Drill[]) => void;
   onRemoveDrill: (id: string) => void;
+  onMoveDrill: (id: string, direction: "up" | "down") => void;
   onAddDrill: () => void;
   onStartSession: () => void;
 }) {
@@ -1031,8 +1085,8 @@ function SessionBuilder(props: {
     onDrillDurationInput,
     onDrillBpmInput,
     onSaveDrill,
-    onReorderDrills,
     onRemoveDrill,
+    onMoveDrill,
     onAddDrill,
     onStartSession,
   } = props;
@@ -1041,11 +1095,7 @@ function SessionBuilder(props: {
 
   return (
     <View style={styles.screenBody}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.builderScrollBody}
-      >
+      <View style={styles.builderHeader}>
         <View style={styles.topRow}>
           <Pressable onPress={onBack} style={styles.topActionButton}>
             <Text style={styles.topActionText}>Back</Text>
@@ -1096,84 +1146,113 @@ function SessionBuilder(props: {
           {builderError ? <Text style={styles.errorText}>{builderError}</Text> : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Long-press a drill card and drag to reorder.</Text>
+        <Text style={styles.helperText}>Tap a drill card to edit. Use ↑/↓ to reorder.</Text>
 
         <TouchableOpacity style={styles.primaryCta} onPress={onStartSession}>
           <Text style={styles.primaryCtaText}>Start This Session</Text>
         </TouchableOpacity>
 
-        <DraggableFlatList
-          data={drills}
-          style={styles.builderList}
-          keyExtractor={(item) => item.id}
-          onDragEnd={({ data }) => onReorderDrills(data)}
-          nestedScrollEnabled
-          contentContainerStyle={{ gap: 12, paddingBottom: 12 }}
-          renderItem={({ item, drag, isActive, getIndex }) => (
-            <ScaleDecorator>
-              <TouchableOpacity
-                onLongPress={drag}
-                activeOpacity={0.9}
-                onPress={() => onSelectDrill(item.id)}
-                style={[
-                  styles.drillCard,
-                  selectedDrillId === item.id ? styles.drillCardSelected : null,
-                  isActive ? styles.drillCardActive : null,
-                ]}
-              >
-                <View style={styles.drillLeft}>
-                  <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
-                  <View>
-                    <Text style={styles.drillName}>{item.name}</Text>
-                    <Text style={styles.drillMeta}>
-                      {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
-                    </Text>
-                  </View>
-                </View>
+        <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill}>
+          <Text style={styles.secondaryCtaText}>Add Drill</Text>
+        </TouchableOpacity>
+      </View>
 
-                <View style={styles.inlineRow}>
-                  <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
-                  <TouchableOpacity style={styles.removeChip} onPress={() => onRemoveDrill(item.id)}>
-                    <Text style={styles.removeChipText}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
+      <FlatList
+        data={drills}
+        style={styles.builderList}
+        keyExtractor={(item) => item.id}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.builderListContent}
+        ListFooterComponent={
+          <View style={styles.builderFooter}>
+            <GlowCard>
+              <Text style={styles.cardLabel}>Edit Drill</Text>
+              <TextInput
+                value={drillNameInput}
+                onChangeText={onDrillNameInput}
+                placeholder="Drill name"
+                placeholderTextColor={COLORS.muted}
+                style={styles.templateInput}
+              />
+              <View style={styles.inlineRow}>
+                <TextInput
+                  value={drillDurationInput}
+                  onChangeText={onDrillDurationInput}
+                  keyboardType="number-pad"
+                  placeholder="Minutes (1-30)"
+                  placeholderTextColor={COLORS.muted}
+                  style={styles.timeInput}
+                />
+                <TextInput
+                  value={drillBpmInput}
+                  onChangeText={onDrillBpmInput}
+                  keyboardType="number-pad"
+                  placeholder="BPM (40-240)"
+                  placeholderTextColor={COLORS.muted}
+                  style={styles.timeInput}
+                />
+              </View>
+              <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
+                <Text style={styles.smallActionText}>Save Drill</Text>
               </TouchableOpacity>
-            </ScaleDecorator>
-          )}
-        />
-
-        <GlowCard>
-          <Text style={styles.cardLabel}>Edit Drill</Text>
-          <TextInput
-            value={drillNameInput}
-            onChangeText={onDrillNameInput}
-            placeholder="Drill name"
-            placeholderTextColor={COLORS.muted}
-            style={styles.templateInput}
-          />
-          <View style={styles.inlineRow}>
-            <TextInput
-              value={drillDurationInput}
-              onChangeText={onDrillDurationInput}
-              keyboardType="number-pad"
-              placeholder="Minutes (1-30)"
-              placeholderTextColor={COLORS.muted}
-              style={styles.timeInput}
-            />
-            <TextInput
-              value={drillBpmInput}
-              onChangeText={onDrillBpmInput}
-              keyboardType="number-pad"
-              placeholder="BPM (40-240)"
-              placeholderTextColor={COLORS.muted}
-              style={styles.timeInput}
-            />
+            </GlowCard>
           </View>
-          <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
-            <Text style={styles.smallActionText}>Save Drill</Text>
+        }
+        ListEmptyComponent={
+          <GlowCard>
+            <Text style={styles.cardLabel}>No Drills Yet</Text>
+            <Text style={styles.completeSubtext}>
+              Add a drill with the + button, then start your session.
+            </Text>
+          </GlowCard>
+        }
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => onSelectDrill(item.id)}
+            style={[
+              styles.drillCard,
+              selectedDrillId === item.id ? styles.drillCardSelected : null,
+            ]}
+          >
+            <View style={styles.drillLeft}>
+              <Text style={styles.drillOrder}>#{index + 1}</Text>
+              <View>
+                <Text style={styles.drillName}>{item.name}</Text>
+                <Text style={styles.drillMeta}>
+                  {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.inlineRow}>
+              <TouchableOpacity
+                style={styles.moveChip}
+                onPress={() => onMoveDrill(item.id, "up")}
+              >
+                <Text style={styles.removeChipText}>↑</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.moveChip}
+                onPress={() => onMoveDrill(item.id, "down")}
+              >
+                <Text style={styles.removeChipText}>↓</Text>
+              </TouchableOpacity>
+              <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
+              <TouchableOpacity style={styles.removeChip} onPress={() => onRemoveDrill(item.id)}>
+                <Text style={styles.removeChipText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
+        )}
+      />
+
+      {drills.length === 0 ? (
+        <GlowCard style={styles.builderEmptyCard}>
+          <Text style={styles.cardLabel}>No Drills Yet</Text>
+          <Text style={styles.completeSubtext}>Tap + to add your first drill to this template.</Text>
         </GlowCard>
-      </ScrollView>
+      ) : null}
 
       <TouchableOpacity style={styles.fab} onPress={onAddDrill} accessibilityRole="button">
         <Text style={styles.fabText}>＋</Text>
@@ -1398,10 +1477,11 @@ function getLevelState(totalXp: number): LevelState {
 }
 
 function formatClock(totalSeconds: number): string {
-  const min = Math.floor(totalSeconds / 60)
+  const safeTotalSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+  const min = Math.floor(safeTotalSeconds / 60)
     .toString()
     .padStart(2, "0");
-  const sec = (totalSeconds % 60).toString().padStart(2, "0");
+  const sec = (safeTotalSeconds % 60).toString().padStart(2, "0");
   return `${min}:${sec}`;
 }
 
@@ -1542,6 +1622,20 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.4,
   },
+  secondaryCta: {
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryCtaText: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: "700",
+  },
   topActionButton: {
     minHeight: 44,
     minWidth: 64,
@@ -1561,13 +1655,22 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 13,
   },
-  builderScrollBody: {
-    gap: 18,
+  builderList: {
+    flex: 1,
+  },
+  builderListContent: {
+    gap: 12,
     paddingBottom: 108,
   },
-  builderList: {
-    minHeight: 180,
-    maxHeight: 320,
+  builderHeader: {
+    gap: 18,
+    paddingBottom: 6,
+  },
+  builderFooter: {
+    paddingTop: 6,
+  },
+  builderEmptyCard: {
+    marginTop: 4,
   },
   drillCard: {
     minHeight: 76,
@@ -1630,7 +1733,8 @@ const styles = StyleSheet.create({
     shadowColor: "#000000",
     shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 7,
+    elevation: 20,
+    zIndex: 30,
   },
   fabText: {
     color: COLORS.text,
@@ -1846,6 +1950,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.divider,
     paddingHorizontal: 10,
+    justifyContent: "center",
+  },
+  moveChip: {
+    minHeight: 30,
+    minWidth: 30,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    alignItems: "center",
     justifyContent: "center",
   },
   removeChipText: {

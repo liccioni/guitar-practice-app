@@ -16,7 +16,7 @@ This document is the implementation contract. It defines what must be built and 
 
 2. Session builder
 - Manage templates: create, select, rename, save, delete, duplicate.
-- Manage drills in template: add, remove, reorder.
+- Manage drills in template: add, remove, reorder (up/down controls).
 - Allow editing drill name, duration, BPM.
 
 3. Active practice
@@ -66,6 +66,11 @@ This document is the implementation contract. It defines what must be built and 
 ## 4.5 Persistence envelope
 - versioned envelope: `{ version, state }`
 - migrate legacy unversioned payloads on load
+- sanitize malformed persisted entities on load:
+  - drop invalid drills/history records
+  - drop invalid template drill references
+  - recompute template `totalDurationSeconds` from valid drills
+  - normalize invalid goal settings to defaults
 
 ## 5. UI Contract (Locked)
 1. Visual system
@@ -101,13 +106,18 @@ This document is the implementation contract. It defines what must be built and 
 - Must run offline for MVP flows.
 - `npm run check` must pass (lint, typecheck, coverage tests).
 - Coverage thresholds are enforced in test config.
+- UI interaction coverage is required for Session Builder core interactions:
+  - add drill to selected template
+  - fallback add drill behavior when active template id is null
+  - explicit error path when no template exists
+  - reorder controls (up/down) including boundary behavior
 - App IDs:
   - iOS bundle id: `net.liccioni.guitarpractice`
   - Android package: `net.liccioni.guitarpractice`
 - EAS profiles required: `development`, `preview`, `production`.
 
 ## 7. Done Criteria (MVP)
-Functional done when all required user flows work without runtime crashes and domain rules hold.
+Functional done when all required user flows work without runtime crashes (including malformed local state) and domain rules hold.
 Quality done when `npm run check` passes and physical-device smoke tests pass on one iPhone and one Android device.
 
 ## 8. Out of Scope (MVP)
