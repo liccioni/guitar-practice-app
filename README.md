@@ -29,3 +29,4 @@ npm run e2e:detox:test:ios
 - Product + acceptance criteria: `docs/SPEC.md`
 - Full rebuild runbook (from scratch): `docs/PROJECT_RUNBOOK.md`
 - Change history + stability markers: `docs/RELEASE_NOTES.md`
+- Bug registry: `docs/BUG_REPORTS.md`

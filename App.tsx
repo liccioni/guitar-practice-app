@@ -304,19 +304,14 @@ export default function App() {
   }, [allDrills, goalSettings, history, isHydrated, templates]);
 
   useEffect(() => {
+    fadeAnim.stopAnimation();
+    fadeAnim.setValue(0.94);
     Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
+      toValue: 1,
+      duration: 180,
       easing: Easing.inOut(Easing.ease),
       useNativeDriver: true,
-    }).start(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }).start();
-    });
+    }).start();
   }, [fadeAnim, screen]);
 
   useEffect(() => {

@@ -106,6 +106,11 @@ npm run e2e:prebuild:ios
 - Confirm `EXPO_IOS_DEPLOYMENT_TARGET=17.0` in workflow.
 - Ensure `scripts/force-ios-deployment-target.sh 17.0` is run pre/post pods.
 
+4. If screen navigation shows flicker/flash:
+- Check `App.tsx` global fade transition.
+- It must remain a soft fade-in (no `1 -> 0 -> 1` full fade-out sequence).
+- Reference bug report: `docs/BUG_REPORTS.md` (`BR-2026-03-04-001`).
+
 ## 10. How to Mark a New Stable Baseline
 1. Ensure local + CI are green.
 2. Create and push annotated tag:
@@ -114,4 +119,3 @@ git tag -a stable-YYYY-MM-DD-<suffix> -m "Stable baseline"
 git push origin stable-YYYY-MM-DD-<suffix>
 ```
 3. Create GitHub release from tag.
-

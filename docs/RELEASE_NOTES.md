@@ -26,3 +26,8 @@ This baseline represents a known-good state with:
 ## Current Branch Position
 After the stable tag, branch `main` may include additional CI hardening commits. Use the tag if you need the exact frozen baseline.
 
+## Post-Tag Fixes
+1. Screen transition flicker fix (`App.tsx`)
+- Root cause: full fade-out/in animation on screen changes caused visible flashing.
+- Resolution: switched to soft one-way fade-in transition.
+- Bug reference: `docs/BUG_REPORTS.md` -> `BR-2026-03-04-001`.

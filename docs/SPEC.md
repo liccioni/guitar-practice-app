@@ -85,6 +85,7 @@ This is the implementation contract for the current project state.
 - Accent usage only for CTA, XP, progress ring, active drill, streak indicator.
 - Primary interactions >=44px touch targets.
 - Motion timing: 180-220ms ease-in-out.
+- Screen transitions must not use full-opacity fade-out to `0`; avoid flash/flicker on navigation.
 
 ## 6. Testing and Quality Gates
 1. Local quality gate (required)
