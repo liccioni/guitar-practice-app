@@ -1,28 +1,31 @@
 # Guitar Practice App
 
-Mobile guitar practice coach app (dark mode, gamified UX) built with Expo + TypeScript.
+Gamified mobile guitar practice coach built with Expo + React Native + TypeScript.
+
+## Stable Baseline
+- Stable tag: `stable-2026-03-04-ci-green`
+- Stable commit: `fbca806`
+- GitHub release: `stable-2026-03-04-ci-green`
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`
 - Android package: `net.liccioni.guitarpractice`
 
 ## Quick Start
-1. Install dependencies: `npm install`
-2. Run iOS simulator (stable localhost mode): `npm run ios:local`
-3. Or start Expo normally: `npm run start`
-4. Test on phone with Expo Go by scanning the QR code.
+```bash
+npm ci
+npm run check
+npm run ios:local
+```
 
-## Build Profiles
-EAS profiles are defined in `eas.json`:
-- `development`
-- `preview`
-- `production`
-
-## Quality Gate
-- Run full quality gate: `npm run check`
+## Test Commands
+```bash
+npm run test:coverage
+npm run e2e:detox:build:ios
+npm run e2e:detox:test:ios
+```
 
 ## Documentation
-Use this minimal set:
-1. Product spec: `docs/SPEC.md`
-2. Rebuild/runbook (single source of execution truth): `docs/PROJECT_RUNBOOK.md`
-3. Release history: `docs/RELEASE_NOTES.md`
+- Product + acceptance criteria: `docs/SPEC.md`
+- Full rebuild runbook (from scratch): `docs/PROJECT_RUNBOOK.md`
+- Change history + stability markers: `docs/RELEASE_NOTES.md`

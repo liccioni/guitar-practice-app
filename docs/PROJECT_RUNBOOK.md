@@ -1,160 +1,117 @@
-# Project Runbook (Single Execution Guide)
+# Project Runbook (Rebuild From Scratch)
 
-This is the operational guide to rebuild the project from scratch and reach the current result.
+This runbook is designed to reproduce the project up to the exact stable baseline.
 
-## 1. Product Target
-- App: mobile guitar practice coach.
-- Platforms: iOS + Android (Expo React Native).
-- Data model: local-first, offline-first, on-device persistence only.
-- Visual direction: dark mode only (`#121212`), gamified UX, no admin/table UI patterns.
-- Locked design tokens:
-  - Background `#121212`, Surface `#1A1A1A`, Elevated `#222222`, Divider `#2A2A2A`
-  - Primary Accent `#D97706`, Secondary Accent `#E6B980`, XP `#EAB308`
-  - Primary Text `#F5F5F5`, Secondary Text `#B3B3B3`, Disabled `#6B7280`
-- Accent usage is restricted to CTA, XP, progress ring, active drill, and streak indicator.
-- Motion timing target is 180-220ms ease-in-out.
+## 1. Target Baseline
+- Stable tag: `stable-2026-03-04-ci-green`
+- Stable commit: `fbca806`
+- Canonical repo: `https://github.com/liccioni/guitar-practice-app`
 
-## 2. Current Delivered Scope
-### Core flows implemented
-1. Home dashboard
-- Level, XP progress, streak, daily goal progress, achievement badges.
-- Daily reminder toggle + reminder time save.
-
-2. Session Builder
-- Template create/select/rename/save/delete/duplicate.
-- Drill cards with reorder controls (up/down).
-- Drill add/remove.
-- Drill edit form with domain validation (name, duration, BPM).
-- Stable list rendering path is required (regression-safe fallback over drag-only behavior).
-
-3. Active practice
-- Countdown timer and session progress.
-- Metronome on/off + BPM step controls (+/- 5).
-- Pause/resume/skip.
-- Skip-safe accounting (skipped drills do not count as completed minutes).
-
-4. Session completion
-- XP reward + level-up state.
-- Streak confirmation.
-- Badge updates.
-
-5. Persistence
-- Drills, templates, history, goal settings stored via local storage gateway.
-- Versioned persistence envelope + migration handling.
-- Load-time data sanitization removes malformed drills/history entries, repairs template drill references, and normalizes invalid goal settings.
-
-## 3. Canonical Rules
-1. Validation
-- Drill name required.
-- Drill duration 1-30 minutes.
-- Drill BPM 40-240 when provided.
-- Session template total duration >= 5 minutes.
-
-2. Session accounting
-- Completed minutes are only from completed drills.
-- Skipped drills never increase completed minutes.
-- Session is `completed=true` only when all drills are completed.
-
-3. Goal/streak
-- Goal progress from today minutes vs daily target.
-- Streak based on local calendar days with practiced minutes > 0.
-
-## 4. Architecture and File Map
-### App shell
-- `/Users/liccioni/CodexProjects/guitar practice app/App.tsx`
-
-### Domain modules
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/exercises/drill.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/sessions/sessionTemplate.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/sessions/runtimeState.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/metronome/metronome.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/history/metrics.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/domain/goals/streak.ts`
-
-### Application services
-- `/Users/liccioni/CodexProjects/guitar practice app/src/application/practicePipeline.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/application/reminders.ts`
-
-### Persistence
-- `/Users/liccioni/CodexProjects/guitar practice app/src/persistence/LocalStorageGateway.ts`
-- `/Users/liccioni/CodexProjects/guitar practice app/src/persistence/InMemoryPracticeRepository.ts`
-
-## 5. Setup and Commands
-1. Install
+## 2. Prerequisites
+1. Node.js 20.x and npm.
+2. Xcode + iOS Simulator (for local iOS and Detox).
+3. CocoaPods (`sudo gem install cocoapods -N`).
+4. Homebrew package for Detox simulator utility:
 ```bash
-npm install
+brew tap wix/brew
+brew install applesimutils
 ```
 
-2. Run app
+## 3. Fresh Clone to Stable State
 ```bash
-npm run ios:local
-# or
-npm run start
+git clone git@github.com:liccioni/guitar-practice-app.git
+cd guitar-practice-app
+git fetch --tags
+git checkout stable-2026-03-04-ci-green
+npm ci
 ```
 
-3. Quality gate (required before commit/release)
+## 4. Verify Baseline Locally
+1. Quality gate:
 ```bash
 npm run check
 ```
-This runs:
-- lint
-- typecheck
-- test coverage gate
+Expected: lint + typecheck + coverage pass.
 
-4. E2E smoke (Detox, iOS simulator)
+2. iOS e2e validation:
 ```bash
-npm run e2e:detox:ios
+npm run e2e:detox:build:ios
+npm run e2e:detox:test:ios
 ```
-Notes:
-- `e2e:detox:ios` now runs prebuild automatically before build/test.
-- `applesimutils` is required for Detox test execution:
-  - `brew tap wix/brew`
-  - `brew install applesimutils`
-- If Detox cannot find the default simulator type, list available devices and override:
-  - `npm run e2e:list:simulators`
-  - `DETOX_DEVICE=\"<your simulator name>\" npm run e2e:detox:ios`
-- Smoke scenario covers: Home -> Builder -> Add Drill -> Start Session -> Active screen.
+Expected: all `Session builder e2e` tests pass.
 
-## 6. Testing and Coverage Policy
-### Coverage gate is enforced in config
-- `vitest` coverage provider: v8.
-- Global thresholds:
-  - lines >= 88
-  - statements >= 80
-  - functions >= 88
-  - branches >= 60
+## 5. Run App Locally
+```bash
+npm run ios:local
+```
+Alternative:
+```bash
+npm run start
+```
 
-### Test suites include
-- domain validation + runtime + metrics + streak
-- persistence migration + gateway behavior
-- reminders behavior
-- repository behavior
-- end-to-end pipeline integration
-- session builder UI-state interaction tests (add drill paths and template fallback/error handling)
-- session builder reorder interaction tests (up/down and boundary behavior)
-- session builder negative-path tests for missing/invalid active template ids
-- Detox iOS smoke test for end-to-end UI critical path
+## 6. CI Design (Important for Reproducibility)
+The repo intentionally ignores generated native folders in git (`/ios`, `/android`).
 
-## 7. Acceptance Gate
-### Functional acceptance
-1. Template CRUD + duplicate works in Builder.
-2. Validation errors are shown in-app (no uncaught runtime errors).
-3. Active session supports timer, metronome, pause/resume/skip.
-4. Completed sessions persist and metrics update on Home.
-5. Reminder toggle/time saves and schedules locally.
+CI therefore must always generate and normalize native iOS files during the workflow:
+1. `npm run e2e:prebuild:ios`
+2. `bash scripts/force-ios-deployment-target.sh 17.0` (pre-pods)
+3. `pod install --repo-update`
+4. `bash scripts/force-ios-deployment-target.sh 17.0` (post-pods)
+5. `npm run e2e:detox:build:ios`
+6. `npx detox clean-framework-cache && npx detox build-framework-cache`
+7. `npm run e2e:detox:test:ios`
 
-### Quality acceptance
-1. `npm run check` passes.
-2. No red-screen/black-screen runtime crashes for invalid template/drill input or malformed persisted local state paths.
+This flow is implemented in `.github/workflows/ci.yml`.
 
-## 8. Remaining Work to Reach Store Submission
-1. Validation UX polish and drill authoring ergonomics.
-2. Physical device accessibility/performance verification.
-3. Store pipeline execution:
-- App Store Connect/TestFlight internal build.
-- Play Console internal testing build.
+## 7. Why These Hardening Steps Exist
+1. Path safety
+- Build scripts patch generated Xcode project scripts to handle spaces in workspace paths.
+- Script: `scripts/patch-ios-project-scripts.js`
 
-## 9. Release Identity
-- iOS bundle id: `net.liccioni.guitarpractice`
-- Android package: `net.liccioni.guitarpractice`
-- EAS profiles: `development`, `preview`, `production`
+2. Deployment/SDK drift
+- Expo prebuild/pods can drift SDK/deployment values.
+- Script `scripts/force-ios-deployment-target.sh` forces:
+  - `IPHONEOS_DEPLOYMENT_TARGET = 17.0`
+  - generic `SDKROOT` values (`iphonesimulator` / `iphoneos`)
+
+3. Detox synchronization
+- App has frequent timers/animations.
+- E2E setup disables Detox synchronization per test launch for stability.
+- File: `e2e/init.js`
+
+## 8. Test Surfaces and Expected Results
+1. Unit + integration
+- 50 tests expected passing at baseline.
+
+2. Detox iOS
+- `e2e/builder-smoke.e2e.js` expects 4 passing tests:
+  - add drill
+  - remove drill
+  - start session
+  - complete session by skip
+
+## 9. Recovery Procedures
+1. If Detox reports framework cache validation errors:
+```bash
+npx detox clean-framework-cache
+npx detox build-framework-cache
+```
+
+2. If iOS workspace is missing:
+```bash
+npm run e2e:prebuild:ios
+```
+
+3. If iOS SDK/deployment mismatch appears in CI:
+- Confirm `EXPO_IOS_DEPLOYMENT_TARGET=17.0` in workflow.
+- Ensure `scripts/force-ios-deployment-target.sh 17.0` is run pre/post pods.
+
+## 10. How to Mark a New Stable Baseline
+1. Ensure local + CI are green.
+2. Create and push annotated tag:
+```bash
+git tag -a stable-YYYY-MM-DD-<suffix> -m "Stable baseline"
+git push origin stable-YYYY-MM-DD-<suffix>
+```
+3. Create GitHub release from tag.
+
