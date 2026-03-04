@@ -75,10 +75,16 @@ jobs:
       - name: Generate iOS native project
         run: npm run e2e:prebuild:ios
 
+      - name: Force iOS deployment target (pre-pods)
+        run: bash scripts/force-ios-deployment-target.sh 17.0
+
       - name: Install Pods
         run: |
           cd ios
           pod install --repo-update
+
+      - name: Force iOS deployment target (post-pods)
+        run: bash scripts/force-ios-deployment-target.sh 17.0
 
       - name: Build iOS app for Detox
         run: npm run e2e:detox:build:ios
