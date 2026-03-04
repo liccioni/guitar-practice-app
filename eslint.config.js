@@ -19,6 +19,7 @@ module.exports = defineConfig([
         expect: "readonly",
         it: "readonly",
         by: "readonly",
+        waitFor: "readonly",
       },
     },
   },

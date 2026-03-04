@@ -1099,7 +1099,7 @@ export function SessionBuilder(props: {
   const totalXp = drills.reduce((sum, drill) => sum + toXp(drill), 0);
 
   return (
-    <View style={styles.screenBody} testID="active-screen">
+    <View style={styles.screenBody} testID="builder-screen">
       <View style={styles.builderHeader}>
         <View style={styles.topRow}>
           <Pressable onPress={onBack} style={styles.topActionButton}>
@@ -1317,7 +1317,7 @@ function ActivePractice(props: {
   });
 
   return (
-    <View style={styles.screenBody} testID="complete-screen">
+    <View style={styles.screenBody} testID="active-screen">
       <Text style={styles.cardLabel}>Session Progress</Text>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
@@ -1385,7 +1385,7 @@ function SessionComplete(props: {
   const glowOpacity = rewardGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
 
   return (
-    <View style={styles.screenBody}>
+    <View style={styles.screenBody} testID="complete-screen">
       <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
 
       <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>

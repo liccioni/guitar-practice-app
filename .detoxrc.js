@@ -14,9 +14,8 @@ module.exports = {
   apps: {
     "ios.debug": {
       type: "ios.app",
-      binaryPath: "ios/build/Build/Products/Debug-iphonesimulator/GuitarPractice.app",
-      build:
-        "xcodebuild -workspace ios/GuitarPractice.xcworkspace -scheme GuitarPractice -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build",
+      binaryPath: "ios/build/Build/Products/Release-iphonesimulator/GuitarPractice.app",
+      build: "bash scripts/detox-build-ios.sh",
     },
   },
   devices: {
