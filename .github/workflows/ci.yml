@@ -56,7 +56,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "16.2"
+          xcode-version: "latest-stable"
 
       - name: Update CocoaPods
         run: sudo gem install cocoapods -N
@@ -71,6 +71,7 @@ jobs:
           node -v
           npm -v
           xcodebuild -version
+          xcodebuild -showsdks
 
       - name: Generate iOS native project
         run: npm run e2e:prebuild:ios

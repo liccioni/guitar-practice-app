@@ -14,6 +14,8 @@ fi
 
 if [[ -f ios/GuitarPractice.xcodeproj/project.pbxproj ]]; then
   perl -0pi -e "s/IPHONEOS_DEPLOYMENT_TARGET = \\d+(?:\\.\\d+)?;/IPHONEOS_DEPLOYMENT_TARGET = ${TARGET};/g" ios/GuitarPractice.xcodeproj/project.pbxproj
+  perl -0pi -e "s/SDKROOT = iphonesimulator\\d+(?:\\.\\d+)?;/SDKROOT = iphonesimulator;/g" ios/GuitarPractice.xcodeproj/project.pbxproj
+  perl -0pi -e "s/SDKROOT = iphoneos\\d+(?:\\.\\d+)?;/SDKROOT = iphoneos;/g" ios/GuitarPractice.xcodeproj/project.pbxproj
   echo "[force-ios-target] Patched ios/GuitarPractice.xcodeproj/project.pbxproj"
 else
   echo "[force-ios-target] Skipped ios/GuitarPractice.xcodeproj/project.pbxproj (not found)"
@@ -21,6 +23,8 @@ fi
 
 if [[ -f ios/Pods/Pods.xcodeproj/project.pbxproj ]]; then
   perl -0pi -e "s/IPHONEOS_DEPLOYMENT_TARGET = \\d+(?:\\.\\d+)?;/IPHONEOS_DEPLOYMENT_TARGET = ${TARGET};/g" ios/Pods/Pods.xcodeproj/project.pbxproj
+  perl -0pi -e "s/SDKROOT = iphonesimulator\\d+(?:\\.\\d+)?;/SDKROOT = iphonesimulator;/g" ios/Pods/Pods.xcodeproj/project.pbxproj
+  perl -0pi -e "s/SDKROOT = iphoneos\\d+(?:\\.\\d+)?;/SDKROOT = iphoneos;/g" ios/Pods/Pods.xcodeproj/project.pbxproj
   echo "[force-ios-target] Patched ios/Pods/Pods.xcodeproj/project.pbxproj"
 else
   echo "[force-ios-target] Skipped ios/Pods/Pods.xcodeproj/project.pbxproj (not found)"
