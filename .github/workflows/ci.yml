@@ -62,6 +62,9 @@ jobs:
           npm -v
           xcodebuild -version
 
+      - name: Generate iOS native project
+        run: npm run e2e:prebuild:ios
+
       - name: Build iOS app for Detox
         run: npm run e2e:detox:build:ios
 
