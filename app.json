@@ -14,6 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "deploymentTarget": "17.0",
       "bundleIdentifier": "net.liccioni.guitarpractice"
     },
     "android": {
