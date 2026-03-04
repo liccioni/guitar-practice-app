@@ -49,6 +49,11 @@ Alternative:
 npm run start
 ```
 
+## 5.1 Distribution Constraints
+- Android internal distribution is available through EAS preview builds.
+- iOS internal/store distribution requires a paid Apple Developer team.
+- If Apple enrollment is not active, continue iOS via simulator/local QA only.
+
 ## 6. CI Design (Important for Reproducibility)
 The repo intentionally ignores generated native folders in git (`/ios`, `/android`).
 

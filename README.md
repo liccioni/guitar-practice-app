@@ -30,3 +30,4 @@ npm run e2e:detox:test:ios
 - Full rebuild runbook (from scratch): `docs/PROJECT_RUNBOOK.md`
 - Change history + stability markers: `docs/RELEASE_NOTES.md`
 - Bug registry: `docs/BUG_REPORTS.md`
+- Active release execution plan: `docs/RELEASE_PLAN.md`

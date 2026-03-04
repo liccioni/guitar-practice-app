@@ -31,3 +31,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Root cause: full fade-out/in animation on screen changes caused visible flashing.
 - Resolution: switched to soft one-way fade-in transition.
 - Bug reference: `docs/BUG_REPORTS.md` -> `BR-2026-03-04-001`.
+2. EAS project initialized and Android preview internal build completed.
+- Build id: `b4cb9774-1ca3-4b3a-a2cb-9bdb94e543bb`
+- Artifact: `https://expo.dev/artifacts/eas/ojSxXYtSYjCoSPPosJchFe.apk`
+- iOS distribution remains blocked until Apple Developer enrollment is active.
