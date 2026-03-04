@@ -35,3 +35,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Build id: `b4cb9774-1ca3-4b3a-a2cb-9bdb94e543bb`
 - Artifact: `https://expo.dev/artifacts/eas/ojSxXYtSYjCoSPPosJchFe.apk`
 - iOS distribution remains blocked until Apple Developer enrollment is active.
+3. Metronome upgraded from visual-only feedback to audible offline tick playback.
+- Added audio service: `src/application/metronomeAudio.ts`
+- Added bundled tick asset: `assets/audio/metronome-tick.wav`
+- Added unit tests: `tests/metronomeAudio.test.ts`

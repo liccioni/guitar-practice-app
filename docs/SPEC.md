@@ -24,6 +24,7 @@ This is the implementation contract for the current project state.
 3. Active Practice
 - Drill countdown + session progress.
 - Metronome default-on when session starts, with On/Off and BPM +/-5 controls.
+- Metronome must produce audible tick playback from bundled offline asset.
 - Pause/Resume + Skip controls.
 
 4. Session Complete

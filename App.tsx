@@ -15,6 +15,11 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
+import {
+  playMetronomeTick,
+  primeMetronomeAudio,
+  releaseMetronomeAudio,
+} from "./src/application/metronomeAudio";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
 import { appendDrillToTemplate, reorderDrillInTemplate } from "./src/application/sessionBuilder";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
@@ -340,6 +345,7 @@ export default function App() {
     const intervalMs = getBeatIntervalMs(metronomeBpm);
     const beatTimer = setInterval(() => {
       setBeatFlash((current) => !current);
+      void playMetronomeTick();
       try {
         Vibration.vibrate(10);
       } catch {
@@ -349,6 +355,17 @@ export default function App() {
 
     return () => clearInterval(beatTimer);
   }, [isPaused, metronomeBpm, metronomeEnabled, screen]);
+
+  useEffect(() => {
+    if (screen !== "active" || !metronomeEnabled) return;
+    void primeMetronomeAudio();
+  }, [metronomeEnabled, screen]);
+
+  useEffect(() => {
+    return () => {
+      void releaseMetronomeAudio();
+    };
+  }, []);
 
   useEffect(() => {
     if (screen !== "complete") return;

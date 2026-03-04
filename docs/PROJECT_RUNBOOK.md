@@ -84,6 +84,11 @@ This flow is implemented in `.github/workflows/ci.yml`.
 - E2E setup disables Detox synchronization per test launch for stability.
 - File: `e2e/init.js`
 
+4. Metronome audio engine
+- Active practice metronome uses bundled offline tick sound playback.
+- Service file: `src/application/metronomeAudio.ts`
+- Asset file: `assets/audio/metronome-tick.wav`
+
 ## 8. Test Surfaces and Expected Results
 1. Unit + integration
 - 50 tests expected passing at baseline.
