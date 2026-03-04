@@ -66,7 +66,10 @@ This is the implementation contract for the current project state.
 4. goalSettings
 - `dailyMinutesTarget`, `reminderEnabled`, `reminderTime`
 
-5. persistence envelope
+5. profile
+- `totalXp`, `unlockedBadgeIds[]`
+
+6. persistence envelope
 - `{ version, state }`
 
 ## 5. UI Contract (Locked)

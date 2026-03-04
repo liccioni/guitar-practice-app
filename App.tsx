@@ -49,6 +49,12 @@ interface Badge {
   unlocked: boolean;
 }
 
+interface BadgeDefinition {
+  id: string;
+  label: string;
+  icon: string;
+}
+
 const TOKENS = {
   background: "#121212",
   surface: "#1A1A1A",
@@ -94,6 +100,18 @@ const MOTIVATION = [
   "You are one drill away from momentum.",
 ];
 
+const BADGE_DEFINITIONS: BadgeDefinition[] = [
+  { id: "b1", label: "7-Day Streak", icon: "🔥" },
+  { id: "b2", label: "Rhythm Keeper", icon: "🎵" },
+  { id: "b3", label: "XP Hunter", icon: "⚡" },
+  { id: "b4", label: "Session Beast", icon: "🏆" },
+];
+
+const DEFAULT_PROFILE = {
+  totalXp: 0,
+  unlockedBadgeIds: [] as string[],
+};
+
 function makeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -126,6 +144,18 @@ function clampUnit(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+function buildBadgeState(unlockedBadgeIds: string[]): Badge[] {
+  const unlocked = new Set(unlockedBadgeIds);
+  return BADGE_DEFINITIONS.map((badge) => ({
+    ...badge,
+    unlocked: unlocked.has(badge.id),
+  }));
+}
+
+function getUnlockedBadgeIds(badges: Badge[]): string[] {
+  return badges.filter((badge) => badge.unlocked).map((badge) => badge.id);
+}
+
 function createSeedState(nowIso: string): PersistedPracticeState {
   const drills = DRILL_POOL.slice(0, 4).map((input, idx) =>
     createDrillFromInput(`seed_drill_${idx + 1}`, input, nowIso),
@@ -144,6 +174,7 @@ function createSeedState(nowIso: string): PersistedPracticeState {
     templates: [starterTemplate],
     history: [],
     goalSettings: DEFAULT_GOAL_SETTINGS,
+    profile: DEFAULT_PROFILE,
   };
 }
 
@@ -177,17 +208,12 @@ export default function App() {
   const [metronomeBpm, setMetronomeBpm] = useState(100);
   const [beatFlash, setBeatFlash] = useState(false);
 
-  const [totalXp, setTotalXp] = useState(1120);
+  const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
   const [sessionXp, setSessionXp] = useState(0);
   const [leveledUp, setLeveledUp] = useState(false);
   const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
 
-  const [badges, setBadges] = useState<Badge[]>([
-    { id: "b1", label: "7-Day Streak", icon: "🔥", unlocked: true },
-    { id: "b2", label: "Rhythm Keeper", icon: "🎵", unlocked: true },
-    { id: "b3", label: "XP Hunter", icon: "⚡", unlocked: false },
-    { id: "b4", label: "Session Beast", icon: "🏆", unlocked: false },
-  ]);
+  const [badges, setBadges] = useState<Badge[]>(() => buildBadgeState(DEFAULT_PROFILE.unlockedBadgeIds));
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const rewardScale = useRef(new Animated.Value(0.92)).current;
@@ -276,6 +302,8 @@ export default function App() {
         setTemplates(seed.templates);
         setHistory(seed.history);
         setGoalSettings(seed.goalSettings);
+        setTotalXp(seed.profile.totalXp);
+        setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
         setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
@@ -286,6 +314,8 @@ export default function App() {
         setTemplates(seed.templates);
         setHistory(seed.history);
         setGoalSettings(seed.goalSettings);
+        setTotalXp(seed.profile.totalXp);
+        setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
         setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
@@ -305,8 +335,12 @@ export default function App() {
       templates,
       history,
       goalSettings,
+      profile: {
+        totalXp,
+        unlockedBadgeIds: getUnlockedBadgeIds(badges),
+      },
     });
-  }, [allDrills, goalSettings, history, isHydrated, templates]);
+  }, [allDrills, badges, goalSettings, history, isHydrated, templates, totalXp]);
 
   useEffect(() => {
     fadeAnim.stopAnimation();

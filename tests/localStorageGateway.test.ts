@@ -35,12 +35,18 @@ describe("LocalStorageGateway", () => {
             reminderEnabled: true,
             reminderTime: "20:10",
           },
+          profile: {
+            totalXp: 1500,
+            unlockedBadgeIds: ["b3"],
+          },
         },
       }),
     );
 
     const result = await loadPersistedState();
     expect(result.goalSettings.dailyMinutesTarget).toBe(25);
+    expect(result.profile.totalXp).toBe(1500);
+    expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
   });
 
   it("returns empty state when async get fails", async () => {
@@ -50,6 +56,8 @@ describe("LocalStorageGateway", () => {
     expect(result.drills).toEqual([]);
     expect(result.templates).toEqual([]);
     expect(result.history).toEqual([]);
+    expect(result.profile.totalXp).toBe(0);
+    expect(result.profile.unlockedBadgeIds).toEqual([]);
   });
 
   it("saves versioned envelope", async () => {
@@ -64,6 +72,10 @@ describe("LocalStorageGateway", () => {
             dailyMinutesTarget: 30,
             reminderEnabled: false,
             reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 300,
+            unlockedBadgeIds: ["b4", "b4", "bad-id"],
           },
         },
       }),
@@ -88,6 +100,10 @@ describe("LocalStorageGateway", () => {
           dailyMinutesTarget: 30,
           reminderEnabled: false,
           reminderTime: "18:00",
+        },
+        profile: {
+          totalXp: 0,
+          unlockedBadgeIds: [],
         },
       }),
     ).resolves.toBeUndefined();
@@ -157,6 +173,10 @@ describe("LocalStorageGateway", () => {
             reminderEnabled: 1,
             reminderTime: "bad-time",
           },
+          profile: {
+            totalXp: -1,
+            unlockedBadgeIds: ["b3", "", "b3", 25],
+          },
         },
       }),
     );
@@ -183,5 +203,8 @@ describe("LocalStorageGateway", () => {
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(30);
     expect(parsed.goalSettings.reminderEnabled).toBe(true);
     expect(parsed.goalSettings.reminderTime).toBe("18:00");
+
+    expect(parsed.profile.totalXp).toBe(0);
+    expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
   });
 });

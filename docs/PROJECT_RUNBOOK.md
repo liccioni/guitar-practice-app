@@ -91,7 +91,8 @@ This flow is implemented in `.github/workflows/ci.yml`.
 
 ## 8. Test Surfaces and Expected Results
 1. Unit + integration
-- 50 tests expected passing at baseline.
+- 53 tests expected passing on current main.
+- Coverage thresholds must pass (`lines >= 88`, `statements >= 80`, `functions >= 88`, `branches >= 60`).
 
 2. Detox iOS
 - `e2e/builder-smoke.e2e.js` expects 4 passing tests:

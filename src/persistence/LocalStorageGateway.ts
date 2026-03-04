@@ -7,20 +7,32 @@ import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill"
 import { isValidBpm } from "../domain/metronome/metronome";
 
 const STORAGE_KEY = "guitar-practice:v1";
-export const PERSISTENCE_SCHEMA_VERSION = 2;
+export const PERSISTENCE_SCHEMA_VERSION = 3;
+
+export interface PersistedProfileState {
+  totalXp: number;
+  unlockedBadgeIds: string[];
+}
 
 export interface PersistedPracticeState {
   drills: Drill[];
   templates: SessionTemplate[];
   history: PracticeHistoryEntry[];
   goalSettings: GoalSettings;
+  profile: PersistedProfileState;
 }
+
+const DEFAULT_PROFILE_STATE: PersistedProfileState = {
+  totalXp: 0,
+  unlockedBadgeIds: [],
+};
 
 export const EMPTY_PRACTICE_STATE: PersistedPracticeState = {
   drills: [],
   templates: [],
   history: [],
   goalSettings: DEFAULT_GOAL_SETTINGS,
+  profile: DEFAULT_PROFILE_STATE,
 };
 
 interface PersistedEnvelope {
@@ -178,6 +190,27 @@ function sanitizeGoalSettings(input: unknown): GoalSettings {
   };
 }
 
+function sanitizeProfileState(input: unknown): PersistedProfileState {
+  if (!isPlainObject(input)) return DEFAULT_PROFILE_STATE;
+
+  const totalXp = Number(input.totalXp);
+  const unlockedBadgeIds = Array.isArray(input.unlockedBadgeIds)
+    ? Array.from(
+        new Set(
+          input.unlockedBadgeIds
+            .filter((id): id is string => typeof id === "string")
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0),
+        ),
+      )
+    : [];
+
+  return {
+    totalXp: Number.isFinite(totalXp) && totalXp >= 0 ? Math.round(totalXp) : DEFAULT_PROFILE_STATE.totalXp,
+    unlockedBadgeIds,
+  };
+}
+
 function normalizeState(
   input: Partial<PersistedPracticeState> | null | undefined,
 ): PersistedPracticeState {
@@ -187,6 +220,7 @@ function normalizeState(
     templates: sanitizeTemplates(input?.templates, drills),
     history: sanitizeHistory(input?.history),
     goalSettings: sanitizeGoalSettings(input?.goalSettings),
+    profile: sanitizeProfileState(input?.profile),
   };
 }
 
@@ -197,11 +231,7 @@ export function parsePersistedState(raw: string | null): PersistedPracticeState 
     const parsed = JSON.parse(raw) as Partial<PersistedEnvelope> & Partial<PersistedPracticeState>;
 
     // Current versioned envelope.
-    if (
-      typeof parsed.version === "number" &&
-      parsed.version >= PERSISTENCE_SCHEMA_VERSION &&
-      parsed.state
-    ) {
+    if (typeof parsed.version === "number" && parsed.state) {
       return normalizeState(parsed.state);
     }
 

@@ -39,3 +39,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Added audio service: `src/application/metronomeAudio.ts`
 - Added bundled tick asset: `assets/audio/metronome-tick.wav`
 - Added unit tests: `tests/metronomeAudio.test.ts`
+4. Profile progression is now persisted locally.
+- Added persistence schema v3 with `profile.totalXp` and `profile.unlockedBadgeIds`.
+- Added migration-safe defaults for legacy payloads.
+- App now hydrates/saves XP and unlocked badges through local storage.

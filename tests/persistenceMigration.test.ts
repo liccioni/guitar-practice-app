@@ -22,12 +22,15 @@ describe("persistence migration", () => {
         templates: [],
         history: [],
         goalSettings: { dailyMinutesTarget: 20, reminderEnabled: true, reminderTime: "19:30" },
+        profile: { totalXp: 420, unlockedBadgeIds: ["b4"] },
       },
     });
 
     const parsed = parsePersistedState(raw);
     expect(parsed.drills).toHaveLength(1);
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(20);
+    expect(parsed.profile.totalXp).toBe(420);
+    expect(parsed.profile.unlockedBadgeIds).toEqual(["b4"]);
   });
 
   it("migrates legacy direct payload", () => {
@@ -40,6 +43,8 @@ describe("persistence migration", () => {
     const parsed = parsePersistedState(raw);
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(30);
     expect(parsed.goalSettings.reminderEnabled).toBe(false);
+    expect(parsed.profile.totalXp).toBe(0);
+    expect(parsed.profile.unlockedBadgeIds).toEqual([]);
   });
 
   it("falls back to empty state on invalid json", () => {
@@ -47,6 +52,8 @@ describe("persistence migration", () => {
     expect(parsed.drills).toEqual([]);
     expect(parsed.templates).toEqual([]);
     expect(parsed.history).toEqual([]);
+    expect(parsed.profile.totalXp).toBe(0);
+    expect(parsed.profile.unlockedBadgeIds).toEqual([]);
   });
 
   it("drops malformed drills and invalid template drill references", () => {
@@ -91,5 +98,7 @@ describe("persistence migration", () => {
     expect(parsed.drills.map((drill) => drill.id)).toEqual(["valid"]);
     expect(parsed.templates[0]?.drillIds).toEqual(["valid"]);
     expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
+    expect(parsed.profile.totalXp).toBe(0);
+    expect(parsed.profile.unlockedBadgeIds).toEqual([]);
   });
 });
