@@ -15,7 +15,10 @@
     "ios": {
       "supportsTablet": true,
       "deploymentTarget": "17.0",
-      "bundleIdentifier": "net.liccioni.guitarpractice"
+      "bundleIdentifier": "net.liccioni.guitarpractice",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +31,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "77aaea8c-df95-40a6-8fff-6f8e6e872eb7"
+      }
+    },
+    "owner": "liccioni"
   }
 }
