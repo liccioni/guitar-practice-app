@@ -46,7 +46,13 @@ This is the implementation contract for the current project state.
 - Goal progress uses today completed minutes vs daily target.
 - Streak uses local day boundaries and practiced minutes > 0.
 
-4. Persistence integrity
+4. Badge unlock criteria
+- `b1` (7-Day Streak): unlock when streak is >= 7 days.
+- `b2` (Rhythm Keeper): unlock when completed sessions >= 5 and average BPM >= 100.
+- `b3` (XP Hunter): unlock when session XP gained is >= 150.
+- `b4` (Session Beast): unlock when completed drills in one session >= 4.
+
+5. Persistence integrity
 - Data is versioned and sanitized on load.
 - Malformed drills/history entries are dropped.
 - Invalid drill references in templates are removed.

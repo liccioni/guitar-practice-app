@@ -43,3 +43,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Added persistence schema v3 with `profile.totalXp` and `profile.unlockedBadgeIds`.
 - Added migration-safe defaults for legacy payloads.
 - App now hydrates/saves XP and unlocked badges through local storage.
+5. Badge progression now uses deterministic unlock rules (not visual-only defaults).
+- Added badge engine: `src/domain/gamification/badges.ts`
+- Added tests: `tests/badges.test.ts`
+- Unlock criteria now tied to streak, session quality, session XP, and completed drill count.

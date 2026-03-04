@@ -26,6 +26,7 @@ import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercis
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
 import { calculateCurrentStreak } from "./src/domain/goals/streak";
+import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
 import { calculateDashboardMetrics } from "./src/domain/history/metrics";
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
 import { getBeatIntervalMs, isValidBpm, stepBpm } from "./src/domain/metronome/metronome";
@@ -492,15 +493,25 @@ export default function App() {
       completed: finalCompletedDrillIds.length === activeDrillIds.length,
     };
 
-    setHistory((current) => [entry, ...current]);
+    const nextHistory = [entry, ...history];
+    const nextStreak = calculateCurrentStreak(nextHistory, new Date().toISOString());
+    const nextMetrics = calculateDashboardMetrics({
+      entries: nextHistory,
+      nowIso: new Date().toISOString(),
+      dailyMinutesTarget: goalSettings.dailyMinutesTarget,
+    });
+    const nextSessionsCompleted = nextHistory.filter((item) => item.completed).length;
+    const nextUnlockedBadgeIds = computeUnlockedBadgeIds({
+      currentUnlockedBadgeIds: badges.filter((badge) => badge.unlocked).map((badge) => badge.id),
+      sessionXp: finalSessionXp,
+      completedDrillCount: finalCompletedDrillIds.length,
+      streakDays: nextStreak,
+      sessionsCompleted: nextSessionsCompleted,
+      averageBpm: nextMetrics.averageBpm,
+    });
 
-    setBadges((current) =>
-      current.map((badge) => {
-        if (badge.id === "b3" && finalSessionXp >= 150) return { ...badge, unlocked: true };
-        if (badge.id === "b4" && finalCompletedDrillIds.length >= 4) return { ...badge, unlocked: true };
-        return badge;
-      }),
-    );
+    setHistory(nextHistory);
+    setBadges(buildBadgeState(nextUnlockedBadgeIds));
 
     setScreen("complete");
   }
