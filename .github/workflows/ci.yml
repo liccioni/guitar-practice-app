@@ -90,5 +90,8 @@ jobs:
       - name: Build iOS app for Detox
         run: npm run e2e:detox:build:ios
 
+      - name: Refresh Detox framework cache
+        run: npx detox clean-framework-cache && npx detox build-framework-cache
+
       - name: Run Detox iOS tests
         run: npm run e2e:detox:test:ios
