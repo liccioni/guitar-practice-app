@@ -1111,7 +1111,11 @@ export function SessionBuilder(props: {
 
         <GlowCard>
           <View style={styles.inlineRow}>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onCreateTemplate}>
+            <TouchableOpacity
+              style={styles.smallActionButton}
+              onPress={onCreateTemplate}
+              testID="builder-template-new"
+            >
               <Text style={styles.smallActionText}>New</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
@@ -1148,10 +1152,22 @@ export function SessionBuilder(props: {
             style={styles.templateInput}
           />
 
-          {builderError ? <Text style={styles.errorText}>{builderError}</Text> : null}
+          {builderError ? (
+            <Text style={styles.errorText} testID="builder-error-text">
+              {builderError}
+            </Text>
+          ) : null}
         </GlowCard>
 
         <Text style={styles.helperText}>Tap a drill card to edit. Use ↑/↓ to reorder.</Text>
+        <Text style={styles.helperText} testID="builder-drill-count">
+          {drills.length} drills
+        </Text>
+        <View
+          testID="builder-stats"
+          accessibilityLabel={`${drills.length} drills ${totalXp} xp`}
+          style={styles.builderStatsProbe}
+        />
 
         <TouchableOpacity style={styles.primaryCta} onPress={onStartSession} testID="builder-start-session">
           <Text style={styles.primaryCtaText}>Start This Session</Text>
@@ -1359,10 +1375,14 @@ function ActivePractice(props: {
       <Text style={styles.microcopy}>{microcopy}</Text>
 
       <View style={styles.controlsRow}>
-        <TouchableOpacity style={styles.controlButton} onPress={onPauseToggle}>
+        <TouchableOpacity style={styles.controlButton} onPress={onPauseToggle} testID="active-pause-toggle">
           <Text style={styles.controlButtonText}>{isPaused ? "Resume" : "Pause"}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.controlButton, styles.controlButtonSecondary]} onPress={onSkip}>
+        <TouchableOpacity
+          style={[styles.controlButton, styles.controlButtonSecondary]}
+          onPress={onSkip}
+          testID="active-skip-button"
+        >
           <Text style={styles.controlButtonText}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -1406,7 +1426,7 @@ function SessionComplete(props: {
         </View>
       </Animated.View>
 
-      <TouchableOpacity style={styles.primaryCta} onPress={onContinue}>
+      <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
         <Text style={styles.primaryCtaText}>Back to Dashboard</Text>
       </TouchableOpacity>
     </View>
@@ -1671,6 +1691,11 @@ const styles = StyleSheet.create({
   helperText: {
     color: COLORS.muted,
     fontSize: 13,
+  },
+  builderStatsProbe: {
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
   builderList: {
     flex: 1,
