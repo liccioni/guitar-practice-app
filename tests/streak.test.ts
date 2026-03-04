@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateCurrentStreak } from "../src/domain/goals/streak";
+import { calculateCurrentStreak, incrementStreakIfPracticedToday } from "../src/domain/goals/streak";
 import type { PracticeHistoryEntry } from "../src/domain/history/types";
 
 function entry(dayIso: string): PracticeHistoryEntry {
@@ -35,5 +35,13 @@ describe("streak rules", () => {
   it("returns 0 when no practice on current day", () => {
     const entries = [entry("2026-03-01T09:00:00.000Z")];
     expect(calculateCurrentStreak(entries, "2026-03-02T12:00:00.000Z")).toBe(0);
+  });
+
+  it("increments streak when minutes were completed today", () => {
+    expect(incrementStreakIfPracticedToday(4, 1)).toBe(5);
+  });
+
+  it("keeps streak unchanged when no minutes were completed today", () => {
+    expect(incrementStreakIfPracticedToday(4, 0)).toBe(4);
   });
 });

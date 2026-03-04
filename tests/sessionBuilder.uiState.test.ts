@@ -107,6 +107,19 @@ describe("session builder UI state", () => {
     expect(result.templates[0].drillIds).toEqual(["d1", "d2"]);
   });
 
+  it("keeps order unchanged when reorder drill id is missing", () => {
+    const templates = [makeTemplate("t1", ["d1", "d2"], 600)];
+    const result = reorderDrillInTemplate({
+      templates,
+      activeTemplateId: "t1",
+      drillId: "missing",
+      direction: "down",
+      nowIso: "2026-03-03T11:00:00.000Z",
+    });
+
+    expect(result.templates[0].drillIds).toEqual(["d1", "d2"]);
+  });
+
   it("throws when reorder is requested with no templates", () => {
     expect(() =>
       reorderDrillInTemplate({

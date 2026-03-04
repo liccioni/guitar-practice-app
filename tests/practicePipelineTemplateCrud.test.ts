@@ -33,4 +33,21 @@ describe("practice pipeline template CRUD", () => {
     expect(updated.drillIds).toEqual([warmup.id, scales.id]);
     expect(updated.createdAt).toBe("2026-03-02T00:00:00.000Z");
   });
+
+  it("deletes an existing template", () => {
+    const repository = new InMemoryPracticeRepository();
+    const pipeline = new PracticePipeline(repository);
+
+    const warmup = repository.createDrill({ name: "Warmup", durationMinutes: 5 });
+    const template = pipeline.createSessionTemplateFromDrills({
+      id: "t-delete",
+      name: "Delete Me",
+      drills: [warmup],
+      nowIso: "2026-03-02T00:00:00.000Z",
+    });
+
+    expect(repository.listSessionTemplates().map((item) => item.id)).toContain(template.id);
+    pipeline.deleteSessionTemplate(template.id);
+    expect(repository.listSessionTemplates().map((item) => item.id)).not.toContain(template.id);
+  });
 });
