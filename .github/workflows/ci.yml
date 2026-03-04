@@ -35,7 +35,7 @@ jobs:
 
   ios-e2e:
     name: iOS Detox E2E
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -51,6 +51,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.2"
+
+      - name: Update CocoaPods
+        run: sudo gem install cocoapods -N
+
       - name: Install applesimutils
         run: |
           brew tap wix/brew
@@ -64,6 +72,11 @@ jobs:
 
       - name: Generate iOS native project
         run: npm run e2e:prebuild:ios
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install --repo-update
 
       - name: Build iOS app for Detox
         run: npm run e2e:detox:build:ios
