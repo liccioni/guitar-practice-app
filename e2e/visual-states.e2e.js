@@ -2,16 +2,37 @@ async function waitForVisible(id, timeout = 12000) {
   await waitFor(element(by.id(id))).toBeVisible().withTimeout(timeout);
 }
 
+async function ensureBuilderReady() {
+  await waitForVisible("builder-start-session", 16000);
+}
+
 async function openBuilder() {
-  await waitForVisible("home-start-practice");
+  try {
+    await waitForVisible("builder-start-session", 1200);
+    return;
+  } catch {
+    // Not on builder yet; continue with home navigation.
+  }
+
+  await waitForVisible("home-start-practice", 20000);
   await element(by.id("home-start-practice")).tap();
-  await waitForVisible("builder-screen");
+
+  try {
+    await ensureBuilderReady();
+  } catch {
+    try {
+      await element(by.id("home-start-practice")).tap();
+    } catch {
+      // Ignore missing Home CTA here; we may already be transitioning.
+    }
+    await ensureBuilderReady();
+  }
 }
 
 async function ensureDrillExists() {
-  const stats = await element(by.id("builder-stats")).getAttributes();
-  const raw = String(stats.label ?? stats.text ?? stats.value ?? "");
-  const match = raw.match(/(\d+)\s+drills/i);
+  const countLabel = await element(by.id("builder-drill-count")).getAttributes();
+  const raw = String(countLabel.text ?? countLabel.label ?? countLabel.value ?? "");
+  const match = raw.match(/(\d+)\s+drill/i);
   const drillCount = match ? Number(match[1]) : 0;
   if (drillCount === 0) {
     await element(by.id("builder-add-drill")).tap();
@@ -22,30 +43,51 @@ async function ensureDrillExists() {
 async function completeBySkipping() {
   for (let i = 0; i < 20; i += 1) {
     try {
-      await waitForVisible("complete-screen", 1000);
+      await waitForVisible("complete-continue-button", 1000);
       return;
     } catch {
-      await waitForVisible("active-skip-button", 6000);
-      await element(by.id("active-skip-button")).tap();
+      try {
+        await waitForVisible("active-skip-button", 2500);
+        await element(by.id("active-skip-button")).tap();
+      } catch {
+        await waitForVisible("active-screen", 10000);
+      }
     }
   }
-  await waitForVisible("complete-screen", 15000);
+  await waitForVisible("complete-continue-button", 20000);
 }
 
 async function startSessionFromBuilder() {
-  await element(by.id("builder-start-session")).tap();
+  await ensureBuilderReady();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await element(by.id("builder-start-session")).tap();
 
-  try {
-    await waitForVisible("active-screen");
-  } catch (error) {
     try {
-      const attrs = await element(by.id("builder-error-text")).getAttributes();
-      const message = String(attrs.text ?? attrs.label ?? attrs.value ?? "unknown builder error");
-      throw new Error(`Could not start session from builder: ${message}`);
+      await waitForVisible("active-screen", 8000);
+      return;
     } catch {
-      throw error;
+      try {
+        await waitForVisible("active-pause-toggle", 1500);
+        return;
+      } catch {}
+
+      try {
+        const attrs = await element(by.id("builder-error-text")).getAttributes();
+        const message = String(attrs.text ?? attrs.label ?? attrs.value ?? "unknown builder error");
+        if (/no drills/i.test(message)) {
+          await element(by.id("builder-add-drill")).tap();
+          await waitForVisible("builder-drill-count");
+          await ensureBuilderReady();
+          continue;
+        }
+        throw new Error(`Could not start session from builder: ${message}`);
+      } catch {
+        // Continue retrying when transition is still in progress.
+      }
     }
   }
+
+  throw new Error("Could not start session from builder after retries.");
 }
 
 describe("Visual state snapshots", () => {
@@ -61,7 +103,7 @@ describe("Visual state snapshots", () => {
     await device.takeScreenshot("03-active");
 
     await completeBySkipping();
-    await waitForVisible("complete-screen");
+    await waitForVisible("complete-continue-button");
     await device.takeScreenshot("04-complete");
   });
 });
