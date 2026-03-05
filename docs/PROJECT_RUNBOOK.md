@@ -37,8 +37,10 @@ Expected: lint + typecheck + coverage pass.
 ```bash
 npm run e2e:detox:build:ios
 npm run e2e:detox:test:ios
+npm run e2e:detox:visual:ios
 ```
 Expected: all `Session builder e2e` tests pass.
+Expected: visual run emits Home/Builder/Active/Complete snapshots.
 
 ## 5. Run App Locally
 ```bash

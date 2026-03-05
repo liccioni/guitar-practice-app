@@ -114,6 +114,10 @@ This is the implementation contract for the current project state.
 - Start session from Session Builder.
 - Complete a session via Skip flow and reach complete screen.
 
+4. Visual snapshot regression coverage
+- Detox visual test captures screenshots for Home, Builder, Active, and Complete screens.
+- Command: `npm run e2e:detox:visual:ios`
+
 ## 7. CI Contract
 GitHub Actions must run:
 - `quality` job on Ubuntu:

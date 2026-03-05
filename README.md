@@ -23,6 +23,7 @@ npm run ios:local
 npm run test:coverage
 npm run e2e:detox:build:ios
 npm run e2e:detox:test:ios
+npm run e2e:detox:visual:ios
 ```
 
 ## Documentation

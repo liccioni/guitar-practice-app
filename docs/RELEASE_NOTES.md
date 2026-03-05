@@ -47,3 +47,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Added badge engine: `src/domain/gamification/badges.ts`
 - Added tests: `tests/badges.test.ts`
 - Unlock criteria now tied to streak, session quality, session XP, and completed drill count.
+6. Added visual regression snapshot flow on iOS Detox.
+- New test: `e2e/visual-states.e2e.js`
+- New command: `npm run e2e:detox:visual:ios`
+- Captures screenshots of Home, Builder, Active, and Complete states.
