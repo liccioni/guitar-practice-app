@@ -51,3 +51,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - New test: `e2e/visual-states.e2e.js`
 - New command: `npm run e2e:detox:visual:ios`
 - Captures screenshots of Home, Builder, Active, and Complete states.
+7. Added edge-state visual regression snapshots.
+- New test: `e2e/visual-edge-states.e2e.js`
+- New command: `npm run e2e:detox:visual:edge:ios`
+- Captures empty builder, builder validation error, and paused active states.

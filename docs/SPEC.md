@@ -117,6 +117,8 @@ This is the implementation contract for the current project state.
 4. Visual snapshot regression coverage
 - Detox visual test captures screenshots for Home, Builder, Active, and Complete screens.
 - Command: `npm run e2e:detox:visual:ios`
+- Detox edge visual test captures Empty Builder, Builder validation error, and Active paused states.
+- Command: `npm run e2e:detox:visual:edge:ios`
 
 ## 7. CI Contract
 GitHub Actions must run:

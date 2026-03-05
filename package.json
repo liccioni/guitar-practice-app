@@ -20,6 +20,7 @@
     "e2e:detox:build:ios": "npm run e2e:patch:ios && detox build -c ios.sim.debug",
     "e2e:detox:test:ios": "command -v applesimutils >/dev/null 2>&1 || (echo \"Missing applesimutils. Install with: brew tap wix/brew && brew install applesimutils\" && exit 1); detox test -c ios.sim.debug",
     "e2e:detox:visual:ios": "command -v applesimutils >/dev/null 2>&1 || (echo \"Missing applesimutils. Install with: brew tap wix/brew && brew install applesimutils\" && exit 1); detox test -c ios.sim.debug e2e/visual-states.e2e.js --take-screenshots all",
+    "e2e:detox:visual:edge:ios": "command -v applesimutils >/dev/null 2>&1 || (echo \"Missing applesimutils. Install with: brew tap wix/brew && brew install applesimutils\" && exit 1); detox test -c ios.sim.debug e2e/visual-edge-states.e2e.js --take-screenshots all",
     "e2e:detox:ios": "npm run e2e:prebuild:ios && npm run e2e:detox:build:ios && npm run e2e:detox:test:ios",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run test:coverage",
