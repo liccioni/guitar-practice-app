@@ -33,3 +33,4 @@ npm run e2e:detox:visual:edge:ios
 - Change history + stability markers: `docs/RELEASE_NOTES.md`
 - Bug registry: `docs/BUG_REPORTS.md`
 - Active release execution plan: `docs/RELEASE_PLAN.md`
+- Visual screenshot expectations: `docs/VISUAL_SNAPSHOT_MANIFEST.md`

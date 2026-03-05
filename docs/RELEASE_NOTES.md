@@ -55,3 +55,6 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - New test: `e2e/visual-edge-states.e2e.js`
 - New command: `npm run e2e:detox:visual:edge:ios`
 - Captures empty builder, builder validation error, and paused active states.
+8. Added locked visual snapshot manifest for deterministic review.
+- File: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
+- Defines canonical screenshot names for both visual suites.

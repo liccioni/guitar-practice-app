@@ -43,6 +43,7 @@ npm run e2e:detox:visual:edge:ios
 Expected: all `Session builder e2e` tests pass.
 Expected: visual run emits Home/Builder/Active/Complete snapshots.
 Expected: edge visual run emits Empty Builder, validation error, and paused Active snapshots.
+Expected names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
 
 ## 5. Run App Locally
 ```bash
