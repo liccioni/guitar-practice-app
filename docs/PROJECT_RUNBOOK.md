@@ -71,7 +71,11 @@ CI therefore must always generate and normalize native iOS files during the work
 6. `npx detox clean-framework-cache && npx detox build-framework-cache`
 7. `npm run e2e:detox:test:ios`
 
-This flow is implemented in `.github/workflows/ci.yml`.
+This flow is implemented in `.github/workflows/detox-ios.yml`.
+
+Current cost-control mode:
+- `.github/workflows/ci.yml` and `.github/workflows/detox-ios.yml` are set to manual trigger only (`workflow_dispatch`).
+- Push/PR automatic runs are intentionally paused until Actions credits are available.
 
 ## 7. Why These Hardening Steps Exist
 1. Path safety

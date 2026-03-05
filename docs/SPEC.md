@@ -121,13 +121,13 @@ This is the implementation contract for the current project state.
 - Command: `npm run e2e:detox:visual:edge:ios`
 
 ## 7. CI Contract
-GitHub Actions must run:
-- `quality` job on Ubuntu:
+Current repository mode (cost-control): workflows are manual-only (`workflow_dispatch`).
+- `CI` workflow (`.github/workflows/ci.yml`) contains the `quality` job on Ubuntu:
   - install deps
   - lint
   - typecheck
   - coverage tests
-- `ios-e2e` job on macOS:
+- `Detox iOS E2E` workflow (`.github/workflows/detox-ios.yml`) contains the macOS Detox job:
   - install deps/tools
   - prebuild iOS project
   - force deployment target to iOS 17.0
@@ -135,6 +135,7 @@ GitHub Actions must run:
   - build Detox app
   - refresh Detox framework cache
   - run Detox tests
+- When Actions credits are available, automatic triggers can be re-enabled.
 
 ## 8. Out of Scope (Current)
 - Backend APIs

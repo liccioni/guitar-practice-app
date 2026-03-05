@@ -3,6 +3,7 @@
 ## Status
 - Android: Active release track (internal distribution available).
 - iOS: Store/TestFlight distribution blocked pending paid Apple Developer enrollment.
+- CI automation: temporarily paused (manual workflows only) to reduce GitHub Actions usage.
 
 ## Android Track (Active)
 ### Current build
@@ -30,7 +31,7 @@
 ### What still works without Apple paid account
 - iOS simulator and local QA (`npm run ios:local`).
 - UX and functionality development.
-- CI iOS Detox coverage.
+- Manual iOS Detox coverage via workflow dispatch and local Detox commands.
 
 ### What cannot be done until enrollment
 - EAS iOS internal distribution (ad hoc/TestFlight path).
@@ -43,4 +44,3 @@ npx eas-cli build --platform ios --profile preview
 ```
 2. Complete Apple credential prompts.
 3. Distribute internal iOS build and execute same smoke checklist.
-

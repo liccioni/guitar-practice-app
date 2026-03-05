@@ -58,3 +58,6 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 8. Added locked visual snapshot manifest for deterministic review.
 - File: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
 - Defines canonical screenshot names for both visual suites.
+9. Temporarily paused automatic GitHub Actions triggers to control usage.
+- `CI` and `Detox iOS E2E` workflows are currently manual-only (`workflow_dispatch`).
+- This prevents automatic runs on push/PR until credits are replenished.
