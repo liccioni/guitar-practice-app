@@ -61,3 +61,6 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 9. Temporarily paused automatic GitHub Actions triggers to control usage.
 - `CI` and `Detox iOS E2E` workflows are currently manual-only (`workflow_dispatch`).
 - This prevents automatic runs on push/PR until credits are replenished.
+10. Session Builder production-hardening (removed mock behavior).
+- `Add Drill` now creates deterministic editable defaults instead of random canned drills.
+- Drill reorder now uses long-press drag-and-drop interaction.

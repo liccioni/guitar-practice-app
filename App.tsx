@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
-  FlatList,
   Pressable,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import Svg, { Circle } from "react-native-svg";
 import {
   playMetronomeTick,
@@ -21,7 +21,7 @@ import {
   releaseMetronomeAudio,
 } from "./src/application/metronomeAudio";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
-import { appendDrillToTemplate, reorderDrillInTemplate } from "./src/application/sessionBuilder";
+import { appendDrillToTemplate } from "./src/application/sessionBuilder";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
@@ -119,6 +119,15 @@ function makeId(prefix: string): string {
 
 function pickRandomPoolDrill(): CreateDrillInput {
   return DRILL_POOL[Math.floor(Math.random() * DRILL_POOL.length)];
+}
+
+function buildDefaultDrillInput(index: number): CreateDrillInput {
+  return {
+    name: `New Drill ${index}`,
+    durationMinutes: 5,
+    targetBpm: 100,
+    tags: ["warmup"],
+  };
 }
 
 function toXp(drill: Drill): number {
@@ -616,7 +625,8 @@ export default function App() {
   function addDrillToTemplate(): void {
     try {
       const nowIso = new Date().toISOString();
-      const created = createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), nowIso);
+      const nextIndex = builderDrills.length + 1;
+      const created = createDrillFromInput(makeId("drill"), buildDefaultDrillInput(nextIndex), nowIso);
       const result = appendDrillToTemplate({
         templates,
         activeTemplateId: activeTemplateId ?? null,
@@ -634,20 +644,27 @@ export default function App() {
     }
   }
 
-  function moveDrillInTemplate(drillId: string, direction: "up" | "down"): void {
-    try {
-      const nextState = reorderDrillInTemplate({
-        templates,
-        activeTemplateId: activeTemplateId ?? null,
-        drillId,
-        direction,
-        nowIso: new Date().toISOString(),
-      });
-      setTemplates(nextState.templates);
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not reorder drill");
-    }
+  function reorderDrillsInTemplate(nextDrillIds: string[]): void {
+    if (!selectedTemplate) return;
+
+    const normalizedIds = nextDrillIds.filter((id) => selectedTemplate.drillIds.includes(id));
+    const reorderedDrills = normalizedIds
+      .map((id) => allDrills.find((drill) => drill.id === id))
+      .filter((drill): drill is Drill => Boolean(drill));
+
+    setTemplates((current) =>
+      current.map((template) =>
+        template.id === selectedTemplate.id
+          ? {
+              ...template,
+              drillIds: normalizedIds,
+              totalDurationSeconds: calculateTotalDurationSeconds(reorderedDrills),
+              updatedAt: new Date().toISOString(),
+            }
+          : template,
+      ),
+    );
+    setBuilderError(null);
   }
 
   function removeDrillFromTemplate(drillId: string): void {
@@ -913,7 +930,7 @@ export default function App() {
               onDrillBpmInput={setDrillBpmInput}
               onSaveDrill={saveSelectedDrillEdits}
               onRemoveDrill={removeDrillFromTemplate}
-              onMoveDrill={moveDrillInTemplate}
+              onReorderDrills={reorderDrillsInTemplate}
               onAddDrill={addDrillToTemplate}
               onStartSession={startSession}
             />
@@ -1121,7 +1138,7 @@ export function SessionBuilder(props: {
   onDrillBpmInput: (value: string) => void;
   onSaveDrill: () => void;
   onRemoveDrill: (id: string) => void;
-  onMoveDrill: (id: string, direction: "up" | "down") => void;
+  onReorderDrills: (ids: string[]) => void;
   onAddDrill: () => void;
   onStartSession: () => void;
 }) {
@@ -1148,7 +1165,7 @@ export function SessionBuilder(props: {
     onDrillBpmInput,
     onSaveDrill,
     onRemoveDrill,
-    onMoveDrill,
+    onReorderDrills,
     onAddDrill,
     onStartSession,
   } = props;
@@ -1216,7 +1233,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill card to edit. Use ↑/↓ to reorder.</Text>
+        <Text style={styles.helperText}>Tap a drill card to edit. Long-press a drill card to reorder.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -1235,10 +1252,11 @@ export function SessionBuilder(props: {
         </TouchableOpacity>
       </View>
 
-      <FlatList
+      <DraggableFlatList
         data={drills}
         style={styles.builderList}
         keyExtractor={(item) => item.id}
+        onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.builderListContent}
         ListFooterComponent={
@@ -1284,18 +1302,21 @@ export function SessionBuilder(props: {
             </Text>
           </GlowCard>
         }
-        renderItem={({ item, index }) => (
+        renderItem={({ item, getIndex, drag, isActive }) => (
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => onSelectDrill(item.id)}
+            onLongPress={drag}
+            disabled={isActive}
             testID={`builder-drill-card-${item.id}`}
             style={[
               styles.drillCard,
+              isActive ? styles.drillCardActive : null,
               selectedDrillId === item.id ? styles.drillCardSelected : null,
             ]}
           >
             <View style={styles.drillLeft}>
-              <Text style={styles.drillOrder}>#{index + 1}</Text>
+              <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
               <View>
                 <Text style={styles.drillName}>{item.name}</Text>
                 <Text style={styles.drillMeta}>
@@ -1305,20 +1326,6 @@ export function SessionBuilder(props: {
             </View>
 
             <View style={styles.inlineRow}>
-              <TouchableOpacity
-                style={styles.moveChip}
-                onPress={() => onMoveDrill(item.id, "up")}
-                testID={`builder-move-up-${item.id}`}
-              >
-                <Text style={styles.removeChipText}>↑</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.moveChip}
-                onPress={() => onMoveDrill(item.id, "down")}
-                testID={`builder-move-down-${item.id}`}
-              >
-                <Text style={styles.removeChipText}>↓</Text>
-              </TouchableOpacity>
               <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
               <TouchableOpacity
                 style={styles.removeChip}

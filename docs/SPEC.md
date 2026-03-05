@@ -18,7 +18,7 @@ This is the implementation contract for the current project state.
 
 2. Session Builder
 - Template operations: New, Duplicate, Save, Delete, Select.
-- Drill operations: Add, Remove, Reorder (up/down), Edit fields.
+- Drill operations: Add (deterministic editable defaults), Remove, Reorder (long-press drag), Edit fields.
 - Validation and errors surfaced in UI (no uncaught crashes).
 
 3. Active Practice
