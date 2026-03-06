@@ -3,9 +3,9 @@
 Gamified mobile guitar practice coach built with Expo + React Native + TypeScript.
 
 ## Stable Baseline
-- Stable tag: `stable-2026-03-04-ci-green`
-- Stable commit: `fbca806`
-- GitHub release: `stable-2026-03-04-ci-green`
+- Stable tag: `stable-2026-03-06-e2e-green`
+- Stable commit: `bacf971`
+- GitHub release: `stable-2026-03-06-e2e-green`
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`

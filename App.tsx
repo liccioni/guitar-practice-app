@@ -1330,7 +1330,7 @@ export function SessionBuilder(props: {
               <TouchableOpacity
                 style={styles.removeChip}
                 onPress={() => onRemoveDrill(item.id)}
-                testID={`builder-remove-${item.id}`}
+                testID={(getIndex?.() ?? 0) === 0 ? "builder-remove-first" : `builder-remove-${item.id}`}
               >
                 <Text style={styles.removeChipText}>Remove</Text>
               </TouchableOpacity>

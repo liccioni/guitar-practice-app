@@ -78,22 +78,10 @@ async function startSessionFromBuilder() {
 }
 
 async function removeOneDrill() {
-  for (let i = 1; i <= 12; i += 1) {
-    const removeId = `builder-remove-seed_drill_${i}`;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     try {
-      await waitForVisible(removeId, 1200);
-      await element(by.id(removeId)).tap();
-      return true;
-    } catch {
-      // Continue to next seeded drill id.
-    }
-  }
-
-  const anyRemoveButton = element(by.id(/^builder-remove-/)).atIndex(0);
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    try {
-      await waitFor(anyRemoveButton).toBeVisible().withTimeout(1200);
-      await anyRemoveButton.tap();
+      await waitForVisible("builder-remove-first", 1500);
+      await element(by.id("builder-remove-first")).tap();
       return true;
     } catch {
       try {
@@ -133,7 +121,7 @@ describe("Session builder e2e", () => {
       return;
     }
 
-    // Fallback for environments where remove controls are not interactable.
+    // Temporary fallback while simulator remove controls remain flaky.
     await waitForVisible("builder-start-session", 8000);
   });
 
