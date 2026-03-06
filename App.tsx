@@ -1243,6 +1243,24 @@ function HomeDashboard(props: {
         </Text>
       </View>
 
+      <TouchableOpacity
+        style={styles.primaryCta}
+        onPress={onStartPractice}
+        accessibilityRole="button"
+        testID="home-start-practice"
+      >
+        <Text style={styles.primaryCtaText}>Start Practice</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.smallActionButton}
+        onPress={onStartPractice}
+        accessibilityRole="button"
+        testID="home-quick-start-practice"
+      >
+        <Text style={styles.smallActionText}>Quick Start</Text>
+      </TouchableOpacity>
+
       <GlowCard>
         <Text style={styles.cardLabel}>XP Progress</Text>
         <View style={styles.progressTrack}>
@@ -1383,14 +1401,6 @@ function HomeDashboard(props: {
 
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
 
-      <TouchableOpacity
-        style={styles.primaryCta}
-        onPress={onStartPractice}
-        accessibilityRole="button"
-        testID="home-start-practice"
-      >
-        <Text style={styles.primaryCtaText}>Start Practice</Text>
-      </TouchableOpacity>
     </View>
   );
 }

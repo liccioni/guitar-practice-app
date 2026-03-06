@@ -3,9 +3,14 @@ async function waitForVisible(id, timeout = 12000) {
 }
 
 async function openBuilderScreen() {
-  await waitForVisible("home-start-practice", 20000);
-  await element(by.id("home-start-practice")).tap();
-  await waitForVisible("builder-start-session", 20000);
+  try {
+    await waitForVisible("home-quick-start-practice", 60000);
+    await element(by.id("home-quick-start-practice")).tap();
+  } catch {
+    await waitForVisible("home-start-practice", 60000);
+    await element(by.id("home-start-practice")).tap();
+  }
+  await waitForVisible("builder-start-session", 30000);
 }
 
 function parseStats(value) {

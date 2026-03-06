@@ -10,8 +10,13 @@ async function openBuilder() {
     // Not on builder yet; continue with home navigation.
   }
 
-  await waitForVisible("home-start-practice", 20000);
-  await element(by.id("home-start-practice")).tap();
+  try {
+    await waitForVisible("home-quick-start-practice", 60000);
+    await element(by.id("home-quick-start-practice")).tap();
+  } catch {
+    await waitForVisible("home-start-practice", 60000);
+    await element(by.id("home-start-practice")).tap();
+  }
 
   try {
     await waitForVisible("builder-start-session", 16000);
