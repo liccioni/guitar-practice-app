@@ -12,9 +12,11 @@ This is the implementation contract for the current project state.
 
 ## 2. Required User Flows
 1. Home Dashboard
-- Shows level, XP progress, streak, daily goal progress, badges.
+- Shows level, XP progress, goal streak, goal progress, badges.
+- Shows weekly summary analytics and recent-session insights (duration, avg BPM, completion).
 - Primary CTA: Start Practice.
 - Reminder toggle + reminder time controls.
+- Goal type controls (`minutes`, `sessions`, `drills`) and editable goal target.
 
 2. Session Builder
 - Template operations: New, Duplicate, Save, Delete, Select.
@@ -43,8 +45,11 @@ This is the implementation contract for the current project state.
 - Session `completed=true` only when all template drills are completed.
 
 3. Progress and streak
-- Goal progress uses today completed minutes vs daily target.
-- Streak uses local day boundaries and practiced minutes > 0.
+- Goal progress uses selected goal type:
+  - `minutes`: today completed minutes
+  - `sessions`: today completed sessions
+  - `drills`: today completed drills
+- Goal streak uses local day boundaries and counts consecutive days meeting the selected goal target.
 
 4. Badge unlock criteria
 - `b1` (7-Day Streak): unlock when streak is >= 7 days.
@@ -70,7 +75,7 @@ This is the implementation contract for the current project state.
 - `id`, `sessionTemplateId?`, `sessionNameSnapshot`, `drillsSnapshot[]`, `completedDrillIds[]`, `startedAt`, `endedAt?`, `durationCompletedSeconds`, `completed`
 
 4. goalSettings
-- `dailyMinutesTarget`, `reminderEnabled`, `reminderTime`
+- `dailyMinutesTarget`, `goalType`, `goalTarget`, `reminderEnabled`, `reminderTime`
 
 5. profile
 - `totalXp`, `unlockedBadgeIds[]`
@@ -143,6 +148,6 @@ Current repository mode (cost-control): workflows are manual-only (`workflow_dis
 - Social features
 
 ## 9. Stable Milestone
-- Reference stability marker: `stable-2026-03-06-e2e-green`
-- Reference commit: `bacf971`
+- Reference stability marker: `stable-2026-03-06-docs-aligned`
+- Reference commit: `3b6b67d`
 - This marker indicates CI green baseline for quality + iOS Detox.

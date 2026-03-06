@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { PracticeHistoryEntry } from "../domain/history/types";
 import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
 import type { Drill } from "../domain/exercises/types";
-import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "../domain/goals/types";
+import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "../domain/goals/types";
 import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill";
 import { isValidBpm } from "../domain/metronome/metronome";
 
@@ -177,6 +177,27 @@ function sanitizeGoalSettings(input: unknown): GoalSettings {
   if (!isPlainObject(input)) return DEFAULT_GOAL_SETTINGS;
 
   const dailyMinutesTarget = Number(input.dailyMinutesTarget);
+  const goalTypeRaw = input.goalType;
+  const goalType: GoalType =
+    goalTypeRaw === "minutes" || goalTypeRaw === "sessions" || goalTypeRaw === "drills"
+      ? goalTypeRaw
+      : DEFAULT_GOAL_SETTINGS.goalType ?? "minutes";
+  const goalTargetRaw = Number(input.goalTarget);
+  const defaultTargetByType: Record<GoalType, number> = {
+    minutes: DEFAULT_GOAL_SETTINGS.goalTarget ?? DEFAULT_GOAL_SETTINGS.dailyMinutesTarget,
+    sessions: 1,
+    drills: 4,
+  };
+  const targetBoundsByType: Record<GoalType, [number, number]> = {
+    minutes: [5, 300],
+    sessions: [1, 20],
+    drills: [1, 60],
+  };
+  const [targetMin, targetMax] = targetBoundsByType[goalType];
+  const normalizedGoalTarget =
+    Number.isFinite(goalTargetRaw) && goalTargetRaw >= targetMin && goalTargetRaw <= targetMax
+      ? Math.round(goalTargetRaw)
+      : defaultTargetByType[goalType];
   const reminderEnabled = Boolean(input.reminderEnabled);
   const reminderTime = typeof input.reminderTime === "string" ? input.reminderTime : DEFAULT_GOAL_SETTINGS.reminderTime;
 
@@ -185,6 +206,8 @@ function sanitizeGoalSettings(input: unknown): GoalSettings {
       Number.isFinite(dailyMinutesTarget) && dailyMinutesTarget >= 5 && dailyMinutesTarget <= 300
         ? Math.round(dailyMinutesTarget)
         : DEFAULT_GOAL_SETTINGS.dailyMinutesTarget,
+    goalType,
+    goalTarget: normalizedGoalTarget,
     reminderEnabled,
     reminderTime: /^\d{2}:\d{2}$/.test(reminderTime) ? reminderTime : DEFAULT_GOAL_SETTINGS.reminderTime,
   };

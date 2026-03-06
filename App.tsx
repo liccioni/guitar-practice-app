@@ -24,10 +24,10 @@ import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "
 import { appendDrillToTemplate } from "./src/application/sessionBuilder";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
-import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "./src/domain/goals/types";
-import { calculateCurrentStreak } from "./src/domain/goals/streak";
+import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "./src/domain/goals/types";
+import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
-import { calculateDashboardMetrics } from "./src/domain/history/metrics";
+import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/metrics";
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
 import { getBeatIntervalMs, isValidBpm, stepBpm } from "./src/domain/metronome/metronome";
 import {
@@ -112,6 +112,109 @@ const DEFAULT_PROFILE = {
   totalXp: 0,
   unlockedBadgeIds: [] as string[],
 };
+
+interface WeeklySummary {
+  weekMinutes: number;
+  weekSessions: number;
+  weekDrillsCompleted: number;
+  completionRatePercent: number;
+  avgSessionMinutes: number;
+  weekMinutesDelta: number;
+}
+
+interface SessionInsight {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  averageBpm: number;
+  completed: boolean;
+  completedDrills: number;
+  totalDrills: number;
+}
+
+const GOAL_TARGET_BOUNDS: Record<GoalType, [number, number]> = {
+  minutes: [5, 300],
+  sessions: [1, 20],
+  drills: [1, 60],
+};
+
+function getDefaultGoalTarget(goalType: GoalType, dailyMinutesTarget: number): number {
+  if (goalType === "minutes") return dailyMinutesTarget;
+  if (goalType === "sessions") return 1;
+  return 4;
+}
+
+function normalizeGoalTarget(goalType: GoalType, target: number, dailyMinutesTarget: number): number {
+  const [min, max] = GOAL_TARGET_BOUNDS[goalType];
+  const fallback = getDefaultGoalTarget(goalType, dailyMinutesTarget);
+  if (!Number.isFinite(target)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(target)));
+}
+
+function goalUnit(goalType: GoalType): string {
+  if (goalType === "minutes") return "m";
+  if (goalType === "sessions") return "sessions";
+  return "drills";
+}
+
+function getEntryAverageBpm(entry: PracticeHistoryEntry): number {
+  const values = entry.drillsSnapshot
+    .map((drill) => drill.targetBpm)
+    .filter((bpm): bpm is number => typeof bpm === "number");
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((sum, bpm) => sum + bpm, 0) / values.length);
+}
+
+function isWithinDays(dateIso: string, nowIso: string, days: number): boolean {
+  const diff = new Date(nowIso).getTime() - new Date(dateIso).getTime();
+  return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
+}
+
+function isBetweenDaysAgo(dateIso: string, nowIso: string, fromDays: number, toDays: number): boolean {
+  const diff = new Date(nowIso).getTime() - new Date(dateIso).getTime();
+  return diff > fromDays * 24 * 60 * 60 * 1000 && diff <= toDays * 24 * 60 * 60 * 1000;
+}
+
+function buildWeeklySummary(entries: PracticeHistoryEntry[], nowIso: string): WeeklySummary {
+  const thisWeekEntries = entries.filter((entry) => isWithinDays(entry.startedAt, nowIso, 7));
+  const previousWeekEntries = entries.filter((entry) => isBetweenDaysAgo(entry.startedAt, nowIso, 7, 14));
+
+  const weekMinutes = Math.round(
+    thisWeekEntries.reduce((sum, entry) => sum + entry.durationCompletedSeconds, 0) / 60,
+  );
+  const previousWeekMinutes = Math.round(
+    previousWeekEntries.reduce((sum, entry) => sum + entry.durationCompletedSeconds, 0) / 60,
+  );
+  const weekSessions = thisWeekEntries.filter((entry) => entry.completed).length;
+  const weekDrillsCompleted = thisWeekEntries.reduce(
+    (sum, entry) => sum + (entry.completed ? entry.completedDrillIds.length : 0),
+    0,
+  );
+  const completionRatePercent =
+    thisWeekEntries.length === 0 ? 0 : Math.round((weekSessions / thisWeekEntries.length) * 100);
+  const avgSessionMinutes = weekSessions === 0 ? 0 : Math.round(weekMinutes / weekSessions);
+
+  return {
+    weekMinutes,
+    weekSessions,
+    weekDrillsCompleted,
+    completionRatePercent,
+    avgSessionMinutes,
+    weekMinutesDelta: weekMinutes - previousWeekMinutes,
+  };
+}
+
+function buildRecentSessionInsights(entries: PracticeHistoryEntry[], limit = 4): SessionInsight[] {
+  return entries.slice(0, limit).map((entry) => ({
+    id: entry.id,
+    title: entry.sessionNameSnapshot,
+    durationMinutes: Math.round(entry.durationCompletedSeconds / 60),
+    averageBpm: getEntryAverageBpm(entry),
+    completed: entry.completed,
+    completedDrills: entry.completedDrillIds.length,
+    totalDrills: entry.drillsSnapshot.length,
+  }));
+}
 
 function makeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -201,6 +304,7 @@ export default function App() {
   const [templateNameInput, setTemplateNameInput] = useState("");
   const [builderError, setBuilderError] = useState<string | null>(null);
   const [reminderError, setReminderError] = useState<string | null>(null);
+  const [goalError, setGoalError] = useState<string | null>(null);
   const [selectedDrillId, setSelectedDrillId] = useState<string | null>(null);
   const [drillNameInput, setDrillNameInput] = useState("");
   const [drillDurationInput, setDrillDurationInput] = useState("");
@@ -286,10 +390,44 @@ export default function App() {
       }),
     [goalSettings.dailyMinutesTarget, history, nowIso],
   );
-  const streak = useMemo(() => calculateCurrentStreak(history, nowIso), [history, nowIso]);
+  const goalType: GoalType = goalSettings.goalType ?? "minutes";
+  const goalTarget = normalizeGoalTarget(
+    goalType,
+    goalSettings.goalTarget ?? getDefaultGoalTarget(goalType, goalSettings.dailyMinutesTarget),
+    goalSettings.dailyMinutesTarget,
+  );
+  const todayKey = useMemo(() => toLocalDayKey(nowIso), [nowIso]);
+  const todayCompletedSessions = useMemo(
+    () =>
+      history.filter(
+        (entry) => entry.completed && toLocalDayKey(entry.startedAt) === todayKey,
+      ).length,
+    [history, todayKey],
+  );
+  const todayCompletedDrills = useMemo(
+    () =>
+      history
+        .filter((entry) => toLocalDayKey(entry.startedAt) === todayKey)
+        .reduce((sum, entry) => sum + entry.completedDrillIds.length, 0),
+    [history, todayKey],
+  );
+  const goalCurrentValue =
+    goalType === "minutes"
+      ? metrics.todayMinutes
+      : goalType === "sessions"
+        ? todayCompletedSessions
+        : todayCompletedDrills;
+  const goalProgressPercent =
+    goalTarget <= 0 ? 100 : Math.min(100, Math.round((goalCurrentValue / goalTarget) * 100));
+  const dailyGoalProgress = Math.min(1, goalProgressPercent / 100);
+  const weeklySummary = useMemo(() => buildWeeklySummary(history, nowIso), [history, nowIso]);
+  const recentSessionInsights = useMemo(() => buildRecentSessionInsights(history), [history]);
+  const streak = useMemo(
+    () => calculateGoalTypeStreak(history, nowIso, goalType, goalTarget),
+    [goalTarget, goalType, history, nowIso],
+  );
 
   const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
-  const dailyGoalProgress = Math.min(1, metrics.goalProgressPercent / 100);
 
   useEffect(() => {
     const run = async () => {
@@ -503,7 +641,12 @@ export default function App() {
     };
 
     const nextHistory = [entry, ...history];
-    const nextStreak = calculateCurrentStreak(nextHistory, new Date().toISOString());
+    const nextStreak = calculateGoalTypeStreak(
+      nextHistory,
+      new Date().toISOString(),
+      goalType,
+      goalTarget,
+    );
     const nextMetrics = calculateDashboardMetrics({
       entries: nextHistory,
       nowIso: new Date().toISOString(),
@@ -877,6 +1020,46 @@ export default function App() {
     }
   }
 
+  function setGoalType(nextGoalType: GoalType): void {
+    setGoalError(null);
+    setGoalSettings((current) => {
+      const nextTarget = normalizeGoalTarget(
+        nextGoalType,
+        current.goalTarget ?? getDefaultGoalTarget(nextGoalType, current.dailyMinutesTarget),
+        current.dailyMinutesTarget,
+      );
+      return {
+        ...current,
+        goalType: nextGoalType,
+        goalTarget: nextTarget,
+        dailyMinutesTarget: nextGoalType === "minutes" ? nextTarget : current.dailyMinutesTarget,
+      };
+    });
+  }
+
+  function saveGoalTarget(rawTarget: string): void {
+    const numeric = Number(rawTarget.trim());
+    if (!Number.isFinite(numeric)) {
+      setGoalError("Goal target must be a number.");
+      return;
+    }
+
+    const [min, max] = GOAL_TARGET_BOUNDS[goalType];
+    if (numeric < min || numeric > max) {
+      setGoalError(`Goal target must be between ${min} and ${max}.`);
+      return;
+    }
+
+    const normalized = normalizeGoalTarget(goalType, numeric, goalSettings.dailyMinutesTarget);
+    setGoalSettings((current) => ({
+      ...current,
+      goalType,
+      goalTarget: normalized,
+      dailyMinutesTarget: goalType === "minutes" ? normalized : current.dailyMinutesTarget,
+    }));
+    setGoalError(null);
+  }
+
   function resetToHome(): void {
     setScreen("home");
     setMetronomeEnabled(false);
@@ -893,13 +1076,20 @@ export default function App() {
               levelState={levelState}
               streak={streak}
               goalProgress={dailyGoalProgress}
-              todayMinutes={metrics.todayMinutes}
-              dailyGoalMinutes={goalSettings.dailyMinutesTarget}
+              goalType={goalType}
+              goalCurrentValue={goalCurrentValue}
+              goalTarget={goalTarget}
+              goalUnitLabel={goalUnit(goalType)}
+              weeklySummary={weeklySummary}
+              sessionInsights={recentSessionInsights}
               badges={badges}
               storageError={storageError}
+              goalError={goalError}
               reminderEnabled={goalSettings.reminderEnabled}
               reminderTime={goalSettings.reminderTime}
               reminderError={reminderError}
+              onGoalTypeChange={setGoalType}
+              onSaveGoalTarget={saveGoalTarget}
               onToggleReminder={toggleReminder}
               onSaveReminderTime={saveReminderTime}
               onStartPractice={startPracticeFlow}
@@ -992,13 +1182,20 @@ function HomeDashboard(props: {
   levelState: LevelState;
   streak: number;
   goalProgress: number;
-  todayMinutes: number;
-  dailyGoalMinutes: number;
+  goalType: GoalType;
+  goalCurrentValue: number;
+  goalTarget: number;
+  goalUnitLabel: string;
+  weeklySummary: WeeklySummary;
+  sessionInsights: SessionInsight[];
   badges: Badge[];
   storageError: string | null;
+  goalError: string | null;
   reminderEnabled: boolean;
   reminderTime: string;
   reminderError: string | null;
+  onGoalTypeChange: (goalType: GoalType) => void;
+  onSaveGoalTarget: (target: string) => void;
   onToggleReminder: () => void;
   onSaveReminderTime: (time: string) => void;
   onStartPractice: () => void;
@@ -1007,28 +1204,40 @@ function HomeDashboard(props: {
     levelState,
     streak,
     goalProgress,
-    todayMinutes,
-    dailyGoalMinutes,
+    goalType,
+    goalCurrentValue,
+    goalTarget,
+    goalUnitLabel,
+    weeklySummary,
+    sessionInsights,
     badges,
     storageError,
+    goalError,
     reminderEnabled,
     reminderTime,
     reminderError,
+    onGoalTypeChange,
+    onSaveGoalTarget,
     onToggleReminder,
     onSaveReminderTime,
     onStartPractice,
   } = props;
 
   const [timeInput, setTimeInput] = useState(reminderTime);
+  const [goalTargetInput, setGoalTargetInput] = useState(String(goalTarget));
 
   useEffect(() => {
     setTimeInput(reminderTime);
   }, [reminderTime]);
 
+  useEffect(() => {
+    setGoalTargetInput(String(goalTarget));
+  }, [goalTarget]);
+
   return (
     <View style={styles.screenBody}>
       <View style={styles.topRow}>
-        <Text style={styles.title}>Level {levelState.level}</Text>
+        <Text style={styles.title}>Level {levelState.level} Goal Streak</Text>
         <Text style={styles.levelChip}>
           {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
         </Text>
@@ -1050,7 +1259,7 @@ function HomeDashboard(props: {
 
       <View style={styles.rowTwoCol}>
         <GlowCard style={styles.flexCard}>
-          <Text style={styles.cardLabel}>🔥 Streak</Text>
+          <Text style={styles.cardLabel}>🔥 Goal Streak</Text>
           <Text style={styles.bigValue}>{streak} days</Text>
         </GlowCard>
 
@@ -1059,11 +1268,82 @@ function HomeDashboard(props: {
           <View style={{ alignItems: "center", marginTop: 8 }}>
             <ProgressRing size={84} strokeWidth={8} progress={goalProgress} color={COLORS.accentAlt} />
             <Text style={styles.ringText}>
-              {todayMinutes}/{dailyGoalMinutes}m
+              {goalCurrentValue}/{goalTarget} {goalUnitLabel}
             </Text>
           </View>
         </GlowCard>
       </View>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Goal Settings</Text>
+        <View style={styles.inlineRow}>
+          <TouchableOpacity
+            style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("minutes")}
+          >
+            <Text style={styles.smallActionText}>Minutes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallActionButton, goalType === "sessions" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("sessions")}
+          >
+            <Text style={styles.smallActionText}>Sessions</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallActionButton, goalType === "drills" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("drills")}
+          >
+            <Text style={styles.smallActionText}>Drills</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.inlineRow}>
+          <TextInput
+            value={goalTargetInput}
+            onChangeText={setGoalTargetInput}
+            keyboardType="number-pad"
+            placeholder="Target"
+            placeholderTextColor={COLORS.muted}
+            style={styles.timeInput}
+          />
+          <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveGoalTarget(goalTargetInput)}>
+            <Text style={styles.smallActionText}>Save Goal</Text>
+          </TouchableOpacity>
+        </View>
+
+        {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Weekly Summary</Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
+          {weeklySummary.weekMinutesDelta} vs last week)
+        </Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills completed
+        </Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
+        </Text>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Recent Sessions</Text>
+        {sessionInsights.length === 0 ? (
+          <Text style={styles.helperText}>No sessions yet. Start one to unlock trends.</Text>
+        ) : (
+          sessionInsights.map((insight) => (
+            <View key={insight.id} style={styles.recentSessionRow}>
+              <Text style={styles.badgeLabel}>{insight.title}</Text>
+              <Text style={styles.helperText}>
+                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}{" "}
+                drills • {insight.completed ? "Complete" : "Partial"}
+              </Text>
+            </View>
+          ))
+        )}
+      </GlowCard>
 
       <GlowCard>
         <View style={styles.inlineRowSpace}>
@@ -2046,6 +2326,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
   },
+  goalTypeActive: {
+    borderColor: COLORS.accentAlt,
+    backgroundColor: COLORS.cardSoft,
+  },
   smallDangerButton: {
     minHeight: 38,
     borderRadius: 10,
@@ -2082,6 +2366,12 @@ const styles = StyleSheet.create({
     color: COLORS.disabled,
     fontWeight: "700",
     fontSize: 11,
+  },
+  recentSessionRow: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+    paddingTop: 8,
   },
   errorText: {
     color: COLORS.muted,

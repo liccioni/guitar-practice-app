@@ -1,9 +1,9 @@
 # Release Notes
 
 ## Current Stable Baseline
-- Tag: `stable-2026-03-06-e2e-green`
-- Commit: `bacf971`
-- Scope: local iOS Detox full run green (`npm run e2e:detox:ios`) with smoke + visual suites.
+- Tag: `stable-2026-03-06-docs-aligned`
+- Commit: `3b6b67d`
+- Scope: docs-aligned local iOS Detox baseline.
 
 ## Stable Baseline
 - Tag: `stable-2026-03-04-ci-green`
@@ -75,3 +75,9 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 12. Remove-drill smoke case re-enabled with deterministic builder control.
 - Added `builder-remove-first-control` in `SessionBuilder` for stable first-drill removal interaction.
 - `Session builder e2e -> removes a drill when tapping Remove` is now enabled and green.
+13. Home analytics + multi-goal system (minutes/sessions/drills).
+- Added weekly summary analytics (weekly minutes, completion rate, sessions, drills, delta vs previous week).
+- Added recent-session insight list on Home dashboard.
+- Added configurable goal type (`minutes`, `sessions`, `drills`) and goal target controls.
+- Goal streak now tracks consecutive days that meet the selected goal type target.
+- Persistence schema remains backward-compatible while storing `goalType` and `goalTarget`.

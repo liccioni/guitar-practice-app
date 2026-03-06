@@ -32,6 +32,8 @@ describe("LocalStorageGateway", () => {
           history: [],
           goalSettings: {
             dailyMinutesTarget: 25,
+            goalType: "sessions",
+            goalTarget: 2,
             reminderEnabled: true,
             reminderTime: "20:10",
           },
@@ -45,6 +47,8 @@ describe("LocalStorageGateway", () => {
 
     const result = await loadPersistedState();
     expect(result.goalSettings.dailyMinutesTarget).toBe(25);
+    expect(result.goalSettings.goalType).toBe("sessions");
+    expect(result.goalSettings.goalTarget).toBe(2);
     expect(result.profile.totalXp).toBe(1500);
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
   });
@@ -170,6 +174,8 @@ describe("LocalStorageGateway", () => {
           ],
           goalSettings: {
             dailyMinutesTarget: 999,
+            goalType: "invalid",
+            goalTarget: 999,
             reminderEnabled: 1,
             reminderTime: "bad-time",
           },
@@ -201,6 +207,8 @@ describe("LocalStorageGateway", () => {
     expect(parsed.history[0]?.completed).toBe(true);
 
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(30);
+    expect(parsed.goalSettings.goalType).toBe("minutes");
+    expect(parsed.goalSettings.goalTarget).toBe(30);
     expect(parsed.goalSettings.reminderEnabled).toBe(true);
     expect(parsed.goalSettings.reminderTime).toBe("18:00");
 

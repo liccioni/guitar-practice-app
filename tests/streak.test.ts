@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calculateCurrentStreak, incrementStreakIfPracticedToday } from "../src/domain/goals/streak";
+import {
+  calculateCurrentStreak,
+  calculateGoalTypeStreak,
+  incrementStreakIfPracticedToday,
+} from "../src/domain/goals/streak";
 import type { PracticeHistoryEntry } from "../src/domain/history/types";
 
 function entry(dayIso: string): PracticeHistoryEntry {
@@ -43,5 +47,26 @@ describe("streak rules", () => {
 
   it("keeps streak unchanged when no minutes were completed today", () => {
     expect(incrementStreakIfPracticedToday(4, 0)).toBe(4);
+  });
+
+  it("tracks goal streak by sessions target", () => {
+    const entries = [
+      entry("2026-03-03T09:00:00.000Z"),
+      entry("2026-03-02T09:00:00.000Z"),
+      entry("2026-03-01T09:00:00.000Z"),
+    ];
+
+    expect(calculateGoalTypeStreak(entries, "2026-03-03T12:00:00.000Z", "sessions", 1)).toBe(3);
+    expect(calculateGoalTypeStreak(entries, "2026-03-03T12:00:00.000Z", "sessions", 2)).toBe(0);
+  });
+
+  it("tracks goal streak by drills target", () => {
+    const entries: PracticeHistoryEntry[] = [
+      { ...entry("2026-03-03T09:00:00.000Z"), completedDrillIds: ["d1", "d2", "d3"] },
+      { ...entry("2026-03-02T09:00:00.000Z"), completedDrillIds: ["d1", "d2", "d3"] },
+      { ...entry("2026-03-01T09:00:00.000Z"), completedDrillIds: ["d1"] },
+    ];
+
+    expect(calculateGoalTypeStreak(entries, "2026-03-03T12:00:00.000Z", "drills", 3)).toBe(2);
   });
 });
