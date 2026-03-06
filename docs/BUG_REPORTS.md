@@ -2,7 +2,7 @@
 
 ## BR-2026-03-06-001 - Detox Remove Drill Control Flake (iOS Simulator)
 
-- Status: Open (mitigated with temporary test skip)
+- Status: Fixed
 - Date reported: 2026-03-06
 - Area: Detox e2e (`e2e/builder-smoke.e2e.js`)
 - Severity: Medium (test reliability issue, no confirmed production crash)
@@ -10,12 +10,14 @@
 ### Symptom
 In the iOS simulator, the smoke test step that removes a drill from Session Builder intermittently fails to interact with remove controls, causing unstable test outcomes.
 
-### Current Mitigation
-- `Session builder e2e -> removes a drill when tapping Remove` is temporarily marked `it.skip(...)`.
-- Other smoke and visual flows remain active and passing.
+### Fix
+- Added deterministic builder control `builder-remove-first-control` in `SessionBuilder`.
+- Updated smoke test remove path to use this deterministic control.
+- Re-enabled remove-drill smoke test (removed temporary skip).
 
-### Next Fix Direction
-- Provide a deterministic, simulator-stable remove control target in builder list rendering and re-enable the test once interaction reliability is confirmed.
+### Verification
+- `npm run e2e:detox:ios` passed with all suites green.
+- `Session builder e2e` now reports 4 passing tests (including remove drill).
 
 ## BR-2026-03-04-001 - Screen Transition Flicker on Screen Change
 

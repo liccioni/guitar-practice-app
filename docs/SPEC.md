@@ -110,7 +110,7 @@ This is the implementation contract for the current project state.
 
 3. Detox iOS E2E required scenario coverage
 - Add drill in Session Builder.
-- Remove drill in Session Builder (temporarily skipped in `builder-smoke.e2e.js` due simulator flakiness; tracked in bug reports).
+- Remove drill in Session Builder.
 - Start session from Session Builder.
 - Complete a session via Skip flow and reach complete screen.
 

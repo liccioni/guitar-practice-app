@@ -40,7 +40,7 @@ npm run e2e:detox:test:ios
 npm run e2e:detox:visual:ios
 npm run e2e:detox:visual:edge:ios
 ```
-Expected: `Session builder e2e` has 3 passing tests and 1 temporary skip (`removes a drill when tapping Remove`).
+Expected: all `Session builder e2e` tests pass.
 Expected: visual run emits Home/Builder/Active/Complete snapshots.
 Expected: edge visual run emits Empty Builder, validation error, and paused Active snapshots.
 Expected names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
@@ -104,11 +104,11 @@ Current cost-control mode:
 - Coverage thresholds must pass (`lines >= 88`, `statements >= 80`, `functions >= 88`, `branches >= 60`).
 
 2. Detox iOS
-- `e2e/builder-smoke.e2e.js` currently expects:
+- `e2e/builder-smoke.e2e.js` expects 4 passing tests:
   - add drill
+  - remove drill
   - start session
   - complete session by skip
-- remove drill test is temporarily skipped because simulator remove control interaction is flaky.
 
 ## 9. Recovery Procedures
 1. If Detox reports framework cache validation errors:

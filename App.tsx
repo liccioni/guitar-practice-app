@@ -1250,6 +1250,17 @@ export function SessionBuilder(props: {
         <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
           <Text style={styles.secondaryCtaText}>Add Drill</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.smallDangerButton}
+          onPress={() => {
+            if (drills.length > 0) onRemoveDrill(drills[0].id);
+          }}
+          testID="builder-remove-first-control"
+          disabled={drills.length === 0}
+        >
+          <Text style={styles.smallActionText}>Remove First Drill</Text>
+        </TouchableOpacity>
       </View>
 
       <DraggableFlatList
@@ -1330,7 +1341,7 @@ export function SessionBuilder(props: {
               <TouchableOpacity
                 style={styles.removeChip}
                 onPress={() => onRemoveDrill(item.id)}
-                testID={(getIndex?.() ?? 0) === 0 ? "builder-remove-first" : `builder-remove-${item.id}`}
+                testID={`builder-remove-${item.id}`}
               >
                 <Text style={styles.removeChipText}>Remove</Text>
               </TouchableOpacity>

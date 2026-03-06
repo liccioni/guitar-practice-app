@@ -78,22 +78,13 @@ async function startSessionFromBuilder() {
 }
 
 async function removeOneDrill() {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
-      await waitForVisible("builder-remove-first", 1500);
-      await element(by.id("builder-remove-first")).tap();
+      await waitForVisible("builder-remove-first-control", 2000);
+      await element(by.id("builder-remove-first-control")).tap();
       return true;
     } catch {
-      try {
-        await element(by.id("builder-screen")).swipe("down", "fast", 0.7);
-      } catch {}
-      try {
-        await element(by.id("builder-screen")).swipe("up", "fast", 0.7);
-      } catch {}
-      try {
-        await element(by.text("Remove")).tap();
-        return true;
-      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
 
@@ -110,19 +101,16 @@ describe("Session builder e2e", () => {
     await waitForDrillCount(before.drillCount + 1, 10000);
   });
 
-  it.skip("removes a drill when tapping Remove", async () => {
+  it("removes a drill when tapping Remove", async () => {
     await openBuilderScreen();
     await createFreshTemplate();
 
     const current = await getBuilderStats();
     const removed = await removeOneDrill();
-    if (removed) {
-      await waitForDrillCount(Math.max(0, current.drillCount - 1), 10000);
-      return;
+    if (!removed) {
+      throw new Error("Could not remove a drill from builder.");
     }
-
-    // Temporary fallback while simulator remove controls remain flaky.
-    await waitForVisible("builder-start-session", 8000);
+    await waitForDrillCount(Math.max(0, current.drillCount - 1), 10000);
   });
 
   it("starts a session from builder", async () => {

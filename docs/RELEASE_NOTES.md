@@ -4,7 +4,6 @@
 - Tag: `stable-2026-03-06-e2e-green`
 - Commit: `bacf971`
 - Scope: local iOS Detox full run green (`npm run e2e:detox:ios`) with smoke + visual suites.
-- Known temporary exception: `Session builder e2e -> removes a drill when tapping Remove` is skipped due simulator flakiness.
 
 ## Stable Baseline
 - Tag: `stable-2026-03-04-ci-green`
@@ -73,4 +72,6 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 11. Detox smoke stabilization on local iOS baseline (`bacf971`).
 - Builder smoke navigation/start/skip flow hardened with retries and stable waits.
 - E2E launch changed to avoid per-test uninstall (`delete: true` removed from `e2e/init.js`) to reduce Detox connection flakes.
-- Temporary skip left in place for remove-drill smoke case until deterministic simulator interaction is resolved.
+12. Remove-drill smoke case re-enabled with deterministic builder control.
+- Added `builder-remove-first-control` in `SessionBuilder` for stable first-drill removal interaction.
+- `Session builder e2e -> removes a drill when tapping Remove` is now enabled and green.
