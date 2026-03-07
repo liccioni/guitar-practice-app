@@ -1,5 +1,17 @@
 # Release Notes
 
+## Latest Validation (2026-03-07)
+- Validation date: `2026-03-07`
+- Commands:
+  - `npm run check`
+  - `npm run e2e:detox:build:ios`
+  - `npm run e2e:detox:test:ios`
+- Result:
+  - Quality gate passed (`lint`, `typecheck`, coverage)
+  - iOS Detox passed (`3/3` suites, `6/6` tests)
+- Notes:
+  - A transient Detox startup failure (`CFBundleIdentifier not found`) was resolved by rebuilding the iOS Detox app binary before test execution.
+
 ## Current Stable Baseline
 - Tag: `stable-2026-03-06-docs-aligned`
 - Commit: `3b6b67d`
