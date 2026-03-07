@@ -1447,6 +1447,41 @@ export function SessionBuilder(props: {
 
   const totalXp = drills.reduce((sum, drill) => sum + toXp(drill), 0);
   const androidStartHandledRef = useRef(false);
+  const templateNameTrimmed = templateNameInput.trim();
+  const isTemplateNameValid = templateNameTrimmed.length >= 3;
+  const isDrillEditorEnabled = Boolean(selectedDrillId);
+  const drillNameTrimmed = drillNameInput.trim();
+  const isDrillNameValid = drillNameTrimmed.length > 0;
+  const parsedDuration = Number(drillDurationInput.trim());
+  const isDurationValid = Number.isFinite(parsedDuration) && parsedDuration >= 1 && parsedDuration <= 30;
+  const bpmRaw = drillBpmInput.trim();
+  const parsedBpm = bpmRaw.length === 0 ? null : Number(bpmRaw);
+  const isBpmValid =
+    parsedBpm === null || (Number.isFinite(parsedBpm) && parsedBpm >= 40 && parsedBpm <= 240);
+  const canSaveDrill = isDrillEditorEnabled && isDrillNameValid && isDurationValid && isBpmValid;
+  const noDrillSelected = drills.length > 0 && !selectedDrillId;
+
+  function handleSaveTemplatePress(): void {
+    if (!isTemplateNameValid) return;
+    onSaveTemplate();
+  }
+
+  function handleSaveDrillPress(): void {
+    if (!canSaveDrill) return;
+    onSaveDrill();
+  }
+
+  function nudgeDuration(delta: number): void {
+    const base = Number.isFinite(parsedDuration) ? parsedDuration : 5;
+    const next = Math.max(1, Math.min(30, Math.round(base + delta)));
+    onDrillDurationInput(String(next));
+  }
+
+  function nudgeBpm(delta: number): void {
+    const base = Number.isFinite(parsedBpm ?? Number.NaN) ? (parsedBpm as number) : 100;
+    const next = Math.max(40, Math.min(240, Math.round(base + delta)));
+    onDrillBpmInput(String(next));
+  }
 
   function handleStartSessionPressIn(): void {
     if (Platform.OS !== "android") return;
@@ -1489,7 +1524,11 @@ export function SessionBuilder(props: {
             <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
               <Text style={styles.smallActionText}>Duplicate</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onSaveTemplate}>
+            <TouchableOpacity
+              style={[styles.smallActionButton, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
+              onPress={handleSaveTemplatePress}
+              disabled={!isTemplateNameValid}
+            >
               <Text style={styles.smallActionText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallDangerButton} onPress={onDeleteTemplate}>
@@ -1519,6 +1558,9 @@ export function SessionBuilder(props: {
             placeholderTextColor={COLORS.muted}
             style={styles.templateInput}
           />
+          {templateNameInput.length > 0 && !isTemplateNameValid ? (
+            <Text style={styles.helperText}>Session name must be at least 3 characters.</Text>
+          ) : null}
 
           {builderError ? (
             <Text style={styles.errorText} testID="builder-error-text">
@@ -1574,12 +1616,16 @@ export function SessionBuilder(props: {
           <View style={styles.builderFooter}>
             <GlowCard>
               <Text style={styles.cardLabel}>Edit Drill</Text>
+              {noDrillSelected ? (
+                <Text style={styles.helperText}>Select a drill card to edit its values.</Text>
+              ) : null}
               <TextInput
                 value={drillNameInput}
                 onChangeText={onDrillNameInput}
                 placeholder="Drill name"
                 placeholderTextColor={COLORS.muted}
                 style={styles.templateInput}
+                editable={isDrillEditorEnabled}
               />
               <View style={styles.inlineRow}>
                 <TextInput
@@ -1589,6 +1635,7 @@ export function SessionBuilder(props: {
                   placeholder="Minutes (1-30)"
                   placeholderTextColor={COLORS.muted}
                   style={styles.timeInput}
+                  editable={isDrillEditorEnabled}
                 />
                 <TextInput
                   value={drillBpmInput}
@@ -1597,9 +1644,39 @@ export function SessionBuilder(props: {
                   placeholder="BPM (40-240)"
                   placeholderTextColor={COLORS.muted}
                   style={styles.timeInput}
+                  editable={isDrillEditorEnabled}
                 />
               </View>
-              <TouchableOpacity style={styles.smallActionButton} onPress={onSaveDrill}>
+              {isDrillEditorEnabled ? (
+                <View style={styles.inlineRow}>
+                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeDuration(-1)}>
+                    <Text style={styles.pillButtonText}>-1 min</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeDuration(1)}>
+                    <Text style={styles.pillButtonText}>+1 min</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeBpm(-5)}>
+                    <Text style={styles.pillButtonText}>-5 BPM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeBpm(5)}>
+                    <Text style={styles.pillButtonText}>+5 BPM</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+              {isDrillEditorEnabled && !isDrillNameValid ? (
+                <Text style={styles.helperText}>Drill name cannot be empty.</Text>
+              ) : null}
+              {isDrillEditorEnabled && !isDurationValid ? (
+                <Text style={styles.helperText}>Duration must be a number from 1 to 30 minutes.</Text>
+              ) : null}
+              {isDrillEditorEnabled && !isBpmValid ? (
+                <Text style={styles.helperText}>BPM must be blank or between 40 and 240.</Text>
+              ) : null}
+              <TouchableOpacity
+                style={[styles.smallActionButton, !canSaveDrill ? styles.actionButtonDisabled : null]}
+                onPress={handleSaveDrillPress}
+                disabled={!canSaveDrill}
+              >
                 <Text style={styles.smallActionText}>Save Drill</Text>
               </TouchableOpacity>
             </GlowCard>
@@ -1611,6 +1688,9 @@ export function SessionBuilder(props: {
             <Text style={styles.completeSubtext}>
               Add a drill with the + button, then start your session.
             </Text>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onAddDrill}>
+              <Text style={styles.smallActionText}>Add Starter Drill</Text>
+            </TouchableOpacity>
           </GlowCard>
         }
         renderItem={({ item, getIndex, drag, isActive }) => (
@@ -2348,6 +2428,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 12,
+  },
+  actionButtonDisabled: {
+    opacity: 0.45,
   },
   goalTypeActive: {
     borderColor: COLORS.accentAlt,
