@@ -149,4 +149,13 @@ describe("Session builder e2e", () => {
 
     await waitForVisible("complete-continue-button", 10000);
   });
+
+  it("shows template name validation for short names", async () => {
+    await openBuilderScreen();
+    await createFreshTemplate();
+
+    await element(by.id("builder-template-name-input")).replaceText("ab");
+    await waitForVisible("builder-template-name-validation", 5000);
+  });
+
 });

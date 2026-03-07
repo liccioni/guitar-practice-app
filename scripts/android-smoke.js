@@ -45,6 +45,15 @@ function ensureDevice() {
   }
 }
 
+function ensureAppInstalled() {
+  const packages = runIgnore(`adb shell pm list packages ${PACKAGE}`);
+  if (!packages.includes(PACKAGE)) {
+    throw new Error(
+      `App package ${PACKAGE} is not installed on the connected device/emulator. Run npm run android first.`,
+    );
+  }
+}
+
 function dumpUiXml() {
   runIgnore("adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1");
   return run("adb exec-out cat /sdcard/ui.xml");
@@ -103,6 +112,7 @@ function main() {
 
   ensureAdb();
   ensureDevice();
+  ensureAppInstalled();
   runFullSmoke();
 }
 

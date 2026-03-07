@@ -4,6 +4,7 @@
 - Android: Active release track (internal distribution available).
 - iOS: Store/TestFlight distribution blocked pending paid Apple Developer enrollment.
 - CI automation: temporarily paused (manual workflows only) to reduce GitHub Actions usage.
+- Latest stable checkpoint tag: `stable-2026-03-07-builder-ux-green` (`1f6938a`).
 
 ## Android Track (Active)
 ### Current build
@@ -25,7 +26,7 @@
   - `npm run e2e:android:regression:start-session`
     - Logic-level regression suite for start-session preparation (no emulator required).
   - `npm run e2e:android:smoke`
-    - Android runtime sanity check: cold launch reaches known screen + regression suite (emulator/device required).
+    - Android runtime sanity check: app installed + cold launch reaches known screen + regression suite (emulator/device required).
   Note: deterministic commands complement but do not replace the manual full UI flow checklist above.
 3. Log defects against `docs/BUG_REPORTS.md`.
 4. Promote from `preview` to `production` Android profile after QA signoff.

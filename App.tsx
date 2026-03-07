@@ -1528,6 +1528,7 @@ export function SessionBuilder(props: {
               style={[styles.smallActionButton, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
               onPress={handleSaveTemplatePress}
               disabled={!isTemplateNameValid}
+              testID="builder-template-save-button"
             >
               <Text style={styles.smallActionText}>Save</Text>
             </TouchableOpacity>
@@ -1557,9 +1558,12 @@ export function SessionBuilder(props: {
             placeholder="Session name"
             placeholderTextColor={COLORS.muted}
             style={styles.templateInput}
+            testID="builder-template-name-input"
           />
           {templateNameInput.length > 0 && !isTemplateNameValid ? (
-            <Text style={styles.helperText}>Session name must be at least 3 characters.</Text>
+            <Text style={styles.helperText} testID="builder-template-name-validation">
+              Session name must be at least 3 characters.
+            </Text>
           ) : null}
 
           {builderError ? (
@@ -1626,6 +1630,7 @@ export function SessionBuilder(props: {
                 placeholderTextColor={COLORS.muted}
                 style={styles.templateInput}
                 editable={isDrillEditorEnabled}
+                testID="builder-drill-name-input"
               />
               <View style={styles.inlineRow}>
                 <TextInput
@@ -1636,6 +1641,7 @@ export function SessionBuilder(props: {
                   placeholderTextColor={COLORS.muted}
                   style={styles.timeInput}
                   editable={isDrillEditorEnabled}
+                  testID="builder-drill-duration-input"
                 />
                 <TextInput
                   value={drillBpmInput}
@@ -1645,37 +1651,61 @@ export function SessionBuilder(props: {
                   placeholderTextColor={COLORS.muted}
                   style={styles.timeInput}
                   editable={isDrillEditorEnabled}
+                  testID="builder-drill-bpm-input"
                 />
               </View>
               {isDrillEditorEnabled ? (
                 <View style={styles.inlineRow}>
-                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeDuration(-1)}>
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeDuration(-1)}
+                    testID="builder-drill-duration-decrement"
+                  >
                     <Text style={styles.pillButtonText}>-1 min</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeDuration(1)}>
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeDuration(1)}
+                    testID="builder-drill-duration-increment"
+                  >
                     <Text style={styles.pillButtonText}>+1 min</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeBpm(-5)}>
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeBpm(-5)}
+                    testID="builder-drill-bpm-decrement"
+                  >
                     <Text style={styles.pillButtonText}>-5 BPM</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.pillButton} onPress={() => nudgeBpm(5)}>
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeBpm(5)}
+                    testID="builder-drill-bpm-increment"
+                  >
                     <Text style={styles.pillButtonText}>+5 BPM</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
               {isDrillEditorEnabled && !isDrillNameValid ? (
-                <Text style={styles.helperText}>Drill name cannot be empty.</Text>
+                <Text style={styles.helperText} testID="builder-drill-validation-name">
+                  Drill name cannot be empty.
+                </Text>
               ) : null}
               {isDrillEditorEnabled && !isDurationValid ? (
-                <Text style={styles.helperText}>Duration must be a number from 1 to 30 minutes.</Text>
+                <Text style={styles.helperText} testID="builder-drill-validation-duration">
+                  Duration must be a number from 1 to 30 minutes.
+                </Text>
               ) : null}
               {isDrillEditorEnabled && !isBpmValid ? (
-                <Text style={styles.helperText}>BPM must be blank or between 40 and 240.</Text>
+                <Text style={styles.helperText} testID="builder-drill-validation-bpm">
+                  BPM must be blank or between 40 and 240.
+                </Text>
               ) : null}
               <TouchableOpacity
                 style={[styles.smallActionButton, !canSaveDrill ? styles.actionButtonDisabled : null]}
                 onPress={handleSaveDrillPress}
                 disabled={!canSaveDrill}
+                testID="builder-save-drill-button"
               >
                 <Text style={styles.smallActionText}>Save Drill</Text>
               </TouchableOpacity>
