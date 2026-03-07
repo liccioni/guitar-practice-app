@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -1461,6 +1462,25 @@ export function SessionBuilder(props: {
   } = props;
 
   const totalXp = drills.reduce((sum, drill) => sum + toXp(drill), 0);
+  const androidStartHandledRef = useRef(false);
+
+  function handleStartSessionPressIn(): void {
+    if (Platform.OS !== "android") return;
+    if (androidStartHandledRef.current) return;
+    androidStartHandledRef.current = true;
+    onStartSession();
+  }
+
+  function handleStartSessionPress(): void {
+    if (Platform.OS === "android" && androidStartHandledRef.current) return;
+    onStartSession();
+  }
+
+  function handleStartSessionPressOut(): void {
+    if (Platform.OS === "android") {
+      androidStartHandledRef.current = false;
+    }
+  }
 
   return (
     <View style={styles.screenBody} testID="builder-screen">
@@ -1533,7 +1553,13 @@ export function SessionBuilder(props: {
           style={styles.builderStatsProbe}
         />
 
-        <TouchableOpacity style={styles.primaryCta} onPress={onStartSession} testID="builder-start-session">
+        <TouchableOpacity
+          style={styles.primaryCta}
+          onPress={handleStartSessionPress}
+          onPressIn={handleStartSessionPressIn}
+          onPressOut={handleStartSessionPressOut}
+          testID="builder-start-session"
+        >
           <Text style={styles.primaryCtaText}>Start This Session</Text>
         </TouchableOpacity>
 
