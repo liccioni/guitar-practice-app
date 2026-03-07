@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "e2e:prebuild:ios": "expo prebuild --clean --platform ios",
+    "e2e:prebuild:ios": "rm -rf ios && expo prebuild --platform ios",
     "e2e:list:simulators": "xcrun simctl list devices available",
     "e2e:detox:build:ios": "npm run e2e:patch:ios && detox build -c ios.sim.debug",
     "e2e:detox:prepare:ios": "npm run e2e:prebuild:ios && npm run e2e:detox:build:ios",

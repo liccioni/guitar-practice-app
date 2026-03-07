@@ -42,6 +42,10 @@ async function waitForDrillCount(targetCount, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for drill count ${targetCount}`);
 }
 
+async function expectDrillCardsVisible() {
+  await waitForVisible("builder-drill-card-first", 12000);
+}
+
 async function createFreshTemplate() {
   await waitForVisible("builder-template-new", 8000);
   await element(by.id("builder-template-new")).tap();
@@ -49,6 +53,7 @@ async function createFreshTemplate() {
   if (stats.drillCount <= 0) {
     throw new Error("New template did not create drills");
   }
+  await expectDrillCardsVisible();
 }
 
 async function startSessionFromBuilder() {
@@ -104,6 +109,7 @@ describe("Session builder e2e", () => {
     const before = await getBuilderStats();
     await element(by.id("builder-add-drill")).tap();
     await waitForDrillCount(before.drillCount + 1, 10000);
+    await expectDrillCardsVisible();
   });
 
   it("removes a drill when tapping Remove", async () => {

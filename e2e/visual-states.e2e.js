@@ -43,6 +43,7 @@ async function ensureDrillExists() {
     await element(by.id("builder-add-drill")).tap();
     await waitForVisible("builder-drill-count");
   }
+  await waitForVisible("builder-drill-card-first", 12000);
 }
 
 async function completeBySkipping() {

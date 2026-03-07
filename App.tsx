@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  FlatList,
   Platform,
   Pressable,
   StyleSheet,
@@ -1502,8 +1503,13 @@ export function SessionBuilder(props: {
   }
 
   return (
-    <View style={styles.screenBody} testID="builder-screen">
-      <View style={styles.builderHeader}>
+    <View style={[styles.screenBody, styles.builderScreenBody]} testID="builder-screen">
+      <View
+        style={[
+          styles.builderHeader,
+          Platform.OS === "android" ? styles.builderHeaderAndroidLayer : null,
+        ]}
+      >
         <View style={styles.topRow}>
           <Pressable onPress={onBack} style={styles.topActionButton}>
             <Text style={styles.topActionText}>Back</Text>
@@ -1573,7 +1579,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill card to edit. Long-press a drill card to reorder.</Text>
+        <Text style={styles.helperText}>Tap a drill card to edit.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -1582,40 +1588,45 @@ export function SessionBuilder(props: {
           accessibilityLabel={`${drills.length} drills ${totalXp} xp`}
           style={styles.builderStatsProbe}
         />
-
-        <TouchableOpacity
-          style={styles.primaryCta}
-          onPress={handleStartSessionPress}
-          onPressIn={handleStartSessionPressIn}
-          onPressOut={handleStartSessionPressOut}
-          testID="builder-start-session"
-        >
-          <Text style={styles.primaryCtaText}>Start This Session</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
-          <Text style={styles.secondaryCtaText}>Add Drill</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.smallDangerButton}
-          onPress={() => {
-            if (drills.length > 0) onRemoveDrill(drills[0].id);
-          }}
-          testID="builder-remove-first-control"
-          disabled={drills.length === 0}
-        >
-          <Text style={styles.smallActionText}>Remove First Drill</Text>
-        </TouchableOpacity>
       </View>
 
-      <DraggableFlatList
+      <FlatList
         data={drills}
-        style={styles.builderList}
+        style={[
+          styles.builderList,
+          Platform.OS === "android" ? styles.builderListAndroidLayer : null,
+        ]}
         keyExtractor={(item) => item.id}
-        onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.builderListContent}
+        ListHeaderComponent={
+          <View style={styles.builderListActions}>
+            <TouchableOpacity
+              style={[styles.primaryCta, styles.builderPrimaryCta]}
+              onPress={handleStartSessionPress}
+              onPressIn={handleStartSessionPressIn}
+              onPressOut={handleStartSessionPressOut}
+              testID="builder-start-session"
+            >
+              <Text style={styles.primaryCtaText}>Start This Session</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
+              <Text style={styles.secondaryCtaText}>Add Drill</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.smallDangerButton}
+              onPress={() => {
+                if (drills.length > 0) onRemoveDrill(drills[0].id);
+              }}
+              testID="builder-remove-first-control"
+              disabled={drills.length === 0}
+            >
+              <Text style={styles.smallActionText}>Remove First Drill</Text>
+            </TouchableOpacity>
+          </View>
+        }
         ListFooterComponent={
           <View style={styles.builderFooter}>
             <GlowCard>
@@ -1723,21 +1734,19 @@ export function SessionBuilder(props: {
             </TouchableOpacity>
           </GlowCard>
         }
-        renderItem={({ item, getIndex, drag, isActive }) => (
+        renderItem={({ item, index }) => (
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => onSelectDrill(item.id)}
-            onLongPress={drag}
-            disabled={isActive}
             testID={`builder-drill-card-${item.id}`}
             style={[
               styles.drillCard,
-              isActive ? styles.drillCardActive : null,
               selectedDrillId === item.id ? styles.drillCardSelected : null,
             ]}
           >
+            {index === 0 ? <View testID="builder-drill-card-first" style={styles.builderProbe} /> : null}
             <View style={styles.drillLeft}>
-              <Text style={styles.drillOrder}>#{(getIndex?.() ?? 0) + 1}</Text>
+              <Text style={styles.drillOrder}>#{index + 1}</Text>
               <View>
                 <Text style={styles.drillName}>{item.name}</Text>
                 <Text style={styles.drillMeta}>
@@ -2138,6 +2147,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
+  builderPrimaryCta: {
+    marginTop: 0,
+  },
   primaryCtaText: {
     color: COLORS.text,
     fontSize: 17,
@@ -2182,17 +2194,36 @@ const styles = StyleSheet.create({
     height: 1,
     opacity: 0,
   },
+  builderProbe: {
+    width: 1,
+    height: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
   builderList: {
     flex: 1,
+  },
+  builderListAndroidLayer: {
     zIndex: 1,
   },
   builderListContent: {
     gap: 12,
     paddingBottom: 108,
   },
+  builderListActions: {
+    gap: 12,
+    paddingBottom: 2,
+  },
   builderHeader: {
     gap: 18,
     paddingBottom: 6,
+    marginBottom: 12,
+  },
+  builderScreenBody: {
+    gap: 0,
+  },
+  builderHeaderAndroidLayer: {
     zIndex: 12,
     elevation: 12,
   },
@@ -2214,10 +2245,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-  },
-  drillCardActive: {
-    borderColor: COLORS.accent,
-    transform: [{ scale: 1.01 }],
   },
   drillCardSelected: {
     borderColor: COLORS.accent,
