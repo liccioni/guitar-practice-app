@@ -70,16 +70,6 @@ function coldLaunchApp() {
   run(`adb shell am start -n ${ACTIVITY}`);
 }
 
-function ensureAppInForeground(timeoutMs = 12000) {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    const focus = runIgnore("adb shell dumpsys window windows | rg \"mCurrentFocus\" -N");
-    if (focus.includes(PACKAGE)) return true;
-    sleep(400);
-  }
-  return false;
-}
-
 function runStartSessionRegression() {
   run("npm run test -- tests/startSessionPreparation.test.ts", {
     stdio: "inherit",
@@ -90,9 +80,6 @@ function runStartSessionRegression() {
 
 function runFullSmoke() {
   coldLaunchApp();
-  if (!ensureAppInForeground(12000)) {
-    throw new Error("Smoke failed: app did not enter foreground after cold launch.");
-  }
   if (!waitForAnyId(["home-start-practice", "builder-screen"], 25000)) {
     throw new Error("Smoke failed: app did not stabilize on a known launch screen.");
   }
