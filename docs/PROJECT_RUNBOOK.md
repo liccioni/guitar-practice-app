@@ -3,8 +3,8 @@
 This runbook is designed to reproduce the project up to the exact stable baseline.
 
 ## 1. Target Baseline
-- Stable tag: `stable-2026-03-06-e2e-green`
-- Stable commit: `bacf971`
+- Stable tag: `stable-2026-03-07-android-deterministic`
+- Stable commit: `ba586b1`
 - Canonical repo: `https://github.com/liccioni/guitar-practice-app`
 
 ## 2. Prerequisites
@@ -22,7 +22,7 @@ brew install applesimutils
 git clone git@github.com:liccioni/guitar-practice-app.git
 cd guitar-practice-app
 git fetch --tags
-git checkout stable-2026-03-06-e2e-green
+git checkout stable-2026-03-07-android-deterministic
 npm ci
 ```
 
@@ -45,12 +45,14 @@ Expected: visual run emits Home/Builder/Active/Complete snapshots.
 Expected: edge visual run emits Empty Builder, validation error, and paused Active snapshots.
 Expected names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
 
-3. Android deterministic regression and smoke validation (with emulator/device online):
+3. Android deterministic regression and smoke validation:
 ```bash
 npm run e2e:android:regression:start-session
 npm run e2e:android:smoke
 ```
-Expected: both commands print `PASS`.
+Expected:
+- `e2e:android:regression:start-session` prints `PASS` and does not require emulator/device.
+- `e2e:android:smoke` prints `PASS` with emulator/device online.
 
 ## 5. Run App Locally
 ```bash

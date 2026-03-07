@@ -21,11 +21,12 @@
 - Metronome toggle/BPM step
 - Reminder toggle/time save
 - Relaunch app and verify persisted local data
-  Deterministic local commands (emulator/device online):
+  Deterministic verification commands:
   - `npm run e2e:android:regression:start-session`
-    - Runs start-session regression suite.
+    - Logic-level regression suite for start-session preparation (no emulator required).
   - `npm run e2e:android:smoke`
-    - Verifies cold launch + regression suite.
+    - Android runtime sanity check: cold launch reaches known screen + regression suite (emulator/device required).
+  Note: deterministic commands complement but do not replace the manual full UI flow checklist above.
 3. Log defects against `docs/BUG_REPORTS.md`.
 4. Promote from `preview` to `production` Android profile after QA signoff.
 
