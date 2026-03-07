@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import DraggableFlatList from "react-native-draggable-flatlist";
 import Svg, { Circle } from "react-native-svg";
 import {
   playMetronomeTick,
@@ -1502,6 +1501,18 @@ export function SessionBuilder(props: {
     }
   }
 
+  function moveDrill(drillId: string, direction: -1 | 1): void {
+    const currentIndex = drills.findIndex((drill) => drill.id === drillId);
+    if (currentIndex < 0) return;
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= drills.length) return;
+
+    const nextDrills = [...drills];
+    const [moved] = nextDrills.splice(currentIndex, 1);
+    nextDrills.splice(nextIndex, 0, moved);
+    onReorderDrills(nextDrills.map((drill) => drill.id));
+  }
+
   return (
     <View style={[styles.screenBody, styles.builderScreenBody]} testID="builder-screen">
       <View
@@ -1579,7 +1590,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill card to edit.</Text>
+        <Text style={styles.helperText}>Tap a drill card to edit. Use ↑ ↓ to reorder.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -1744,7 +1755,16 @@ export function SessionBuilder(props: {
               selectedDrillId === item.id ? styles.drillCardSelected : null,
             ]}
           >
-            {index === 0 ? <View testID="builder-drill-card-first" style={styles.builderProbe} /> : null}
+            {index === 0 ? (
+              <>
+                <View testID="builder-drill-card-first" style={styles.builderProbe} />
+                <View
+                  testID="builder-drill-first-id-probe"
+                  accessibilityLabel={item.id}
+                  style={styles.builderProbe}
+                />
+              </>
+            ) : null}
             <View style={styles.drillLeft}>
               <Text style={styles.drillOrder}>#{index + 1}</Text>
               <View>
@@ -1757,6 +1777,22 @@ export function SessionBuilder(props: {
 
             <View style={styles.inlineRow}>
               <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
+              <TouchableOpacity
+                style={[styles.moveChip, index === 0 ? styles.actionButtonDisabled : null]}
+                onPress={() => moveDrill(item.id, -1)}
+                disabled={index === 0}
+                testID={`builder-move-up-${item.id}`}
+              >
+                <Text style={styles.smallActionText}>↑</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.moveChip, index === drills.length - 1 ? styles.actionButtonDisabled : null]}
+                onPress={() => moveDrill(item.id, 1)}
+                disabled={index === drills.length - 1}
+                testID={index === 0 ? "builder-move-first-down" : `builder-move-down-${item.id}`}
+              >
+                <Text style={styles.smallActionText}>↓</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.removeChip}
                 onPress={() => onRemoveDrill(item.id)}
