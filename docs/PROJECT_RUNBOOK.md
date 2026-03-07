@@ -3,8 +3,8 @@
 This runbook is designed to reproduce the project up to the exact stable baseline.
 
 ## 1. Target Baseline
-- Stable tag: `stable-2026-03-07-builder-ux-green`
-- Stable commit: `1f6938a`
+- Stable tag: `stable-2026-03-07-builder-validation-green`
+- Stable commit: `43aedef`
 - Canonical repo: `https://github.com/liccioni/guitar-practice-app`
 
 ## 2. Prerequisites
@@ -22,7 +22,7 @@ brew install applesimutils
 git clone git@github.com:liccioni/guitar-practice-app.git
 cd guitar-practice-app
 git fetch --tags
-git checkout stable-2026-03-07-builder-ux-green
+git checkout stable-2026-03-07-builder-validation-green
 npm ci
 ```
 
@@ -113,11 +113,12 @@ Current cost-control mode:
 - Coverage thresholds must pass (`lines >= 88`, `statements >= 80`, `functions >= 88`, `branches >= 60`).
 
 2. Detox iOS
-- `e2e/builder-smoke.e2e.js` expects 4 passing tests:
+- `e2e/builder-smoke.e2e.js` expects 5 passing tests:
   - add drill
   - remove drill
   - start session
   - complete session by skip
+  - template-name validation for short names
 
 3. Android deterministic runtime checks
 - `npm run e2e:android:regression:start-session`
