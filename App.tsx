@@ -23,6 +23,7 @@ import {
 } from "./src/application/metronomeAudio";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
 import { appendDrillToTemplate } from "./src/application/sessionBuilder";
+import { prepareSessionStart } from "./src/application/startSessionPreparation";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
 import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "./src/domain/goals/types";
@@ -30,7 +31,7 @@ import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
 import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/metrics";
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
-import { getBeatIntervalMs, isValidBpm, stepBpm } from "./src/domain/metronome/metronome";
+import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
 import {
   calculateTotalDurationSeconds,
   createSessionTemplate,
@@ -247,10 +248,6 @@ function toSnapshot(drill: Drill): DrillSnapshot {
     durationSeconds: drill.durationSeconds,
     targetBpm: drill.targetBpm,
   };
-}
-
-function isValidRuntimeDrill(drill: Drill): boolean {
-  return drill.name.trim().length > 0 && Number.isFinite(drill.durationSeconds) && drill.durationSeconds > 0;
 }
 
 function clampUnit(value: number): number {
@@ -713,29 +710,19 @@ export default function App() {
   }
 
   function startSession(): void {
-    if (!selectedTemplate) {
-      setBuilderError("No session template available. Create a template first.");
-      return;
-    }
-    if (builderDrills.length === 0) {
-      setBuilderError("This template has no drills. Add at least one drill to start.");
-      return;
-    }
+    const prepared = prepareSessionStart({
+      selectedTemplate: selectedTemplate ?? null,
+      allDrills,
+      currentMetronomeBpm: metronomeBpm,
+    });
 
-    const resolvedDrills = selectedTemplate.drillIds.reduce<Drill[]>((acc, id) => {
-      const drill = allDrills.find((item) => item.id === id);
-      if (drill && isValidRuntimeDrill(drill)) {
-        acc.push(drill);
-      }
-      return acc;
-    }, []);
-
-    if (resolvedDrills.length === 0) {
-      setBuilderError("Selected template has no valid drills. Edit drills and try again.");
+    if (!prepared.ok) {
+      setBuilderError(prepared.error);
       return;
     }
 
     setBuilderError(null);
+    const { resolvedDrills } = prepared;
     setActiveDrillIds(resolvedDrills.map((drill) => drill.id));
     setActiveIndex(0);
     setRemainingSec(Math.max(1, resolvedDrills[0].durationSeconds));
@@ -745,10 +732,7 @@ export default function App() {
     setSessionXp(0);
     setLeveledUp(false);
     setCurrentMicrocopy(MOTIVATION[0]);
-    const firstDrillBpm = resolvedDrills[0].targetBpm;
-    setMetronomeBpm(
-      firstDrillBpm !== undefined && isValidBpm(firstDrillBpm) ? firstDrillBpm : metronomeBpm,
-    );
+    setMetronomeBpm(prepared.nextMetronomeBpm);
     setMetronomeEnabled(true);
     setScreen("active");
   }

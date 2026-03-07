@@ -21,6 +21,11 @@
 - Metronome toggle/BPM step
 - Reminder toggle/time save
 - Relaunch app and verify persisted local data
+  Deterministic local commands (emulator/device online):
+  - `npm run e2e:android:regression:start-session`
+    - Runs start-session regression suite.
+  - `npm run e2e:android:smoke`
+    - Verifies cold launch + regression suite.
 3. Log defects against `docs/BUG_REPORTS.md`.
 4. Promote from `preview` to `production` Android profile after QA signoff.
 

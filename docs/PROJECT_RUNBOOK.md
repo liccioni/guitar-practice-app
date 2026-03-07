@@ -45,6 +45,13 @@ Expected: visual run emits Home/Builder/Active/Complete snapshots.
 Expected: edge visual run emits Empty Builder, validation error, and paused Active snapshots.
 Expected names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
 
+3. Android deterministic regression and smoke validation (with emulator/device online):
+```bash
+npm run e2e:android:regression:start-session
+npm run e2e:android:smoke
+```
+Expected: both commands print `PASS`.
+
 ## 5. Run App Locally
 ```bash
 npm run ios:local
@@ -100,7 +107,7 @@ Current cost-control mode:
 
 ## 8. Test Surfaces and Expected Results
 1. Unit + integration
-- 57 tests expected passing on current main.
+- 62 tests expected passing on current main.
 - Coverage thresholds must pass (`lines >= 88`, `statements >= 80`, `functions >= 88`, `branches >= 60`).
 
 2. Detox iOS
@@ -109,6 +116,12 @@ Current cost-control mode:
   - remove drill
   - start session
   - complete session by skip
+
+3. Android deterministic runtime checks
+- `npm run e2e:android:regression:start-session`
+  - Runs start-session regression suite (`tests/startSessionPreparation.test.ts`).
+- `npm run e2e:android:smoke`
+  - Verifies Android cold launch reaches a known screen, then runs start-session regression suite.
 
 ## 9. Recovery Procedures
 1. If Detox reports framework cache validation errors:
