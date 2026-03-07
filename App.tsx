@@ -2090,6 +2090,7 @@ const styles = StyleSheet.create({
   },
   builderList: {
     flex: 1,
+    zIndex: 1,
   },
   builderListContent: {
     gap: 12,
@@ -2098,6 +2099,8 @@ const styles = StyleSheet.create({
   builderHeader: {
     gap: 18,
     paddingBottom: 6,
+    zIndex: 12,
+    elevation: 12,
   },
   builderFooter: {
     paddingTop: 6,
