@@ -61,16 +61,7 @@ async function captureBuilderRandomCuePreview() {
   }
   await waitForVisible("builder-randomizer-note", 5000);
   await element(by.id("builder-randomizer-note")).tap();
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      await waitForVisible("builder-save-drill-button", 1200);
-      break;
-    } catch {
-      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
-    }
-  }
-  await waitForVisible("builder-save-drill-button", 8000);
-  await element(by.id("builder-save-drill-button")).tap();
+  await waitForVisible("builder-randomizer-note", 2000);
   await element(by.id("builder-drill-list")).swipe("down", "fast", 0.95);
   await device.takeScreenshot("02b-builder-random-cue-preview");
 }

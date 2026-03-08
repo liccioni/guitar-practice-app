@@ -129,17 +129,7 @@ async function captureLongTitleLayoutState() {
     await element(by.id("builder-drill-name-input")).replaceText(
       "Alternate Picking Burst with Extended Accent Pattern",
     );
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      try {
-        await waitForVisible("builder-save-drill-button", 1200);
-        await element(by.id("builder-save-drill-button")).tap();
-        break;
-      } catch {
-        try {
-          await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
-        } catch {}
-      }
-    }
+    await waitForVisible("builder-drill-name-input", 1200);
   }
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
