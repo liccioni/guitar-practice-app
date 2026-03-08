@@ -1933,7 +1933,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill to edit. Reorder with the transport controls.</Text>
+        <Text style={styles.helperText}>Tap a drill card to edit. Use transport arrows to reorder the chain.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -1963,7 +1963,7 @@ export function SessionBuilder(props: {
               onPressOut={handleStartSessionPressOut}
               testID="builder-start-session"
             >
-              <Text style={styles.primaryCtaText}>Begin Session</Text>
+              <Text style={styles.primaryCtaText}>Start This Session</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
@@ -1978,7 +1978,7 @@ export function SessionBuilder(props: {
               testID="builder-remove-first-control"
               disabled={drills.length === 0}
             >
-              <Text style={styles.smallActionText}>Quick Remove First Drill</Text>
+              <Text style={styles.smallActionText}>Remove First Drill</Text>
             </TouchableOpacity>
           </View>
         }
@@ -2947,7 +2947,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "stretch",
     justifyContent: "flex-start",
-    gap: 10,
+    gap: 12,
   },
   drillCardTopRow: {
     flexDirection: "row",
@@ -2988,7 +2988,7 @@ const styles = StyleSheet.create({
   drillMeta: {
     color: COLORS.muted,
     marginTop: 2,
-    fontSize: 12,
+    fontSize: 13,
   },
   drillRandomMeta: {
     color: COLORS.accentAlt,
@@ -3006,9 +3006,12 @@ const styles = StyleSheet.create({
   builderCardActions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     gap: 8,
     flexShrink: 0,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+    paddingTop: 8,
   },
   drillXp: {
     color: COLORS.xp,
@@ -3263,6 +3266,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.divider,
     paddingHorizontal: 10,
     justifyContent: "center",
+    backgroundColor: COLORS.cardSoft,
   },
   moveChip: {
     minHeight: 30,
@@ -3272,9 +3276,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.divider,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: COLORS.cardSoft,
   },
   removeChipText: {
-    color: COLORS.disabled,
+    color: COLORS.muted,
     fontWeight: "700",
     fontSize: 11,
   },
