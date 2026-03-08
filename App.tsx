@@ -6,6 +6,7 @@ import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -1220,7 +1221,12 @@ function HomeDashboard(props: {
   }, [goalTarget]);
 
   return (
-    <View style={styles.screenBody}>
+    <ScrollView
+      style={styles.homeScroll}
+      contentContainerStyle={styles.homeScrollContent}
+      showsVerticalScrollIndicator={false}
+      testID="home-scroll"
+    >
       <View style={styles.topRow}>
         <Text style={styles.title}>Level {levelState.level} Goal Streak</Text>
         <Text style={styles.levelChip}>
@@ -1229,7 +1235,7 @@ function HomeDashboard(props: {
       </View>
 
       <TouchableOpacity
-        style={styles.primaryCta}
+        style={[styles.primaryCta, styles.homePrimaryCta]}
         onPress={onStartPractice}
         accessibilityRole="button"
         testID="home-start-practice"
@@ -1373,7 +1379,7 @@ function HomeDashboard(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Achievements</Text>
+        <Text style={styles.cardLabel} testID="home-achievements-title">Achievements</Text>
         <View style={styles.badgeRow}>
           {badges.map((badge) => (
             <View key={badge.id} style={[styles.badge, !badge.unlocked ? styles.badgeLocked : null]}>
@@ -1386,7 +1392,7 @@ function HomeDashboard(props: {
 
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
 
-    </View>
+    </ScrollView>
   );
 }
 
@@ -2069,6 +2075,15 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     gap: 18,
   },
+  homeScroll: {
+    flex: 1,
+  },
+  homeScrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 18,
+  },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -2185,6 +2200,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   builderPrimaryCta: {
+    marginTop: 0,
+  },
+  homePrimaryCta: {
     marginTop: 0,
   },
   primaryCtaText: {

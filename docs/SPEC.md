@@ -124,6 +124,16 @@ This is the implementation contract for the current project state.
 - Command: `npm run e2e:detox:visual:ios`
 - Detox edge visual test captures Empty Builder, Builder validation error, and Active paused states.
 - Command: `npm run e2e:detox:visual:edge:ios`
+- Home scroll reachability must be validated by dedicated e2e coverage (`e2e/home-scroll.e2e.js`).
+
+5. Coverage requirement policy
+- Minimum required automated coverage target is **95%**.
+- Requirement scope:
+  - Unit/integration coverage across application, domain, and persistence modules.
+  - Critical UX flows must be covered by Detox e2e (home navigation/scroll reachability, builder edit/reorder/remove, active flow, complete flow).
+- Merge policy:
+  - New features/fixes must include tests that prevent regression of changed behavior.
+  - Work that cannot immediately satisfy the 95% threshold must include an explicit gap note and a scheduled follow-up task before release signoff.
 
 ## 7. CI Contract
 Current repository mode (cost-control): workflows are manual-only (`workflow_dispatch`).
