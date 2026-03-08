@@ -20,7 +20,7 @@ This is the implementation contract for the current project state.
 
 2. Session Builder
 - Template operations: New, Duplicate, Save, Delete, Select.
-- Drill operations: Add (deterministic editable defaults), Remove, Reorder (long-press drag), Edit fields.
+- Drill operations: Add (deterministic editable defaults), Remove, Reorder (up/down controls), Edit fields.
 - Validation and errors surfaced in UI (no uncaught crashes).
 
 3. Active Practice
@@ -148,6 +148,6 @@ Current repository mode (cost-control): workflows are manual-only (`workflow_dis
 - Social features
 
 ## 9. Stable Milestone
-- Reference stability marker: `stable-2026-03-06-docs-aligned`
-- Reference commit: `3b6b67d`
-- This marker indicates CI green baseline for quality + iOS Detox.
+- Reference stability marker: `stable-2026-03-07-builder-validation-green`
+- Reference commit: `43aedef`
+- This marker indicates local quality + iOS Detox stable baseline.

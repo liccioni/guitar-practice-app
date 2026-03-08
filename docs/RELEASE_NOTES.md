@@ -13,9 +13,9 @@
   - A transient Detox startup failure (`CFBundleIdentifier not found`) was resolved by rebuilding the iOS Detox app binary before test execution.
 
 ## Current Stable Baseline
-- Tag: `stable-2026-03-06-docs-aligned`
-- Commit: `3b6b67d`
-- Scope: docs-aligned local iOS Detox baseline.
+- Tag: `stable-2026-03-07-builder-validation-green`
+- Commit: `43aedef`
+- Scope: builder-validation local iOS Detox baseline.
 
 ## Stable Baseline
 - Tag: `stable-2026-03-04-ci-green`
@@ -80,7 +80,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - This prevents automatic runs on push/PR until credits are replenished.
 10. Session Builder production-hardening (removed mock behavior).
 - `Add Drill` now creates deterministic editable defaults instead of random canned drills.
-- Drill reorder now uses long-press drag-and-drop interaction.
+- Drill reorder now uses explicit per-card up/down controls.
 11. Detox smoke stabilization on local iOS baseline (`bacf971`).
 - Builder smoke navigation/start/skip flow hardened with retries and stable waits.
 - E2E launch changed to avoid per-test uninstall (`delete: true` removed from `e2e/init.js`) to reduce Detox connection flakes.

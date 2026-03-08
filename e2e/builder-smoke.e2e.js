@@ -46,6 +46,39 @@ async function expectDrillCardsVisible() {
   await waitForVisible("builder-drill-card-first", 12000);
 }
 
+async function getFirstDrillId() {
+  const attrs = await element(by.id("builder-drill-first-id-probe")).getAttributes();
+  return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
+}
+
+async function ensureMoveFirstDownVisible() {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await waitForVisible("builder-move-first-down", 1500);
+      return;
+    } catch {
+      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
+    }
+  }
+  await waitForVisible("builder-move-first-down", 5000);
+}
+
+async function waitForFirstDrillIdChange(previousId, timeoutMs = 8000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const current = await getFirstDrillId();
+      if (current.length > 0 && current !== previousId) {
+        return current;
+      }
+    } catch {
+      // List can virtualize while we swipe; keep polling.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  throw new Error("Timed out waiting for first drill id to change after move-down action.");
+}
+
 async function createFreshTemplate() {
   await waitForVisible("builder-template-new", 8000);
   await element(by.id("builder-template-new")).tap();
@@ -127,6 +160,22 @@ describe("Session builder e2e", () => {
   it("starts a session from builder", async () => {
     await openBuilderScreen();
     await startSessionFromBuilder();
+  });
+
+  it("reorders drills when moving first drill down", async () => {
+    await openBuilderScreen();
+    await createFreshTemplate();
+
+    const stats = await getBuilderStats();
+    if (stats.drillCount < 2) {
+      await element(by.id("builder-add-drill")).tap();
+      await waitForDrillCount(2, 10000);
+    }
+
+    await ensureMoveFirstDownVisible();
+    const firstBefore = await getFirstDrillId();
+    await element(by.id("builder-move-first-down")).tap();
+    await waitForFirstDrillIdChange(firstBefore, 8000);
   });
 
   it("completes a session by skipping drills", async () => {

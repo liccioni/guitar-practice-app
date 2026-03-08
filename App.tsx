@@ -1602,6 +1602,7 @@ export function SessionBuilder(props: {
       </View>
 
       <FlatList
+        testID="builder-drill-list"
         data={drills}
         style={[
           styles.builderList,
