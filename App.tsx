@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   Vibration,
   View,
 } from "react-native";
@@ -1767,6 +1768,7 @@ export function SessionBuilder(props: {
   } = props;
 
   const totalXp = drills.reduce((sum, drill) => sum + toXp(drill), 0);
+  const { width } = useWindowDimensions();
   const androidStartHandledRef = useRef(false);
   const templateNameTrimmed = templateNameInput.trim();
   const isTemplateNameValid = templateNameTrimmed.length >= 3;
@@ -1786,6 +1788,7 @@ export function SessionBuilder(props: {
   const canSaveDrill =
     isDrillEditorEnabled && isDrillNameValid && isDurationValid && isBpmValid && isRandomEveryBarsValid;
   const noDrillSelected = drills.length > 0 && !selectedDrillId;
+  const useCompactDrillCard = width <= 390;
 
   function handleSaveTemplatePress(): void {
     if (!isTemplateNameValid) return;
@@ -2168,6 +2171,11 @@ export function SessionBuilder(props: {
                   <Text style={styles.drillMeta}>
                     {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
                   </Text>
+                  {useCompactDrillCard ? (
+                    <Text style={[styles.drillXp, styles.drillXpCompact]} testID={`builder-drill-xp-${item.id}`}>
+                      +{toXp(item)} XP
+                    </Text>
+                  ) : null}
                   {item.randomizer ? (
                     <Text style={styles.drillRandomMeta}>
                       Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
@@ -2175,12 +2183,11 @@ export function SessionBuilder(props: {
                   ) : null}
                 </View>
               </View>
-              <Text
-                style={styles.drillXp}
-                testID={`builder-drill-xp-${item.id}`}
-              >
-                +{toXp(item)} XP
-              </Text>
+              {!useCompactDrillCard ? (
+                <Text style={styles.drillXp} testID={`builder-drill-xp-${item.id}`}>
+                  +{toXp(item)} XP
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.builderCardActions}>
@@ -2778,6 +2785,11 @@ const styles = StyleSheet.create({
     minWidth: 70,
     textAlign: "right",
     marginTop: 2,
+  },
+  drillXpCompact: {
+    minWidth: 0,
+    textAlign: "left",
+    marginTop: 4,
   },
   fab: {
     position: "absolute",
