@@ -75,4 +75,55 @@ describe("InMemoryPracticeRepository behavior", () => {
     expect(repoB.listSessionTemplates()).toHaveLength(1);
     expect(repoB.listHistory()).toHaveLength(1);
   });
+
+  it("returns drill by id", () => {
+    const repo = new InMemoryPracticeRepository();
+    const drill = repo.createDrill({ name: "Legato", durationMinutes: 6 });
+
+    expect(repo.getDrillById(drill.id)?.name).toBe("Legato");
+    expect(repo.getDrillById("missing")).toBeUndefined();
+  });
+
+  it("throws when updating a missing drill", () => {
+    const repo = new InMemoryPracticeRepository();
+    expect(() => repo.updateDrill("missing", { name: "Nope" })).toThrow("Drill not found");
+  });
+
+  it("updating drill persists normalized values", () => {
+    const repo = new InMemoryPracticeRepository();
+    const drill = repo.createDrill({ name: "Timing", durationMinutes: 5 });
+    const updated = repo.updateDrill(drill.id, { name: " Timing+ ", durationMinutes: 6 });
+
+    expect(updated.name).toBe("Timing+");
+    expect(updated.durationSeconds).toBe(360);
+  });
+
+  it("recalculates template duration with missing drill refs as zero", () => {
+    const repo = new InMemoryPracticeRepository();
+    const warmup = repo.createDrill({ name: "Warmup", durationMinutes: 5 });
+    const alt = repo.createDrill({ name: "Alt", durationMinutes: 6 });
+
+    repo.saveSessionTemplate({
+      id: "t-mixed",
+      name: "Mixed",
+      drillIds: [warmup.id, "ghost-id", alt.id],
+      totalDurationSeconds: warmup.durationSeconds + alt.durationSeconds,
+      isPreset: false,
+      createdAt: "2026-03-01T00:00:00.000Z",
+      updatedAt: "2026-03-01T00:00:00.000Z",
+    });
+    repo.saveSessionTemplate({
+      id: "t-other",
+      name: "Other",
+      drillIds: [alt.id],
+      totalDurationSeconds: alt.durationSeconds,
+      isPreset: false,
+      createdAt: "2026-03-01T00:00:00.000Z",
+      updatedAt: "2026-03-01T00:00:00.000Z",
+    });
+
+    repo.deleteDrill(warmup.id);
+    expect(repo.getSessionTemplateById("t-mixed")?.totalDurationSeconds).toBe(alt.durationSeconds);
+    expect(repo.getSessionTemplateById("t-other")?.totalDurationSeconds).toBe(alt.durationSeconds);
+  });
 });

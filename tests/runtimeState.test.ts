@@ -4,6 +4,7 @@ import type { SessionTemplate } from "../src/domain/sessions/sessionTemplate";
 import {
   advanceToNextSegment,
   createRuntimeState,
+  getCurrentSegment,
   markCurrentSegmentComplete,
   pauseRuntime,
   resumeRuntime,
@@ -90,5 +91,126 @@ describe("runtime state machine", () => {
     expect(completed.completedDrillIds).toEqual(["d1"]);
     expect(completed.durationCompletedSeconds).toBe(60);
     expect(completed.status).toBe("segmentComplete");
+  });
+
+  it("handles invalid or no-op transitions safely", () => {
+    const idle = createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" });
+    expect(pauseRuntime(idle)).toBe(idle);
+    expect(resumeRuntime(idle)).toBe(idle);
+    expect(tickRuntime(idle, 10)).toBe(idle);
+    expect(advanceToNextSegment(idle)).toBe(idle);
+  });
+
+  it("throws when template has no runnable drills", () => {
+    expect(() =>
+      createRuntimeState({
+        template: { ...template, drillIds: ["missing"] },
+        drills,
+        nowIso: "2026-03-02T00:00:00.000Z",
+      }),
+    ).toThrow("Template has no drills to run");
+  });
+
+  it("finishes when current index is out of bounds", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const brokenState = { ...started, currentIndex: 99 };
+
+    expect(tickRuntime(brokenState).status).toBe("finished");
+    expect(markCurrentSegmentComplete(brokenState).status).toBe("finished");
+    expect(skipCurrentSegment(brokenState).status).toBe("finished");
+    expect(getCurrentSegment(brokenState)).toBeUndefined();
+  });
+
+  it("finishes when skipping the final segment", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const atLast = { ...started, currentIndex: started.segments.length - 1 };
+    const skipped = skipCurrentSegment(atLast);
+
+    expect(skipped.status).toBe("finished");
+    expect(skipped.totalRemainingSeconds).toBe(0);
+  });
+
+  it("does not double-count completed drill when ticking an already completed segment", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const alreadyCompletedState = {
+      ...started,
+      completedDrillIds: [started.segments[0].drillId],
+      durationCompletedSeconds: started.segments[0].durationSeconds,
+    };
+
+    const afterTick = tickRuntime(alreadyCompletedState, started.segments[0].durationSeconds);
+    expect(afterTick.completedDrillIds).toEqual([started.segments[0].drillId]);
+    expect(afterTick.durationCompletedSeconds).toBe(started.segments[0].durationSeconds);
+  });
+
+  it("mark complete and skip are no-op for non-runnable status", () => {
+    const idle = createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" });
+    const finished = { ...idle, status: "finished" as const };
+    expect(markCurrentSegmentComplete(finished)).toBe(finished);
+    expect(skipCurrentSegment(finished)).toBe(finished);
+  });
+
+  it("advance finishes when current segment is already last", () => {
+    const state = {
+      ...createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+      status: "segmentComplete" as const,
+      currentIndex: 1,
+    };
+    const next = advanceToNextSegment(state);
+    expect(next.status).toBe("finished");
+  });
+
+  it("start is a no-op unless state is idle", () => {
+    const running = startRuntime(
+      startRuntime(createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" })),
+    );
+    expect(startRuntime(running)).toBe(running);
+  });
+
+  it("tick on final segment transitions to finished", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const onLast = { ...started, currentIndex: 1 };
+    const finished = tickRuntime(onLast, 120);
+    expect(finished.status).toBe("finished");
+  });
+
+  it("tick can decrement without completing segment", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const next = tickRuntime(started, 10);
+    expect(next.status).toBe("running");
+    expect(next.segments[0].remainingSeconds).toBe(50);
+    expect(next.totalRemainingSeconds).toBe(170);
+  });
+
+  it("mark complete does not double-count and can finish on last segment", () => {
+    const started = startRuntime(
+      createRuntimeState({ template, drills, nowIso: "2026-03-02T00:00:00.000Z" }),
+    );
+    const withAlreadyCompleted = {
+      ...started,
+      completedDrillIds: [started.segments[0].drillId],
+      durationCompletedSeconds: started.segments[0].durationSeconds,
+    };
+    const completedOnce = markCurrentSegmentComplete(withAlreadyCompleted);
+    expect(completedOnce.durationCompletedSeconds).toBe(started.segments[0].durationSeconds);
+
+    const atLast = {
+      ...started,
+      currentIndex: 1,
+      completedDrillIds: [started.segments[0].drillId],
+      durationCompletedSeconds: started.segments[0].durationSeconds,
+    };
+    const finished = markCurrentSegmentComplete(atLast);
+    expect(finished.status).toBe("finished");
   });
 });

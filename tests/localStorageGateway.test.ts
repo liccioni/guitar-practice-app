@@ -121,6 +121,14 @@ describe("LocalStorageGateway", () => {
           drills: [
             "bad-shape",
             {
+              id: "",
+              name: "No id",
+              durationSeconds: 300,
+              tags: [],
+              createdAt: "",
+              updatedAt: "",
+            },
+            {
               id: "bad-duration",
               name: "Bad",
               durationSeconds: 0,
@@ -214,5 +222,196 @@ describe("LocalStorageGateway", () => {
 
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
+  });
+
+  it("returns empty state for invalid or empty persisted payload", () => {
+    expect(parsePersistedState(null).drills).toEqual([]);
+    expect(parsePersistedState("not-json").templates).toEqual([]);
+
+    const versionWithoutState = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+      }),
+    );
+    expect(versionWithoutState.history).toEqual([]);
+  });
+
+  it("migrates legacy direct payload and preserves valid goals/profile fields", () => {
+    const parsed = parsePersistedState(
+      JSON.stringify({
+        drills: [
+          {
+            id: "d1",
+            name: " Drill ",
+            description: "  desc  ",
+            durationSeconds: 300,
+            targetBpm: 120,
+            tags: ["a", "a", 1],
+            createdAt: "c",
+            updatedAt: "u",
+          },
+        ],
+        templates: [{ id: "t1", name: " T ", drillIds: ["d1"], isPreset: false }],
+        history: [
+          {
+            id: "h1",
+            sessionTemplateId: "t1",
+            sessionNameSnapshot: " Session ",
+            drillsSnapshot: [{ id: "d1", name: " Drill ", durationSeconds: 300, targetBpm: 120 }],
+            completedDrillIds: ["d1"],
+            startedAt: "2026-03-03T12:00:00.000Z",
+            endedAt: "2026-03-03T12:05:00.000Z",
+            durationCompletedSeconds: 300,
+            completed: true,
+          },
+        ],
+        goalSettings: {
+          dailyMinutesTarget: 45,
+          goalType: "drills",
+          goalTarget: 7,
+          reminderEnabled: false,
+          reminderTime: "19:30",
+        },
+        profile: {
+          totalXp: 42.8,
+          unlockedBadgeIds: ["b1", "b2", "b1"],
+        },
+      }),
+    );
+
+    expect(parsed.drills[0]?.name).toBe("Drill");
+    expect(parsed.drills[0]?.description).toBe("desc");
+    expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
+    expect(parsed.history[0]?.sessionNameSnapshot).toBe("Session");
+    expect(parsed.goalSettings.goalType).toBe("drills");
+    expect(parsed.goalSettings.goalTarget).toBe(7);
+    expect(parsed.goalSettings.reminderTime).toBe("19:30");
+    expect(parsed.profile.totalXp).toBe(43);
+    expect(parsed.profile.unlockedBadgeIds).toEqual(["b1", "b2"]);
+  });
+
+  it("normalizes goal target defaults per goal type and invalid reminder format", () => {
+    const sessionsGoal = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            goalType: "sessions",
+            goalTarget: Number.NaN,
+            reminderEnabled: true,
+            reminderTime: "25:99",
+          },
+        },
+      }),
+    );
+
+    const drillsGoal = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            goalType: "drills",
+            goalTarget: Number.NaN,
+            reminderEnabled: true,
+            reminderTime: "00:00",
+          },
+        },
+      }),
+    );
+
+    expect(sessionsGoal.goalSettings.goalTarget).toBe(1);
+    expect(sessionsGoal.goalSettings.reminderTime).toBe("25:99");
+    expect(drillsGoal.goalSettings.goalTarget).toBe(4);
+    expect(drillsGoal.goalSettings.reminderTime).toBe("00:00");
+  });
+
+  it("covers sanitizer fallback branches for optional/invalid field shapes", () => {
+    const parsed = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [
+            {
+              id: "d-fallback",
+              name: "Fallback",
+              description: 42,
+              durationSeconds: 300,
+              targetBpm: 120,
+              tags: "not-array",
+              createdAt: 1,
+              updatedAt: null,
+            },
+          ],
+          templates: [
+            {
+              id: "t-fallback",
+              name: "Fallback",
+              drillIds: "not-array",
+              isPreset: true,
+              createdAt: 1,
+              updatedAt: null,
+            },
+          ],
+          history: [
+            {
+              id: "h-missing-start",
+              sessionNameSnapshot: "Bad",
+              durationCompletedSeconds: 10,
+              completed: false,
+            },
+            {
+              id: "h-no-arrays",
+              sessionNameSnapshot: "No Arrays",
+              startedAt: "2026-03-03T12:00:00.000Z",
+              drillsSnapshot: "bad",
+              completedDrillIds: "bad",
+              durationCompletedSeconds: 60,
+              completed: true,
+              endedAt: "2026-03-03T12:01:00.000Z",
+            },
+            {
+              id: "h-bad-snap-duration",
+              sessionNameSnapshot: "Bad Snap",
+              startedAt: "2026-03-03T12:00:00.000Z",
+              drillsSnapshot: [{ id: "d1", name: "X", durationSeconds: 0 }],
+              completedDrillIds: [],
+              durationCompletedSeconds: 60,
+              completed: false,
+            },
+          ],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            goalType: "minutes",
+            goalTarget: 30,
+            reminderEnabled: 1,
+            reminderTime: 999,
+          },
+          profile: {
+            totalXp: 12,
+            unlockedBadgeIds: "not-array",
+          },
+        },
+      }),
+    );
+
+    expect(parsed.drills[0]?.tags).toEqual([]);
+    expect(parsed.drills[0]?.description).toBeUndefined();
+    expect(parsed.drills[0]?.createdAt).toBe("");
+    expect(parsed.drills[0]?.updatedAt).toBe("");
+    expect(parsed.templates[0]?.drillIds).toEqual([]);
+    expect(parsed.templates[0]?.createdAt).toBe("");
+    expect(parsed.history).toHaveLength(2);
+    expect(parsed.history[0]?.drillsSnapshot).toEqual([]);
+    expect(parsed.history[1]?.drillsSnapshot).toEqual([]);
+    expect(parsed.goalSettings.reminderTime).toBe("18:00");
+    expect(parsed.profile.unlockedBadgeIds).toEqual([]);
   });
 });

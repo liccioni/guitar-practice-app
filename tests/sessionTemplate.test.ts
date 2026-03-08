@@ -39,4 +39,38 @@ describe("session template output", () => {
     expect(renderSessionSummary(template, drills)).toContain("1. Warmup (5m)");
     expect(renderSessionSummary(template, drills)).toContain("2. Scales (10m)");
   });
+
+  it("validates required name and minimum session duration", () => {
+    expect(() =>
+      createSessionTemplate({
+        id: "bad-1",
+        name: "   ",
+        drillIds: [],
+        totalDurationSeconds: 600,
+        nowIso: "2026-03-02T00:00:00.000Z",
+      }),
+    ).toThrow("Session name is required");
+
+    expect(() =>
+      createSessionTemplate({
+        id: "bad-2",
+        name: "Too short",
+        drillIds: ["d1"],
+        totalDurationSeconds: 60,
+        nowIso: "2026-03-02T00:00:00.000Z",
+      }),
+    ).toThrow("Session must be at least 5 minutes");
+  });
+
+  it("defaults preset flag to false", () => {
+    const template = createSessionTemplate({
+      id: "s2",
+      name: "Default Preset",
+      drillIds: ["d1"],
+      totalDurationSeconds: 300,
+      nowIso: "2026-03-02T00:00:00.000Z",
+    });
+
+    expect(template.isPreset).toBe(false);
+  });
 });

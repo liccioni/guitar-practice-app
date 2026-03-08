@@ -50,4 +50,38 @@ describe("practice pipeline template CRUD", () => {
     pipeline.deleteSessionTemplate(template.id);
     expect(repository.listSessionTemplates().map((item) => item.id)).not.toContain(template.id);
   });
+
+  it("throws when updating a missing template", () => {
+    const repository = new InMemoryPracticeRepository();
+    const pipeline = new PracticePipeline(repository);
+    const drill = repository.createDrill({ name: "Warmup", durationMinutes: 5 });
+
+    expect(() =>
+      pipeline.updateSessionTemplateFromDrills({
+        id: "missing",
+        name: "Missing",
+        drills: [drill],
+      }),
+    ).toThrow("Template not found");
+  });
+
+  it("defaults update timestamp when nowIso is omitted", () => {
+    const repository = new InMemoryPracticeRepository();
+    const pipeline = new PracticePipeline(repository);
+    const drill = repository.createDrill({ name: "Warmup", durationMinutes: 5 });
+    const template = pipeline.createSessionTemplateFromDrills({
+      id: "t-now",
+      name: "Now",
+      drills: [drill],
+      nowIso: "2026-03-02T00:00:00.000Z",
+    });
+
+    const updated = pipeline.updateSessionTemplateFromDrills({
+      id: template.id,
+      name: "Now+",
+      drills: [drill],
+    });
+
+    expect(updated.updatedAt).not.toBe("2026-03-02T00:00:00.000Z");
+  });
 });

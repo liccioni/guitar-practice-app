@@ -108,10 +108,11 @@ This is the implementation contract for the current project state.
 - Includes lint, typecheck, and coverage threshold enforcement.
 
 2. Unit/integration coverage thresholds (vitest)
-- lines >= 88
-- statements >= 80
-- functions >= 88
-- branches >= 60
+- lines >= 95
+- statements >= 95
+- functions >= 95
+- branches >= 95
+- enforced per-file and globally via `vitest.config.ts`.
 
 3. Detox iOS E2E required scenario coverage
 - Add drill in Session Builder.
@@ -141,9 +142,7 @@ This is the implementation contract for the current project state.
 Current repository mode (cost-control): workflows are manual-only (`workflow_dispatch`).
 - `CI` workflow (`.github/workflows/ci.yml`) contains the `quality` job on Ubuntu:
   - install deps
-  - lint
-  - typecheck
-  - coverage tests
+  - run strict check gate (`npm run check`: lint + typecheck + per-file 95% coverage)
 - `Detox iOS E2E` workflow (`.github/workflows/detox-ios.yml`) contains the macOS Detox job:
   - install deps/tools
   - prebuild iOS project

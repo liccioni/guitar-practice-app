@@ -70,4 +70,31 @@ describe("prepareSessionStart", () => {
       error: "Selected template has no valid drills. Edit drills and try again.",
     });
   });
+
+  it("falls back to current bpm when first drill bpm is missing/invalid", () => {
+    const now = "2026-03-07T12:00:00.000Z";
+    const drill = createDrillFromInput(
+      "drill_fallback",
+      { name: "Timing", durationMinutes: 5, targetBpm: 100 },
+      now,
+    );
+    const template = createSessionTemplate({
+      id: "template_fallback",
+      name: "Fallback",
+      drillIds: ["missing", drill.id],
+      totalDurationSeconds: drill.durationSeconds,
+      nowIso: now,
+    });
+
+    const result = prepareSessionStart({
+      selectedTemplate: template,
+      allDrills: [{ ...drill, targetBpm: 999 }],
+      currentMetronomeBpm: 95,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.nextMetronomeBpm).toBe(95);
+    expect(result.resolvedDrills).toHaveLength(1);
+  });
 });

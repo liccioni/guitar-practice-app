@@ -44,4 +44,27 @@ describe("history metrics", () => {
   it("uses local day key for boundary calculations", () => {
     expect(toLocalDayKey("2026-03-02T23:59:00.000Z")).not.toBe("");
   });
+
+  it("handles zero/invalid goal target and entries without bpm", () => {
+    const metrics = calculateDashboardMetrics({
+      entries: [
+        {
+          id: "h3",
+          sessionNameSnapshot: "No bpm",
+          drillsSnapshot: [{ id: "d3", name: "Rhythm", durationSeconds: 300 }],
+          completedDrillIds: ["d3"],
+          startedAt: "2026-02-20T08:00:00.000Z",
+          durationCompletedSeconds: 300,
+          completed: false,
+        },
+      ],
+      nowIso: "2026-03-02T18:00:00.000Z",
+      dailyMinutesTarget: 0,
+    });
+
+    expect(metrics.weeklyMinutes).toBe(0);
+    expect(metrics.todayMinutes).toBe(0);
+    expect(metrics.averageBpm).toBe(0);
+    expect(metrics.goalProgressPercent).toBe(100);
+  });
 });
