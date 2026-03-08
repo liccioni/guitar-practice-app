@@ -1774,16 +1774,28 @@ export function SessionBuilder(props: {
             ) : null}
             <View style={styles.drillLeft}>
               <Text style={styles.drillOrder}>#{index + 1}</Text>
-              <View>
-                <Text style={styles.drillName}>{item.name}</Text>
+              <View style={styles.drillTextBlock}>
+                <Text
+                  style={styles.drillName}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                  testID={`builder-drill-title-${item.id}`}
+                >
+                  {item.name}
+                </Text>
                 <Text style={styles.drillMeta}>
                   {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
                 </Text>
               </View>
             </View>
 
-            <View style={styles.inlineRow}>
-              <Text style={styles.drillXp}>+{toXp(item)} XP</Text>
+            <View style={styles.builderCardActions}>
+              <Text
+                style={styles.drillXp}
+                testID={`builder-drill-xp-${item.id}`}
+              >
+                +{toXp(item)} XP
+              </Text>
               <TouchableOpacity
                 style={[styles.moveChip, index === 0 ? styles.actionButtonDisabled : null]}
                 onPress={() => moveDrill(item.id, -1)}
@@ -2309,6 +2321,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     flex: 1,
+    minWidth: 0,
+  },
+  drillTextBlock: {
+    flex: 1,
+    minWidth: 0,
   },
   drillOrder: {
     color: COLORS.muted,
@@ -2319,16 +2336,26 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 16,
     fontWeight: "700",
+    flexShrink: 1,
   },
   drillMeta: {
     color: COLORS.muted,
     marginTop: 2,
     fontSize: 12,
   },
+  builderCardActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginLeft: 8,
+    flexShrink: 0,
+  },
   drillXp: {
     color: COLORS.xp,
     fontWeight: "800",
     fontSize: 13,
+    minWidth: 58,
+    textAlign: "right",
   },
   fab: {
     position: "absolute",

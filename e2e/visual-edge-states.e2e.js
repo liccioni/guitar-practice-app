@@ -87,6 +87,39 @@ async function ensureAtLeastOneDrill() {
   await waitForVisible("builder-drill-card-first", 12000);
 }
 
+async function getFirstDrillId() {
+  const attrs = await element(by.id("builder-drill-first-id-probe")).getAttributes();
+  return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
+}
+
+async function captureLongTitleLayoutState() {
+  const firstId = await getFirstDrillId();
+  if (!firstId) return;
+
+  await element(by.id(`builder-drill-card-${firstId}`)).tap();
+  await waitForVisible("builder-drill-name-input");
+  await element(by.id("builder-drill-name-input")).replaceText(
+    "Alternate Picking Burst with Extended Accent Pattern",
+  );
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await waitForVisible("builder-save-drill-button", 1200);
+      await element(by.id("builder-save-drill-button")).tap();
+      break;
+    } catch {
+      try {
+        await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
+      } catch {}
+    }
+  }
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await element(by.id("builder-drill-list")).swipe("down", "fast", 0.9);
+    } catch {}
+  }
+  await device.takeScreenshot("edge-04-builder-long-name-layout");
+}
+
 async function startSession() {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await element(by.id("builder-start-session")).tap();
@@ -135,6 +168,7 @@ describe("Visual edge state snapshots", () => {
     }
 
     await ensureAtLeastOneDrill();
+    await captureLongTitleLayoutState();
     await startSession();
     await waitForVisible("active-pause-toggle");
     await element(by.id("active-pause-toggle")).tap();
