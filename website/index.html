@@ -32,6 +32,10 @@
           <a class="btn btn-primary" href="#waitlist">Get Early Access</a>
           <a class="btn btn-secondary" href="#features">See Features</a>
         </div>
+        <div class="hero-links">
+          <a href="https://github.com/liccioni/guitar-practice-app" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="#pricing">Subscription Plans</a>
+        </div>
       </div>
     </header>
 
@@ -54,20 +58,47 @@
         </div>
       </section>
 
+      <section class="section" id="proof">
+        <h2>Built for daily use</h2>
+        <div class="proof-grid">
+          <article class="proof-shot">
+            <div class="proof-screen">Onboarding Suggestion</div>
+            <p>Suggests a first session based on level, focus, and available time.</p>
+          </article>
+          <article class="proof-shot">
+            <div class="proof-screen">Session Builder</div>
+            <p>Edit drills fast and add optional random cues for active decision-making.</p>
+          </article>
+          <article class="proof-shot">
+            <div class="proof-screen">Live Practice</div>
+            <p>Metronome + cue pulses keep timing and variation consistent.</p>
+          </article>
+        </div>
+      </section>
+
       <section class="section section-accent" id="pricing">
         <h2>Planned pricing</h2>
         <p class="pricing-copy">Start free, then unlock advanced plans and premium session packs.</p>
-        <div class="price-chip">$7.99 / month (target)</div>
+        <div class="price-row">
+          <div class="price-chip">Free Starter</div>
+          <div class="price-chip">$7.99 / month (target)</div>
+          <div class="price-chip">$69 / year (target)</div>
+        </div>
       </section>
 
       <section class="section" id="waitlist">
         <h2>Join the waitlist</h2>
-        <p>Leave your email and we will notify you when subscriptions open.</p>
+        <p>Leave your email and we will notify you when subscriptions and premium session packs open.</p>
         <form id="waitlist-form" class="waitlist-form">
           <input id="email" type="email" required placeholder="you@guitar.com" />
-          <button class="btn btn-primary" type="submit">Notify Me</button>
+          <button class="btn btn-primary" type="submit">Join Waitlist</button>
         </form>
         <p id="waitlist-message" class="waitlist-message" aria-live="polite"></p>
+        <div class="waitlist-actions">
+          <a class="btn btn-secondary" href="mailto:liccioni+guitarapp@gmail.com?subject=Guitar%20Practice%20App%20Waitlist">
+            Email Directly
+          </a>
+        </div>
       </section>
     </main>
 

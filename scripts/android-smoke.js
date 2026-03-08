@@ -80,6 +80,17 @@ function waitForAnyId(ids, timeoutMs = 20000) {
   return false;
 }
 
+function waitForAnyIdWithScroll(ids, timeoutMs = 20000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const xml = dumpUiXml();
+    if (ids.some((id) => hasId(xml, id))) return true;
+    runIgnore("adb shell input swipe 540 1900 540 700");
+    sleep(500);
+  }
+  return false;
+}
+
 function coldLaunchApp() {
   runIgnore(`adb shell am force-stop ${PACKAGE}`);
   sleep(700);
@@ -112,7 +123,7 @@ function runOnboardingSmoke() {
   clearAppData();
   coldLaunchApp();
 
-  if (!waitForAnyId(["onboarding-generate"], 25000)) {
+  if (!waitForAnyIdWithScroll(["onboarding-generate"], 25000)) {
     throw new Error("Onboarding smoke failed: onboarding controls were not visible after clean launch.");
   }
 

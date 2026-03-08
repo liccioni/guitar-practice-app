@@ -2,36 +2,20 @@ async function waitForVisible(id, timeout = 12000) {
   await waitFor(element(by.id(id))).toBeVisible().withTimeout(timeout);
 }
 
-async function ensureBuilderReady() {
-  await waitForVisible("builder-start-session", 16000);
+async function scrollTo(id, maxSwipes = 6) {
+  for (let attempt = 0; attempt < maxSwipes; attempt += 1) {
+    try {
+      await waitForVisible(id, 1200);
+      return;
+    } catch {
+      await element(by.id("home-scroll")).swipe("up", "fast", 0.65);
+    }
+  }
+  await waitForVisible(id, 5000);
 }
 
-async function openBuilder() {
-  try {
-    await waitForVisible("builder-start-session", 1200);
-    return;
-  } catch {
-    // Not on builder yet; continue with home navigation.
-  }
-
-  try {
-    await waitForVisible("home-quick-start-practice", 60000);
-    await element(by.id("home-quick-start-practice")).tap();
-  } catch {
-    await waitForVisible("home-start-practice", 60000);
-    await element(by.id("home-start-practice")).tap();
-  }
-
-  try {
-    await ensureBuilderReady();
-  } catch {
-    try {
-      await element(by.id("home-start-practice")).tap();
-    } catch {
-      // Ignore missing Home CTA here; we may already be transitioning.
-    }
-    await ensureBuilderReady();
-  }
+async function ensureBuilderReady() {
+  await waitForVisible("builder-start-session", 16000);
 }
 
 async function ensureDrillExists() {
@@ -44,6 +28,40 @@ async function ensureDrillExists() {
     await waitForVisible("builder-drill-count");
   }
   await waitForVisible("builder-drill-card-first", 12000);
+}
+
+async function getFirstDrillId() {
+  const attrs = await element(by.id("builder-drill-first-id-probe")).getAttributes();
+  return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
+}
+
+async function captureBuilderRandomCuePreview() {
+  const firstId = await getFirstDrillId();
+  if (!firstId) return;
+
+  await element(by.id(`builder-drill-card-${firstId}`)).tap();
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      await waitForVisible("builder-randomizer-note", 1200);
+      break;
+    } catch {
+      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
+    }
+  }
+  await waitForVisible("builder-randomizer-note", 5000);
+  await element(by.id("builder-randomizer-note")).tap();
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      await waitForVisible("builder-save-drill-button", 1200);
+      break;
+    } catch {
+      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
+    }
+  }
+  await waitForVisible("builder-save-drill-button", 8000);
+  await element(by.id("builder-save-drill-button")).tap();
+  await element(by.id("builder-drill-list")).swipe("down", "fast", 0.95);
+  await device.takeScreenshot("02b-builder-random-cue-preview");
 }
 
 async function completeBySkipping() {
@@ -105,8 +123,15 @@ describe("Visual state snapshots", () => {
     }
     await device.takeScreenshot("01-home");
 
-    await openBuilder();
+    await scrollTo("onboarding-generate");
+    await element(by.id("onboarding-generate")).tap();
+    await waitForVisible("onboarding-apply-suggestion", 10000);
+    await device.takeScreenshot("01b-onboarding-suggestion");
+    await element(by.id("onboarding-apply-suggestion")).tap();
+    await ensureBuilderReady();
+
     await ensureDrillExists();
+    await captureBuilderRandomCuePreview();
     await device.takeScreenshot("02-builder");
 
     await startSessionFromBuilder();
