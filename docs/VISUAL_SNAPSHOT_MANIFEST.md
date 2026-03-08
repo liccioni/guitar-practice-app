@@ -11,6 +11,7 @@ npm run e2e:detox:visual:ios
 Expected screenshots:
 - `01-home`
 - `02-builder`
+- `02b-builder-random-cue-preview`
 - `03-active`
 - `04-complete`
 
@@ -24,6 +25,7 @@ Expected screenshots:
 - `edge-01-builder-empty`
 - `edge-02-builder-validation-error`
 - `edge-03-active-paused`
+- `edge-04-builder-long-name-layout`
 
 ## 3. Review Rule
 - A visual run is considered valid only if every expected name above is present.

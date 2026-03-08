@@ -1,7 +1,7 @@
 # Project Runbook (Reproduce Current Main From Scratch)
 
 This runbook reproduces the repository exactly as it exists on `origin/main` at the time you run it.
-For a bit-for-bit reproduction of the audited state in this document, use commit `e7cfc3f`.
+For a bit-for-bit reproduction of the audited state in this document, use commit `a2867de`.
 
 ## 1. Host Requirements (macOS)
 1. Xcode + iOS Simulator.
@@ -46,7 +46,7 @@ cd guitar-practice-app
 git checkout main
 git pull --ff-only
 # Optional exact-state pin (recommended for reproducibility audit):
-git checkout e7cfc3f
+git checkout a2867de
 git rev-parse --short HEAD
 npm ci
 ```
@@ -112,6 +112,14 @@ This command enforces:
 - `.github/workflows/ci.yml`: manual trigger only.
 - `.github/workflows/detox-ios.yml`: manual trigger only.
 - This is intentional while GitHub Actions credits are constrained.
+
+## 9b. CI Re-enable Steps (Do Not Apply Yet)
+When Actions credits are available, re-enable auto triggers in both workflow files:
+1. Add `push` and `pull_request` triggers back under `on:` in:
+- `.github/workflows/ci.yml`
+- `.github/workflows/detox-ios.yml`
+2. Keep `workflow_dispatch` so manual runs remain available.
+3. Validate with one PR and one direct push to confirm expected jobs run.
 
 ## 10. Troubleshooting
 1. `Unable to locate a Java Runtime`

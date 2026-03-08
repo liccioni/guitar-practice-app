@@ -18,7 +18,7 @@
   - Android smoke requires valid `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`.
 
 ## Latest Verified Main
-- Commit: `e7cfc3f`
+- Commit: `a2867de`
 - Scope: current main with onboarding, random-cue UX, strict coverage, updated visual regressions.
 
 ## Stable Baseline

@@ -3,8 +3,8 @@
 Gamified mobile guitar practice coach built with Expo + React Native + TypeScript.
 
 ## Reproducibility Status
-- Last audited app baseline: `e7cfc3f`
-- Bit-for-bit rebuild target: `git checkout e7cfc3f`
+- Last audited app baseline: `a2867de`
+- Bit-for-bit rebuild target: `git checkout a2867de`
 - CI workflows are intentionally manual-only (`workflow_dispatch`) due to Actions credit constraints.
 - Canonical rebuild guide: [docs/PROJECT_RUNBOOK.md](/Users/liccioni/CodexProjects/guitar practice app/docs/PROJECT_RUNBOOK.md)
 
@@ -49,5 +49,8 @@ npm run stability:all
 - Bug registry: `docs/BUG_REPORTS.md`
 - Active release execution plan: `docs/RELEASE_PLAN.md`
 - Next feature roadmap (variation + onboarding + website): `docs/NEXT_FEATURE_PLAN.md`
+- UI/UX Pro Max integration workflow: `docs/UI_UX_PRO_MAX_INTEGRATION.md`
+- UI redesign rollout plan (no-regression batches): `docs/UI_UX_IMPLEMENTATION_PLAN.md`
+- Fretline design system source of truth: `docs/design-system/fretline/MASTER.md`
 - Visual screenshot expectations: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
 - `gh-pages` website runbook (manual deploy): `docs/GH_PAGES_RUNBOOK.md`

@@ -90,15 +90,15 @@ This is the implementation contract for the current project state.
 ## 5. UI Contract (Locked)
 - Dark-mode only.
 - Token palette:
-  - Background `#121212`
-  - Surface `#1A1A1A`
-  - Elevated `#222222`
-  - Divider `#2A2A2A`
+  - Background `#0F0F10`
+  - Surface `#171718`
+  - Elevated `#222224`
+  - Divider `#2E2E31`
   - Primary Accent `#D97706`
-  - Secondary Accent `#E6B980`
-  - XP Highlight `#EAB308`
-  - Primary Text `#F5F5F5`
-  - Secondary Text `#B3B3B3`
+  - Secondary Accent `#F59E0B`
+  - XP Highlight `#FACC15`
+  - Primary Text `#F5F5F4`
+  - Secondary Text `#B8B8B5`
   - Disabled `#6B7280`
 - Rounded cards (16px).
 - Accent usage only for CTA, XP, progress ring, active drill, streak indicator.
@@ -125,9 +125,9 @@ This is the implementation contract for the current project state.
 - Complete a session via Skip flow and reach complete screen.
 
 4. Visual snapshot regression coverage
-- Detox visual test captures screenshots for Home, Builder, Active, and Complete screens.
+- Detox visual test captures screenshots for Home, Builder, Builder Random Cue Preview, Active, and Complete screens.
 - Command: `npm run e2e:detox:visual:ios`
-- Detox edge visual test captures Empty Builder, Builder validation error, and Active paused states.
+- Detox edge visual test captures Empty Builder, Builder validation error, Active paused, and long-title builder layout states.
 - Command: `npm run e2e:detox:visual:edge:ios`
 - Home scroll reachability must be validated by dedicated e2e coverage (`e2e/home-scroll.e2e.js`).
 
@@ -163,6 +163,6 @@ Current repository mode (cost-control): workflows are manual-only (`workflow_dis
 - Social features
 
 ## 9. Verified Milestone
-- Latest verified main commit (runtime/features): `e7cfc3f`
-- Historical stable tag reference: `stable-2026-03-08-builder-layout-green`
+- Latest verified main commit (runtime/features): `a2867de`
+- Historical stable tag reference: `stable-2026-03-08-strict-coverage-green`
 - Rebuild instructions are authoritative in `docs/PROJECT_RUNBOOK.md`.

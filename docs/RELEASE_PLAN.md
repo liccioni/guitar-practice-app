@@ -5,7 +5,7 @@
 - iOS: Store/TestFlight distribution blocked pending paid Apple Developer enrollment.
 - CI automation: temporarily paused (manual workflows only) to reduce GitHub Actions usage.
 - Latest stable checkpoint tag: `stable-2026-03-08-strict-coverage-green`.
-- Latest verified runtime/features commit on `main`: `e7cfc3f`.
+- Latest verified runtime/features commit on `main`: `a2867de`.
 
 ## Android Track (Active)
 ### Current build
@@ -52,3 +52,14 @@ npx eas-cli build --platform ios --profile preview
 ```
 2. Complete Apple credential prompts.
 3. Distribute internal iOS build and execute same smoke checklist.
+
+## CI Re-enable Playbook (Deferred)
+Keep CI disabled for now. When credits are available:
+1. Restore `push` and `pull_request` triggers in `.github/workflows/ci.yml`.
+2. Restore `push` and `pull_request` triggers in `.github/workflows/detox-ios.yml`.
+3. Keep `workflow_dispatch` in both files.
+4. Validate in this order:
+- run `npm run check` locally
+- open one PR and verify `CI` auto-run
+- merge and verify post-merge run
+- dispatch `Detox iOS E2E` manually for final parity
