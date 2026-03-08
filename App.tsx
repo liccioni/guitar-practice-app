@@ -2153,35 +2153,37 @@ export function SessionBuilder(props: {
                 />
               </>
             ) : null}
-            <View style={styles.drillLeft}>
-              <Text style={styles.drillOrder}>#{index + 1}</Text>
-              <View style={styles.drillTextBlock}>
-                <Text
-                  style={styles.drillName}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                  testID={`builder-drill-title-${item.id}`}
-                >
-                  {item.name}
-                </Text>
-                <Text style={styles.drillMeta}>
-                  {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
-                </Text>
-                {item.randomizer ? (
-                  <Text style={styles.drillRandomMeta}>
-                    Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
+            <View style={styles.drillCardTopRow}>
+              <View style={styles.drillLeft}>
+                <Text style={styles.drillOrder}>#{index + 1}</Text>
+                <View style={styles.drillTextBlock}>
+                  <Text
+                    style={styles.drillName}
+                    numberOfLines={3}
+                    ellipsizeMode="tail"
+                    testID={`builder-drill-title-${item.id}`}
+                  >
+                    {item.name}
                   </Text>
-                ) : null}
+                  <Text style={styles.drillMeta}>
+                    {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
+                  </Text>
+                  {item.randomizer ? (
+                    <Text style={styles.drillRandomMeta}>
+                      Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
+                    </Text>
+                  ) : null}
+                </View>
               </View>
-            </View>
-
-            <View style={styles.builderCardActions}>
               <Text
                 style={styles.drillXp}
                 testID={`builder-drill-xp-${item.id}`}
               >
                 +{toXp(item)} XP
               </Text>
+            </View>
+
+            <View style={styles.builderCardActions}>
               <TouchableOpacity
                 style={[styles.moveChip, index === 0 ? styles.actionButtonDisabled : null]}
                 onPress={() => moveDrill(item.id, -1)}
@@ -2708,15 +2710,21 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   drillCard: {
-    minHeight: 76,
+    minHeight: 94,
     borderRadius: 16,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    flexDirection: "column",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    gap: 10,
+  },
+  drillCardTopRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 10,
   },
@@ -2759,16 +2767,17 @@ const styles = StyleSheet.create({
   builderCardActions: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-end",
     gap: 8,
-    marginLeft: 8,
     flexShrink: 0,
   },
   drillXp: {
     color: COLORS.xp,
     fontWeight: "800",
-    fontSize: 13,
-    minWidth: 58,
+    fontSize: 14,
+    minWidth: 70,
     textAlign: "right",
+    marginTop: 2,
   },
   fab: {
     position: "absolute",
