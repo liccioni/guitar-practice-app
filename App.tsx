@@ -26,7 +26,7 @@ import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "
 import { appendDrillToTemplate } from "./src/application/sessionBuilder";
 import { prepareSessionStart } from "./src/application/startSessionPreparation";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
-import type { CreateDrillInput, Drill } from "./src/domain/exercises/types";
+import type { CreateDrillInput, Drill, DrillRandomizerKind } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "./src/domain/goals/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
@@ -102,6 +102,13 @@ const MOTIVATION = [
   "Stay relaxed, stay precise.",
   "Small gains compound fast.",
   "You are one drill away from momentum.",
+];
+
+const RANDOMIZER_KIND_OPTIONS: { value: "none" | DrillRandomizerKind; label: string }[] = [
+  { value: "none", label: "No Random Cue" },
+  { value: "note", label: "Random Note" },
+  { value: "triad", label: "Random Triad" },
+  { value: "fingers4", label: "Random 4 Fingers" },
 ];
 
 const BADGE_DEFINITIONS: BadgeDefinition[] = [
@@ -251,6 +258,17 @@ function toSnapshot(drill: Drill): DrillSnapshot {
   };
 }
 
+function randomCueValues(kind: DrillRandomizerKind): string[] {
+  if (kind === "note") return ["A", "B", "C", "D", "E", "F", "G"];
+  if (kind === "triad") return ["A Maj", "A Min", "C Maj", "C Min", "D Maj", "E Min", "G Maj"];
+  return ["1-2-3-4", "1-3-2-4", "4-3-2-1", "1-4-2-3", "2-4-1-3", "3-1-4-2"];
+}
+
+function pickRandomCueValue(kind: DrillRandomizerKind): string {
+  const pool = randomCueValues(kind);
+  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+}
+
 function clampUnit(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(1, value));
@@ -308,6 +326,8 @@ export default function App() {
   const [drillNameInput, setDrillNameInput] = useState("");
   const [drillDurationInput, setDrillDurationInput] = useState("");
   const [drillBpmInput, setDrillBpmInput] = useState("");
+  const [drillRandomizerKindInput, setDrillRandomizerKindInput] = useState<"none" | DrillRandomizerKind>("none");
+  const [drillRandomEveryBarsInput, setDrillRandomEveryBarsInput] = useState("2");
 
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [activeDrillIds, setActiveDrillIds] = useState<string[]>([]);
@@ -320,6 +340,8 @@ export default function App() {
   const [metronomeEnabled, setMetronomeEnabled] = useState(true);
   const [metronomeBpm, setMetronomeBpm] = useState(100);
   const [beatFlash, setBeatFlash] = useState(false);
+  const [randomCueLabel, setRandomCueLabel] = useState<string | null>(null);
+  const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
 
   const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
   const [sessionXp, setSessionXp] = useState(0);
@@ -332,7 +354,9 @@ export default function App() {
   const rewardScale = useRef(new Animated.Value(0.92)).current;
   const rewardGlow = useRef(new Animated.Value(0)).current;
   const completionPulse = useRef(new Animated.Value(0)).current;
+  const randomCuePulse = useRef(new Animated.Value(0)).current;
   const handleDrillFinishedRef = useRef<() => void>(() => undefined);
+  const randomCueRemainingRef = useRef(0);
 
   const nowIso = new Date().toISOString();
   const selectedTemplate = useMemo(
@@ -527,6 +551,36 @@ export default function App() {
     const beatTimer = setInterval(() => {
       setBeatFlash((current) => !current);
       void playMetronomeTick();
+
+      const randomizer = activeDrill?.randomizer;
+      if (randomizer) {
+        const nextRemaining = randomCueRemainingRef.current - 1;
+        if (nextRemaining <= 0) {
+          const resetBeats = randomizer.everyBars * 4;
+          randomCueRemainingRef.current = resetBeats;
+          setRandomCueBeatsRemaining(resetBeats);
+          setRandomCueLabel(pickRandomCueValue(randomizer.kind));
+          randomCuePulse.setValue(0);
+          Animated.sequence([
+            Animated.timing(randomCuePulse, {
+              toValue: 1,
+              duration: 200,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(randomCuePulse, {
+              toValue: 0,
+              duration: 300,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+          ]).start();
+        } else {
+          randomCueRemainingRef.current = nextRemaining;
+          setRandomCueBeatsRemaining(nextRemaining);
+        }
+      }
+
       try {
         Vibration.vibrate(10);
       } catch {
@@ -535,7 +589,7 @@ export default function App() {
     }, intervalMs);
 
     return () => clearInterval(beatTimer);
-  }, [isPaused, metronomeBpm, metronomeEnabled, screen]);
+  }, [activeDrill, isPaused, metronomeBpm, metronomeEnabled, randomCuePulse, screen]);
 
   useEffect(() => {
     if (screen !== "active" || !metronomeEnabled) return;
@@ -587,11 +641,15 @@ export default function App() {
       setDrillNameInput("");
       setDrillDurationInput("");
       setDrillBpmInput("");
+      setDrillRandomizerKindInput("none");
+      setDrillRandomEveryBarsInput("2");
       return;
     }
     setDrillNameInput(selectedBuilderDrill.name);
     setDrillDurationInput(String(Math.max(1, Math.round(selectedBuilderDrill.durationSeconds / 60))));
     setDrillBpmInput(selectedBuilderDrill.targetBpm ? String(selectedBuilderDrill.targetBpm) : "");
+    setDrillRandomizerKindInput(selectedBuilderDrill.randomizer?.kind ?? "none");
+    setDrillRandomEveryBarsInput(String(selectedBuilderDrill.randomizer?.everyBars ?? 2));
   }, [selectedBuilderDrill]);
 
   function triggerCompletionPulse(): void {
@@ -611,6 +669,23 @@ export default function App() {
       }),
     ]).start();
   }
+
+  useEffect(() => {
+    const randomizer = screen === "active" ? activeDrill?.randomizer : undefined;
+    if (!randomizer) {
+      randomCueRemainingRef.current = 0;
+      setRandomCueLabel(null);
+      setRandomCueBeatsRemaining(0);
+      randomCuePulse.setValue(0);
+      return;
+    }
+
+    const initialBeats = randomizer.everyBars * 4;
+    randomCueRemainingRef.current = initialBeats;
+    setRandomCueLabel(pickRandomCueValue(randomizer.kind));
+    setRandomCueBeatsRemaining(initialBeats);
+    randomCuePulse.setValue(0);
+  }, [activeDrill, randomCuePulse, screen]);
 
   function finishSession(
     finalCompletedDrillIds: string[],
@@ -932,6 +1007,14 @@ export default function App() {
       const durationMinutes = Number(drillDurationInput);
       const nextBpm =
         drillBpmInput.trim().length === 0 ? undefined : Number(drillBpmInput.trim());
+      const parsedEveryBars = Number(drillRandomEveryBarsInput.trim());
+      const randomizer =
+        drillRandomizerKindInput === "none"
+          ? undefined
+          : {
+              kind: drillRandomizerKindInput,
+              everyBars: parsedEveryBars,
+            };
 
       const updated = updateDrillFromInput(
         selectedBuilderDrill,
@@ -939,6 +1022,7 @@ export default function App() {
           name: drillNameInput,
           durationMinutes,
           targetBpm: nextBpm,
+          randomizer,
         },
         new Date().toISOString(),
       );
@@ -1100,10 +1184,14 @@ export default function App() {
               drillNameInput={drillNameInput}
               drillDurationInput={drillDurationInput}
               drillBpmInput={drillBpmInput}
+              drillRandomizerKindInput={drillRandomizerKindInput}
+              drillRandomEveryBarsInput={drillRandomEveryBarsInput}
               onSelectDrill={setSelectedDrillId}
               onDrillNameInput={setDrillNameInput}
               onDrillDurationInput={setDrillDurationInput}
               onDrillBpmInput={setDrillBpmInput}
+              onDrillRandomizerKindInput={setDrillRandomizerKindInput}
+              onDrillRandomEveryBarsInput={setDrillRandomEveryBarsInput}
               onSaveDrill={saveSelectedDrillEdits}
               onRemoveDrill={removeDrillFromTemplate}
               onReorderDrills={reorderDrillsInTemplate}
@@ -1124,6 +1212,9 @@ export default function App() {
               metronomeEnabled={metronomeEnabled}
               metronomeBpm={metronomeBpm}
               beatFlash={beatFlash}
+              randomCueLabel={randomCueLabel}
+              randomCueBeatsRemaining={randomCueBeatsRemaining}
+              randomCuePulse={randomCuePulse}
               onMetronomeToggle={() => setMetronomeEnabled((current) => !current)}
               onMetronomeStep={(delta) => setMetronomeBpm((current) => stepBpm(current, delta))}
               onPauseToggle={() => setIsPaused((current) => !current)}
@@ -1413,10 +1504,14 @@ export function SessionBuilder(props: {
   drillNameInput: string;
   drillDurationInput: string;
   drillBpmInput: string;
+  drillRandomizerKindInput: "none" | DrillRandomizerKind;
+  drillRandomEveryBarsInput: string;
   onSelectDrill: (id: string) => void;
   onDrillNameInput: (value: string) => void;
   onDrillDurationInput: (value: string) => void;
   onDrillBpmInput: (value: string) => void;
+  onDrillRandomizerKindInput: (value: "none" | DrillRandomizerKind) => void;
+  onDrillRandomEveryBarsInput: (value: string) => void;
   onSaveDrill: () => void;
   onRemoveDrill: (id: string) => void;
   onReorderDrills: (ids: string[]) => void;
@@ -1440,10 +1535,14 @@ export function SessionBuilder(props: {
     drillNameInput,
     drillDurationInput,
     drillBpmInput,
+    drillRandomizerKindInput,
+    drillRandomEveryBarsInput,
     onSelectDrill,
     onDrillNameInput,
     onDrillDurationInput,
     onDrillBpmInput,
+    onDrillRandomizerKindInput,
+    onDrillRandomEveryBarsInput,
     onSaveDrill,
     onRemoveDrill,
     onReorderDrills,
@@ -1464,7 +1563,12 @@ export function SessionBuilder(props: {
   const parsedBpm = bpmRaw.length === 0 ? null : Number(bpmRaw);
   const isBpmValid =
     parsedBpm === null || (Number.isFinite(parsedBpm) && parsedBpm >= 40 && parsedBpm <= 240);
-  const canSaveDrill = isDrillEditorEnabled && isDrillNameValid && isDurationValid && isBpmValid;
+  const parsedRandomEveryBars = Number(drillRandomEveryBarsInput.trim());
+  const isRandomEveryBarsValid =
+    drillRandomizerKindInput === "none" ||
+    (Number.isFinite(parsedRandomEveryBars) && parsedRandomEveryBars >= 1 && parsedRandomEveryBars <= 16);
+  const canSaveDrill =
+    isDrillEditorEnabled && isDrillNameValid && isDurationValid && isBpmValid && isRandomEveryBarsValid;
   const noDrillSelected = drills.length > 0 && !selectedDrillId;
 
   function handleSaveTemplatePress(): void {
@@ -1487,6 +1591,12 @@ export function SessionBuilder(props: {
     const base = Number.isFinite(parsedBpm ?? Number.NaN) ? (parsedBpm as number) : 100;
     const next = Math.max(40, Math.min(240, Math.round(base + delta)));
     onDrillBpmInput(String(next));
+  }
+
+  function nudgeRandomBars(delta: number): void {
+    const base = Number.isFinite(parsedRandomEveryBars) ? parsedRandomEveryBars : 2;
+    const next = Math.max(1, Math.min(16, Math.round(base + delta)));
+    onDrillRandomEveryBarsInput(String(next));
   }
 
   function handleStartSessionPressIn(): void {
@@ -1715,6 +1825,56 @@ export function SessionBuilder(props: {
                   </TouchableOpacity>
                 </View>
               ) : null}
+              <Text style={styles.helperText}>Optional random cue</Text>
+              <View style={styles.templatePillsRow}>
+                {RANDOMIZER_KIND_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.templatePill,
+                      drillRandomizerKindInput === option.value ? styles.templatePillActive : null,
+                    ]}
+                    onPress={() => onDrillRandomizerKindInput(option.value)}
+                    disabled={!isDrillEditorEnabled}
+                    testID={`builder-randomizer-${option.value}`}
+                  >
+                    <Text style={styles.templatePillText}>{option.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {drillRandomizerKindInput !== "none" ? (
+                <>
+                  <View style={styles.inlineRow}>
+                    <TextInput
+                      value={drillRandomEveryBarsInput}
+                      onChangeText={onDrillRandomEveryBarsInput}
+                      keyboardType="number-pad"
+                      placeholder="Every N bars (1-16)"
+                      placeholderTextColor={COLORS.muted}
+                      style={styles.timeInput}
+                      editable={isDrillEditorEnabled}
+                      testID="builder-random-bars-input"
+                    />
+                    <TouchableOpacity
+                      style={styles.pillButton}
+                      onPress={() => nudgeRandomBars(-1)}
+                      testID="builder-random-bars-decrement"
+                    >
+                      <Text style={styles.pillButtonText}>-1 bar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.pillButton}
+                      onPress={() => nudgeRandomBars(1)}
+                      testID="builder-random-bars-increment"
+                    >
+                      <Text style={styles.pillButtonText}>+1 bar</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.helperText}>
+                    During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
+                  </Text>
+                </>
+              ) : null}
               {isDrillEditorEnabled && !isDrillNameValid ? (
                 <Text style={styles.helperText} testID="builder-drill-validation-name">
                   Drill name cannot be empty.
@@ -1728,6 +1888,11 @@ export function SessionBuilder(props: {
               {isDrillEditorEnabled && !isBpmValid ? (
                 <Text style={styles.helperText} testID="builder-drill-validation-bpm">
                   BPM must be blank or between 40 and 240.
+                </Text>
+              ) : null}
+              {isDrillEditorEnabled && !isRandomEveryBarsValid ? (
+                <Text style={styles.helperText} testID="builder-drill-validation-random-bars">
+                  Random cue bars must be a number from 1 to 16.
                 </Text>
               ) : null}
               <TouchableOpacity
@@ -1854,6 +2019,9 @@ function ActivePractice(props: {
   metronomeEnabled: boolean;
   metronomeBpm: number;
   beatFlash: boolean;
+  randomCueLabel: string | null;
+  randomCueBeatsRemaining: number;
+  randomCuePulse: Animated.Value;
   onMetronomeToggle: () => void;
   onMetronomeStep: (delta: number) => void;
   onPauseToggle: () => void;
@@ -1870,6 +2038,9 @@ function ActivePractice(props: {
     metronomeEnabled,
     metronomeBpm,
     beatFlash,
+    randomCueLabel,
+    randomCueBeatsRemaining,
+    randomCuePulse,
     onMetronomeToggle,
     onMetronomeStep,
     onPauseToggle,
@@ -1879,6 +2050,10 @@ function ActivePractice(props: {
   const pulseScale = completionPulse.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.07],
+  });
+  const cueScale = randomCuePulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.08],
   });
 
   return (
@@ -1919,6 +2094,12 @@ function ActivePractice(props: {
           <View style={[styles.beatDot, beatFlash && metronomeEnabled ? styles.beatDotActive : null]} />
           <Text style={styles.helperText}>Beat indicator {metronomeEnabled ? "running" : "stopped"}</Text>
         </View>
+        {randomCueLabel ? (
+          <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
+            <Text style={styles.randomCueLabel}>Random Cue: {randomCueLabel}</Text>
+            <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
+          </Animated.View>
+        ) : null}
       </GlowCard>
 
       <Text style={styles.microcopy}>{microcopy}</Text>
@@ -2639,5 +2820,20 @@ const styles = StyleSheet.create({
   beatDotActive: {
     backgroundColor: COLORS.accent,
     borderColor: COLORS.accent,
+  },
+  randomCueCard: {
+    marginTop: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  randomCueLabel: {
+    color: COLORS.accentAlt,
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

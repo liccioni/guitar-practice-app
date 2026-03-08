@@ -87,4 +87,31 @@ describe("drill validation", () => {
     expect(updated.targetBpm).toBe(140);
     expect(updated.tags).toEqual(["rhythm"]);
   });
+
+  it("validates and persists randomizer config", () => {
+    const base = createDrillFromInput(
+      "d6",
+      {
+        name: "Random cue drill",
+        durationMinutes: 6,
+        targetBpm: 100,
+        tags: ["technique"],
+        randomizer: { kind: "note", everyBars: 2 },
+      },
+      "2026-03-02T00:00:00.000Z",
+    );
+
+    expect(base.randomizer).toEqual({ kind: "note", everyBars: 2 });
+
+    const updated = updateDrillFromInput(
+      base,
+      { randomizer: { kind: "triad", everyBars: 4 } },
+      "2026-03-03T00:00:00.000Z",
+    );
+    expect(updated.randomizer).toEqual({ kind: "triad", everyBars: 4 });
+
+    expect(() =>
+      updateDrillFromInput(base, { randomizer: { kind: "note", everyBars: 0 } }, "2026-03-03T00:00:00.000Z"),
+    ).toThrow("Random cue bars must be between 1 and 16");
+  });
 });

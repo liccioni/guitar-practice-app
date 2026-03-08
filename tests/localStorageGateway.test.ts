@@ -247,6 +247,7 @@ describe("LocalStorageGateway", () => {
             durationSeconds: 300,
             targetBpm: 120,
             tags: ["a", "a", 1],
+            randomizer: { kind: "note", everyBars: 3 },
             createdAt: "c",
             updatedAt: "u",
           },
@@ -281,6 +282,7 @@ describe("LocalStorageGateway", () => {
 
     expect(parsed.drills[0]?.name).toBe("Drill");
     expect(parsed.drills[0]?.description).toBe("desc");
+    expect(parsed.drills[0]?.randomizer).toEqual({ kind: "note", everyBars: 3 });
     expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
     expect(parsed.history[0]?.sessionNameSnapshot).toBe("Session");
     expect(parsed.goalSettings.goalType).toBe("drills");
@@ -346,6 +348,7 @@ describe("LocalStorageGateway", () => {
               durationSeconds: 300,
               targetBpm: 120,
               tags: "not-array",
+              randomizer: { kind: "unknown", everyBars: 99 },
               createdAt: 1,
               updatedAt: null,
             },
@@ -404,6 +407,7 @@ describe("LocalStorageGateway", () => {
 
     expect(parsed.drills[0]?.tags).toEqual([]);
     expect(parsed.drills[0]?.description).toBeUndefined();
+    expect(parsed.drills[0]?.randomizer).toBeUndefined();
     expect(parsed.drills[0]?.createdAt).toBe("");
     expect(parsed.drills[0]?.updatedAt).toBe("");
     expect(parsed.templates[0]?.drillIds).toEqual([]);

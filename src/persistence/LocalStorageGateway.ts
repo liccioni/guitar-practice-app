@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { PracticeHistoryEntry } from "../domain/history/types";
 import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
-import type { Drill } from "../domain/exercises/types";
+import type { Drill, DrillRandomizerKind } from "../domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "../domain/goals/types";
 import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill";
 import { isValidBpm } from "../domain/metronome/metronome";
@@ -74,6 +74,29 @@ function sanitizeDrills(input: unknown): Drill[] {
       continue;
     }
 
+    const randomizer = isPlainObject(item.randomizer)
+      ? {
+          kind:
+            item.randomizer.kind === "note" ||
+            item.randomizer.kind === "triad" ||
+            item.randomizer.kind === "fingers4"
+              ? (item.randomizer.kind as DrillRandomizerKind)
+              : null,
+          everyBars: Number(item.randomizer.everyBars),
+        }
+      : null;
+    const normalizedRandomizer =
+      randomizer &&
+      randomizer.kind &&
+      Number.isFinite(randomizer.everyBars) &&
+      randomizer.everyBars >= 1 &&
+      randomizer.everyBars <= 16
+        ? {
+            kind: randomizer.kind,
+            everyBars: Math.round(randomizer.everyBars),
+          }
+        : undefined;
+
     sanitized.push({
       id: item.id,
       name: item.name.trim(),
@@ -81,6 +104,7 @@ function sanitizeDrills(input: unknown): Drill[] {
       durationSeconds,
       targetBpm: Number.isFinite(targetBpm) && isValidBpm(targetBpm) ? targetBpm : undefined,
       tags: tags as Drill["tags"],
+      randomizer: normalizedRandomizer,
       createdAt: typeof item.createdAt === "string" ? item.createdAt : "",
       updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : "",
     });
