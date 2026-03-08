@@ -2,16 +2,15 @@ async function waitForVisible(id, timeout = 12000) {
   await waitFor(element(by.id(id))).toBeVisible().withTimeout(timeout);
 }
 
-async function scrollTo(id, maxSwipes = 6) {
-  for (let attempt = 0; attempt < maxSwipes; attempt += 1) {
-    try {
-      await waitForVisible(id, 1200);
-      return;
-    } catch {
-      await element(by.id("home-scroll")).swipe("up", "fast", 0.65);
-    }
-  }
-  await waitForVisible(id, 5000);
+async function openBuilderFromHome() {
+  try {
+    await waitForVisible("home-quick-start-practice", 3000);
+    await element(by.id("home-quick-start-practice")).tap();
+    return;
+  } catch {}
+
+  await waitForVisible("home-start-practice", 8000);
+  await element(by.id("home-start-practice")).tap();
 }
 
 async function ensureBuilderReady() {
@@ -123,11 +122,7 @@ describe("Visual state snapshots", () => {
     }
     await device.takeScreenshot("01-home");
 
-    await scrollTo("onboarding-generate");
-    await element(by.id("onboarding-generate")).tap();
-    await waitForVisible("onboarding-apply-suggestion", 10000);
-    await device.takeScreenshot("01b-onboarding-suggestion");
-    await element(by.id("onboarding-apply-suggestion")).tap();
+    await openBuilderFromHome();
     await ensureBuilderReady();
 
     await ensureDrillExists();

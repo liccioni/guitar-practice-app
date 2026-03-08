@@ -96,8 +96,31 @@ async function captureLongTitleLayoutState() {
   const firstId = await getFirstDrillId();
   if (!firstId) return;
 
-  await element(by.id(`builder-drill-card-${firstId}`)).tap();
-  await waitForVisible("builder-drill-name-input");
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      await element(by.id(`builder-drill-card-${firstId}`)).tap();
+      for (let inner = 0; inner < 6; inner += 1) {
+        try {
+          await waitForVisible("builder-drill-name-input", 900);
+          break;
+        } catch {
+          await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
+        }
+      }
+      await waitForVisible("builder-drill-name-input", 1800);
+      break;
+    } catch {
+      try {
+        await element(by.id("builder-drill-list")).swipe("up", "fast", 0.5);
+      } catch {}
+      try {
+        await element(by.id("builder-drill-list")).swipe("down", "fast", 0.6);
+      } catch {}
+      if (attempt === 5) {
+        throw new Error("Could not reach drill editor input in edge visual flow.");
+      }
+    }
+  }
   await element(by.id("builder-drill-name-input")).replaceText(
     "Alternate Picking Burst with Extended Accent Pattern",
   );

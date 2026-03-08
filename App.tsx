@@ -56,7 +56,7 @@ import {
   type PersistedPracticeState,
 } from "./src/persistence/LocalStorageGateway";
 
-type Screen = "home" | "builder" | "active" | "complete";
+type Screen = "home" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
 
 interface Badge {
   id: string;
@@ -72,15 +72,15 @@ interface BadgeDefinition {
 }
 
 const TOKENS = {
-  background: "#121212",
-  surface: "#1A1A1A",
-  elevated: "#222222",
-  divider: "#2A2A2A",
+  background: "#0F0F10",
+  surface: "#171718",
+  elevated: "#222224",
+  divider: "#2E2E31",
   primaryAccent: "#D97706",
-  secondaryAccent: "#E6B980",
-  xpHighlight: "#EAB308",
-  textPrimary: "#F5F5F5",
-  textSecondary: "#B3B3B3",
+  secondaryAccent: "#F59E0B",
+  xpHighlight: "#FACC15",
+  textPrimary: "#F5F5F4",
+  textSecondary: "#B8B8B5",
   disabled: "#6B7280",
 };
 
@@ -94,7 +94,7 @@ const COLORS = {
   accentAlt: TOKENS.secondaryAccent,
   xp: TOKENS.xpHighlight,
   divider: TOKENS.divider,
-  danger: "#B45309",
+  danger: "#C2410C",
   disabled: TOKENS.disabled,
 };
 
@@ -458,9 +458,6 @@ export default function App() {
       : goalType === "sessions"
         ? todayCompletedSessions
         : todayCompletedDrills;
-  const goalProgressPercent =
-    goalTarget <= 0 ? 100 : Math.min(100, Math.round((goalCurrentValue / goalTarget) * 100));
-  const dailyGoalProgress = Math.min(1, goalProgressPercent / 100);
   const weeklySummary = useMemo(() => buildWeeklySummary(history, nowIso), [history, nowIso]);
   const recentSessionInsights = useMemo(() => buildRecentSessionInsights(history), [history]);
   const streak = useMemo(
@@ -1162,6 +1159,10 @@ export default function App() {
     setMetronomeEnabled(false);
   }
 
+  function navigateFromTab(next: "home" | "sessions" | "progress" | "profile"): void {
+    setScreen(next);
+  }
+
   const onboardingSuggestion = useMemo(() => {
     if (!onboardingState.answers) return null;
     return buildPracticeOnboardingSuggestion(onboardingState.answers);
@@ -1225,7 +1226,6 @@ export default function App() {
             <HomeDashboard
               levelState={levelState}
               streak={streak}
-              goalProgress={dailyGoalProgress}
               goalType={goalType}
               goalCurrentValue={goalCurrentValue}
               goalTarget={goalTarget}
@@ -1248,6 +1248,36 @@ export default function App() {
               onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
               onResetOnboarding={resetOnboardingQuestionnaire}
               onStartPractice={startPracticeFlow}
+            />
+          ) : null}
+
+          {screen === "sessions" ? (
+            <SessionsLibrary
+              templates={templates}
+              drills={allDrills}
+              onOpenBuilder={(templateId) => {
+                setActiveTemplateId(templateId);
+                setScreen("builder");
+              }}
+            />
+          ) : null}
+
+          {screen === "progress" ? (
+            <ProgressStats
+              weeklySummary={weeklySummary}
+              sessionInsights={recentSessionInsights}
+              averageBpm={metrics.averageBpm}
+              streak={streak}
+            />
+          ) : null}
+
+          {screen === "profile" ? (
+            <ProfileAchievements
+              levelState={levelState}
+              totalXp={totalXp}
+              badges={badges}
+              onboardingState={onboardingState}
+              onResetOnboarding={resetOnboardingQuestionnaire}
             />
           ) : null}
 
@@ -1335,6 +1365,9 @@ export default function App() {
             />
           ) : null}
           </Animated.View>
+          {screen !== "active" && screen !== "complete" ? (
+            <AppTabBar screen={screen} onNavigate={navigateFromTab} />
+          ) : null}
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -1344,7 +1377,6 @@ export default function App() {
 function HomeDashboard(props: {
   levelState: LevelState;
   streak: number;
-  goalProgress: number;
   goalType: GoalType;
   goalCurrentValue: number;
   goalTarget: number;
@@ -1371,7 +1403,6 @@ function HomeDashboard(props: {
   const {
     levelState,
     streak,
-    goalProgress,
     goalType,
     goalCurrentValue,
     goalTarget,
@@ -1440,35 +1471,70 @@ function HomeDashboard(props: {
       testID="home-scroll"
     >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Level {levelState.level} Goal Streak</Text>
-        <Text style={styles.levelChip}>
-          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
-        </Text>
+        <View>
+          <Text style={styles.brandEyebrow}>FRETLINE</Text>
+          <Text style={styles.title}>Ready to play?</Text>
+        </View>
+        <Text style={styles.levelChip}>Level {levelState.level}</Text>
       </View>
 
-      <TouchableOpacity
-        style={[styles.primaryCta, styles.homePrimaryCta]}
-        onPress={onStartPractice}
-        accessibilityRole="button"
-        testID="home-start-practice"
-      >
-        <Text style={styles.primaryCtaText}>Start Practice</Text>
-      </TouchableOpacity>
+      <GlowCard style={styles.homeHeroPanel}>
+        <Text style={styles.cardLabel}>Today&apos;s Session</Text>
+        <Text style={styles.heroHeadline}>Keep your streak alive</Text>
+        <Text style={styles.heroSubline}>
+          {goalCurrentValue}/{goalTarget} {goalUnitLabel} • {streak} day streak
+        </Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${Math.max(6, (levelState.currentLevelXp / levelState.nextLevelXp) * 100)}%`,
+              },
+            ]}
+          />
+        </View>
+        <Text style={styles.helperText}>
+          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP to next level
+        </Text>
+        <TouchableOpacity
+          style={[styles.primaryCta, styles.homePrimaryCta]}
+          onPress={onStartPractice}
+          accessibilityRole="button"
+          testID="home-start-practice"
+        >
+          <Text style={styles.primaryCtaText}>Start Practice</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.smallActionButton}
-        onPress={onStartPractice}
-        accessibilityRole="button"
-        testID="home-quick-start-practice"
-      >
-        <Text style={styles.smallActionText}>Quick Start</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.smallActionButton}
+          onPress={onStartPractice}
+          accessibilityRole="button"
+          testID="home-quick-start-practice"
+        >
+          <Text style={styles.smallActionText}>Open Session Builder</Text>
+        </TouchableOpacity>
+      </GlowCard>
+
+      <View style={styles.homeStatStrip}>
+        <GlowCard style={styles.flexCard}>
+          <Text style={styles.cardLabel}>Streak</Text>
+          <Text style={styles.bigValue}>{streak} days</Text>
+        </GlowCard>
+        <GlowCard style={styles.flexCard}>
+          <Text style={styles.cardLabel}>Goal</Text>
+          <Text style={styles.bigValue}>
+            {goalCurrentValue}/{goalTarget}
+          </Text>
+          <Text style={styles.helperText}>{goalUnitLabel}</Text>
+        </GlowCard>
+      </View>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Practice Starter</Text>
+        <Text style={styles.cardLabel}>Starter Questionnaire</Text>
         {!onboardingState.completed ? (
           <>
-            <Text style={styles.helperText}>Answer 4 quick questions to get a suggested first session.</Text>
+            <Text style={styles.helperText}>Answer 4 quick questions and get a focused starting routine.</Text>
             <Text style={styles.helperText}>Level</Text>
             <View style={styles.templatePillsRow}>
               {(["beginner", "intermediate", "expert"] as const).map((level) => (
@@ -1530,7 +1596,7 @@ function HomeDashboard(props: {
               onPress={submitOnboardingAnswers}
               testID="onboarding-generate"
             >
-              <Text style={styles.smallActionText}>Generate Suggestion</Text>
+              <Text style={styles.smallActionText}>Generate Practice Plan</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -1547,7 +1613,7 @@ function HomeDashboard(props: {
                 onPress={onApplyOnboardingSuggestion}
                 testID="onboarding-apply-suggestion"
               >
-                <Text style={styles.smallActionText}>Apply to Builder</Text>
+                <Text style={styles.smallActionText}>Build This Session</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.smallActionButton}
@@ -1562,38 +1628,7 @@ function HomeDashboard(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>XP Progress</Text>
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${Math.max(6, (levelState.currentLevelXp / levelState.nextLevelXp) * 100)}%`,
-              },
-            ]}
-          />
-        </View>
-      </GlowCard>
-
-      <View style={styles.rowTwoCol}>
-        <GlowCard style={styles.flexCard}>
-          <Text style={styles.cardLabel}>🔥 Goal Streak</Text>
-          <Text style={styles.bigValue}>{streak} days</Text>
-        </GlowCard>
-
-        <GlowCard style={styles.flexCard}>
-          <Text style={styles.cardLabel}>Today Goal</Text>
-          <View style={{ alignItems: "center", marginTop: 8 }}>
-            <ProgressRing size={84} strokeWidth={8} progress={goalProgress} color={COLORS.accentAlt} />
-            <Text style={styles.ringText}>
-              {goalCurrentValue}/{goalTarget} {goalUnitLabel}
-            </Text>
-          </View>
-        </GlowCard>
-      </View>
-
-      <GlowCard>
-        <Text style={styles.cardLabel}>Goal Settings</Text>
+        <Text style={styles.cardLabel}>Practice Controls</Text>
         <View style={styles.inlineRow}>
           <TouchableOpacity
             style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
@@ -1625,45 +1660,9 @@ function HomeDashboard(props: {
             style={styles.timeInput}
           />
           <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveGoalTarget(goalTargetInput)}>
-            <Text style={styles.smallActionText}>Save Goal</Text>
+            <Text style={styles.smallActionText}>Save</Text>
           </TouchableOpacity>
         </View>
-
-        {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
-      </GlowCard>
-
-      <GlowCard>
-        <Text style={styles.cardLabel}>Weekly Summary</Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
-          {weeklySummary.weekMinutesDelta} vs last week)
-        </Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills completed
-        </Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
-        </Text>
-      </GlowCard>
-
-      <GlowCard>
-        <Text style={styles.cardLabel}>Recent Sessions</Text>
-        {sessionInsights.length === 0 ? (
-          <Text style={styles.helperText}>No sessions yet. Start one to unlock trends.</Text>
-        ) : (
-          sessionInsights.map((insight) => (
-            <View key={insight.id} style={styles.recentSessionRow}>
-              <Text style={styles.badgeLabel}>{insight.title}</Text>
-              <Text style={styles.helperText}>
-                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}{" "}
-                drills • {insight.completed ? "Complete" : "Partial"}
-              </Text>
-            </View>
-          ))
-        )}
-      </GlowCard>
-
-      <GlowCard>
         <View style={styles.inlineRowSpace}>
           <Text style={styles.cardLabel}>Daily Reminder</Text>
           <TouchableOpacity style={styles.pillButton} onPress={onToggleReminder}>
@@ -1684,7 +1683,39 @@ function HomeDashboard(props: {
           </TouchableOpacity>
         </View>
 
+        {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
         {reminderError ? <Text style={styles.errorText}>{reminderError}</Text> : null}
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Weekly Summary</Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
+          {weeklySummary.weekMinutesDelta} vs last week)
+        </Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills completed
+        </Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
+        </Text>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Recent Sessions</Text>
+        {sessionInsights.length === 0 ? (
+          <Text style={styles.helperText}>No sessions yet. Start one to unlock progress tracking.</Text>
+        ) : (
+          sessionInsights.map((insight) => (
+            <View key={insight.id} style={styles.recentSessionRow}>
+              <Text style={styles.badgeLabel}>{insight.title}</Text>
+              <Text style={styles.helperText}>
+                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}{" "}
+                drills • {insight.completed ? "Complete" : "Partial"}
+              </Text>
+            </View>
+          ))
+        )}
       </GlowCard>
 
       <GlowCard>
@@ -1700,7 +1731,6 @@ function HomeDashboard(props: {
       </GlowCard>
 
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
-
     </ScrollView>
   );
 }
@@ -1862,11 +1892,12 @@ export function SessionBuilder(props: {
           <Pressable onPress={onBack} style={styles.topActionButton}>
             <Text style={styles.topActionText}>Back</Text>
           </Pressable>
-          <Text style={styles.title}>Session Builder</Text>
+          <Text style={styles.title}>Build Your Chain</Text>
           <Text style={styles.levelChip}>{totalXp} XP</Text>
         </View>
 
-        <GlowCard>
+        <GlowCard style={styles.builderHeroCard}>
+          <Text style={styles.heroSubline}>Shape your drill flow, then hit play.</Text>
           <View style={styles.inlineRow}>
             <TouchableOpacity
               style={styles.smallActionButton}
@@ -1927,7 +1958,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill card to edit. Use ↑ ↓ to reorder.</Text>
+        <Text style={styles.helperText}>Tap a drill to edit. Reorder with the transport controls.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -1957,7 +1988,7 @@ export function SessionBuilder(props: {
               onPressOut={handleStartSessionPressOut}
               testID="builder-start-session"
             >
-              <Text style={styles.primaryCtaText}>Start This Session</Text>
+              <Text style={styles.primaryCtaText}>Begin Session</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
@@ -1972,14 +2003,14 @@ export function SessionBuilder(props: {
               testID="builder-remove-first-control"
               disabled={drills.length === 0}
             >
-              <Text style={styles.smallActionText}>Remove First Drill</Text>
+              <Text style={styles.smallActionText}>Quick Remove First Drill</Text>
             </TouchableOpacity>
           </View>
         }
         ListFooterComponent={
           <View style={styles.builderFooter}>
             <GlowCard>
-              <Text style={styles.cardLabel}>Edit Drill</Text>
+              <Text style={styles.cardLabel}>Drill Editor</Text>
               {noDrillSelected ? (
                 <Text style={styles.helperText}>Select a drill card to edit its values.</Text>
               ) : null}
@@ -2248,6 +2279,184 @@ export function SessionBuilder(props: {
   );
 }
 
+function SessionsLibrary(props: {
+  templates: SessionTemplate[];
+  drills: Drill[];
+  onOpenBuilder: (templateId: string) => void;
+}) {
+  const { templates, drills, onOpenBuilder } = props;
+
+  return (
+    <View style={styles.screenBody}>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Sessions</Text>
+      </View>
+      <Text style={styles.helperText}>Select a routine preset and jump into your chain builder.</Text>
+
+      <ScrollView contentContainerStyle={styles.sessionsList} showsVerticalScrollIndicator={false}>
+        {templates.map((template) => {
+          const items = template.drillIds
+            .map((id) => drills.find((drill) => drill.id === id))
+            .filter((drill): drill is Drill => Boolean(drill));
+          const totalXp = items.reduce((sum, drill) => sum + toXp(drill), 0);
+          const totalMinutes = Math.max(0, Math.round(template.totalDurationSeconds / 60));
+
+          return (
+            <GlowCard key={template.id} style={styles.sessionPresetCard}>
+              <View style={styles.inlineRowSpace}>
+                <Text style={styles.sessionPresetTitle}>{template.name}</Text>
+                <Text style={styles.levelChip}>+{totalXp} XP</Text>
+              </View>
+              <Text style={styles.helperText}>
+                {items.length} drills • {totalMinutes} min
+              </Text>
+              <TouchableOpacity style={styles.primaryCta} onPress={() => onOpenBuilder(template.id)}>
+                <Text style={styles.primaryCtaText}>Open Builder</Text>
+              </TouchableOpacity>
+            </GlowCard>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+function ProgressStats(props: {
+  weeklySummary: WeeklySummary;
+  sessionInsights: SessionInsight[];
+  averageBpm: number;
+  streak: number;
+}) {
+  const { weeklySummary, sessionInsights, averageBpm, streak } = props;
+  const base = Math.max(1, weeklySummary.weekMinutes);
+  const skillBars = [
+    { label: "Technique", value: Math.min(100, Math.round((weeklySummary.weekDrillsCompleted * 12) / base * 10)) },
+    { label: "Timing", value: Math.min(100, Math.round(averageBpm)) },
+    { label: "Speed", value: Math.min(100, Math.round((averageBpm / 160) * 100)) },
+    { label: "Fretboard", value: Math.min(100, Math.round((weeklySummary.weekSessions / 7) * 100)) },
+    { label: "Consistency", value: Math.min(100, Math.round((streak / 14) * 100)) },
+  ];
+
+  return (
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Progress</Text>
+      </View>
+      <GlowCard style={styles.homeHeroPanel}>
+        <Text style={styles.cardLabel}>This Week</Text>
+        <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min played</Text>
+        <Text style={styles.heroSubline}>
+          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills
+        </Text>
+      </GlowCard>
+      <GlowCard>
+        <Text style={styles.cardLabel}>Skill Breakdown</Text>
+        {skillBars.map((skill) => (
+          <View key={skill.label} style={styles.skillRow}>
+            <View style={styles.inlineRowSpace}>
+              <Text style={styles.badgeLabel}>{skill.label}</Text>
+              <Text style={styles.helperText}>{skill.value}%</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.max(4, skill.value)}%` }]} />
+            </View>
+          </View>
+        ))}
+      </GlowCard>
+      <GlowCard>
+        <Text style={styles.cardLabel}>Recent Form</Text>
+        {sessionInsights.length === 0 ? (
+          <Text style={styles.helperText}>Complete one session to see improvement trends.</Text>
+        ) : (
+          sessionInsights.map((insight) => (
+            <View key={insight.id} style={styles.recentSessionRow}>
+              <Text style={styles.badgeLabel}>{insight.title}</Text>
+              <Text style={styles.helperText}>
+                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}
+              </Text>
+            </View>
+          ))
+        )}
+      </GlowCard>
+    </ScrollView>
+  );
+}
+
+function ProfileAchievements(props: {
+  levelState: LevelState;
+  totalXp: number;
+  badges: Badge[];
+  onboardingState: PracticeOnboardingState;
+  onResetOnboarding: () => void;
+}) {
+  const { levelState, totalXp, badges, onboardingState, onResetOnboarding } = props;
+  const unlocked = badges.filter((badge) => badge.unlocked).length;
+
+  return (
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Profile</Text>
+      </View>
+
+      <GlowCard style={styles.homeHeroPanel}>
+        <Text style={styles.cardLabel}>Player Identity</Text>
+        <Text style={styles.heroHeadline}>Level {levelState.level} Guitarist</Text>
+        <Text style={styles.heroSubline}>{totalXp} total XP • {unlocked} badges unlocked</Text>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Achievements</Text>
+        <View style={styles.badgeRow}>
+          {badges.map((badge) => (
+            <View key={badge.id} style={[styles.badge, !badge.unlocked ? styles.badgeLocked : null]}>
+              <Text style={styles.badgeIcon}>{badge.icon}</Text>
+              <Text style={styles.badgeLabel}>{badge.label}</Text>
+            </View>
+          ))}
+        </View>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Onboarding Plan</Text>
+        <Text style={styles.helperText}>
+          {onboardingState.completed ? "Questionnaire completed." : "Questionnaire not completed yet."}
+        </Text>
+        <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding}>
+          <Text style={styles.smallActionText}>Reset Questionnaire</Text>
+        </TouchableOpacity>
+      </GlowCard>
+    </ScrollView>
+  );
+}
+
+function AppTabBar(props: {
+  screen: Screen;
+  onNavigate: (screen: "home" | "sessions" | "progress" | "profile") => void;
+}) {
+  const { screen, onNavigate } = props;
+  const tabs: { id: "home" | "sessions" | "progress" | "profile"; label: string }[] = [
+    { id: "home", label: "Practice" },
+    { id: "sessions", label: "Sessions" },
+    { id: "progress", label: "Progress" },
+    { id: "profile", label: "Profile" },
+  ];
+  const selectedTab = screen === "builder" ? "sessions" : screen;
+
+  return (
+    <View style={styles.tabBar}>
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.id}
+          style={[styles.tabItem, selectedTab === tab.id ? styles.tabItemActive : null]}
+          onPress={() => onNavigate(tab.id)}
+        >
+          <Text style={[styles.tabLabel, selectedTab === tab.id ? styles.tabLabelActive : null]}>{tab.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 function ActivePractice(props: {
   drill: Drill;
   drillProgress: number;
@@ -2300,15 +2509,16 @@ function ActivePractice(props: {
 
   return (
     <View style={styles.screenBody} testID="active-screen">
-      <Text style={styles.cardLabel}>Session Progress</Text>
+      <Text style={styles.cardLabel}>Practice Mode</Text>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
       </View>
 
       <Animated.View style={[styles.activeCard, styles.activeCardHighlight, { transform: [{ scale: pulseScale }] }]}>
-        <ProgressRing size={240} strokeWidth={14} progress={drillProgress} color={COLORS.accent} />
+        <ProgressRing size={272} strokeWidth={16} progress={drillProgress} color={COLORS.accent} />
         <View style={styles.timerOverlay}>
           <Text style={styles.timerValue}>{formatClock(remainingSec)}</Text>
+          <Text style={styles.cardLabel}>Now Playing</Text>
           <Text style={styles.timerLabel}>{drill.name}</Text>
           <Text style={styles.xpInline}>Reward +{toXp(drill)} XP</Text>
         </View>
@@ -2316,7 +2526,7 @@ function ActivePractice(props: {
 
       <GlowCard>
         <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Metronome</Text>
+          <Text style={styles.cardLabel}>Rig Control: Metronome</Text>
           <TouchableOpacity style={styles.pillButton} onPress={onMetronomeToggle}>
             <Text style={styles.pillButtonText}>{metronomeEnabled ? "On" : "Off"}</Text>
           </TouchableOpacity>
@@ -2334,7 +2544,7 @@ function ActivePractice(props: {
 
         <View style={styles.inlineRow}>
           <View style={[styles.beatDot, beatFlash && metronomeEnabled ? styles.beatDotActive : null]} />
-          <Text style={styles.helperText}>Beat indicator {metronomeEnabled ? "running" : "stopped"}</Text>
+          <Text style={styles.helperText}>Beat pulse {metronomeEnabled ? "locked" : "stopped"}</Text>
         </View>
         {randomCueLabel ? (
           <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
@@ -2384,12 +2594,12 @@ function SessionComplete(props: {
       <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
 
       <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>
-        <Text style={styles.completeTitle}>Session Complete</Text>
+        <Text style={styles.completeTitle}>Session Crushed</Text>
         <Text style={styles.completeXp}>+{sessionXp} XP</Text>
-        <Text style={styles.completeSubtext}>Great work. You moved your playing forward today.</Text>
+        <Text style={styles.completeSubtext}>Clean reps stacked. Your playing moved forward today.</Text>
 
-        {leveledUp ? <Text style={styles.levelUp}>Level Up! You are now Level {level}.</Text> : null}
-        <Text style={styles.streakLine}>🔥 Streak confirmed: {streak} days</Text>
+        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
+        <Text style={styles.streakLine}>🔥 Streak protected: {streak} days</Text>
 
         <View style={styles.badgeRow}>
           {badges.slice(0, 4).map((badge) => (
@@ -2402,7 +2612,7 @@ function SessionComplete(props: {
       </Animated.View>
 
       <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
-        <Text style={styles.primaryCtaText}>Back to Dashboard</Text>
+        <Text style={styles.primaryCtaText}>Back to Practice Hub</Text>
       </TouchableOpacity>
     </View>
   );
@@ -2508,19 +2718,19 @@ const styles = StyleSheet.create({
   },
   screenBody: {
     flex: 1,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 28,
-    gap: 18,
+    paddingBottom: 100,
+    gap: 16,
   },
   homeScroll: {
     flex: 1,
   },
   homeScrollContent: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 40,
-    gap: 18,
+    paddingBottom: 120,
+    gap: 16,
   },
   topRow: {
     flexDirection: "row",
@@ -2530,9 +2740,15 @@ const styles = StyleSheet.create({
   },
   title: {
     color: COLORS.text,
-    fontSize: 28,
+    fontSize: 42,
     fontWeight: "800",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
+  },
+  brandEyebrow: {
+    color: COLORS.accentAlt,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
   levelChip: {
     color: COLORS.xp,
@@ -2547,7 +2763,7 @@ const styles = StyleSheet.create({
   glowCard: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.divider,
     shadowColor: "#000000",
@@ -2556,6 +2772,26 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     gap: 10,
+  },
+  homeHeroPanel: {
+    borderColor: "rgba(217,119,6,0.55)",
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+  },
+  builderHeroCard: {
+    borderColor: "rgba(217,119,6,0.45)",
+  },
+  heroHeadline: {
+    color: COLORS.text,
+    fontSize: 28,
+    fontWeight: "800",
+    lineHeight: 32,
+  },
+  heroSubline: {
+    color: COLORS.muted,
+    fontSize: 14,
+    lineHeight: 20,
   },
   cardLabel: {
     color: COLORS.muted,
@@ -2583,14 +2819,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
   },
+  homeStatStrip: {
+    flexDirection: "row",
+    gap: 12,
+  },
   flexCard: {
     flex: 1,
   },
   bigValue: {
     color: COLORS.accent,
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "800",
-    marginTop: 4,
+    marginTop: 2,
   },
   ringText: {
     color: COLORS.text,
@@ -2625,10 +2865,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   primaryCta: {
-    marginTop: "auto",
     backgroundColor: COLORS.accent,
-    minHeight: 52,
-    borderRadius: 16,
+    minHeight: 56,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -2645,7 +2884,7 @@ const styles = StyleSheet.create({
   },
   primaryCtaText: {
     color: COLORS.text,
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "800",
     letterSpacing: 0.4,
   },
@@ -2680,7 +2919,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     color: COLORS.muted,
-    fontSize: 13,
+    fontSize: 14,
   },
   builderStatsProbe: {
     width: 1,
@@ -2709,7 +2948,7 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   builderHeader: {
-    gap: 18,
+    gap: 12,
     paddingBottom: 6,
     marginBottom: 12,
   },
@@ -2727,13 +2966,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   drillCard: {
-    minHeight: 94,
-    borderRadius: 16,
+    minHeight: 102,
+    borderRadius: 18,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     flexDirection: "column",
     alignItems: "stretch",
     justifyContent: "flex-start",
@@ -2747,6 +2986,10 @@ const styles = StyleSheet.create({
   },
   drillCardSelected: {
     borderColor: COLORS.accent,
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
   drillLeft: {
     flexDirection: "row",
@@ -2766,8 +3009,8 @@ const styles = StyleSheet.create({
   },
   drillName: {
     color: COLORS.text,
-    fontSize: 16,
-    lineHeight: 21,
+    fontSize: 18,
+    lineHeight: 23,
     fontWeight: "700",
     flexShrink: 1,
   },
@@ -2799,7 +3042,7 @@ const styles = StyleSheet.create({
   drillXp: {
     color: COLORS.xp,
     fontWeight: "800",
-    fontSize: 14,
+    fontSize: 18,
     minWidth: 70,
     textAlign: "right",
     marginTop: 2,
@@ -2836,7 +3079,7 @@ const styles = StyleSheet.create({
   activeCard: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
+    paddingVertical: 8,
   },
   activeCardHighlight: {
     shadowColor: COLORS.accent,
@@ -2849,13 +3092,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 4,
   },
   timerValue: {
     color: COLORS.text,
-    fontSize: 48,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontSize: 64,
+    fontWeight: "900",
+    letterSpacing: 1.2,
   },
   timerLabel: {
     color: COLORS.text,
@@ -2910,8 +3153,8 @@ const styles = StyleSheet.create({
   },
   completeCard: {
     marginTop: 20,
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 20,
+    padding: 20,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -2919,12 +3162,12 @@ const styles = StyleSheet.create({
   },
   completeTitle: {
     color: COLORS.text,
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: "800",
   },
   completeXp: {
     color: COLORS.xp,
-    fontSize: 40,
+    fontSize: 54,
     fontWeight: "900",
   },
   completeSubtext: {
@@ -3069,6 +3312,61 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.divider,
     paddingTop: 8,
+  },
+  sessionsList: {
+    gap: 12,
+    paddingBottom: 24,
+  },
+  sessionPresetCard: {
+    gap: 12,
+  },
+  sessionPresetTitle: {
+    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: "800",
+    flex: 1,
+    paddingRight: 8,
+  },
+  skillRow: {
+    gap: 6,
+    marginBottom: 8,
+  },
+  tabBar: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    bottom: 12,
+    minHeight: 64,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    borderRadius: 20,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  tabItem: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  tabItemActive: {
+    backgroundColor: COLORS.cardSoft,
+    borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.45)",
+  },
+  tabLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tabLabelActive: {
+    color: COLORS.text,
   },
   errorText: {
     color: COLORS.muted,
