@@ -117,6 +117,12 @@ async function captureLongTitleLayoutState() {
       await element(by.id("builder-drill-list")).swipe("down", "fast", 0.9);
     } catch {}
   }
+
+  const statsAttrs = await element(by.id("builder-stats")).getAttributes();
+  const statsRaw = String(statsAttrs.label ?? statsAttrs.text ?? statsAttrs.value ?? "");
+  if (!/lineLimit:3\b/.test(statsRaw)) {
+    throw new Error(`Expected compact drill title lineLimit:3 in builder-stats, got: ${statsRaw || "unknown"}`);
+  }
   await device.takeScreenshot("edge-04-builder-long-name-layout");
 }
 

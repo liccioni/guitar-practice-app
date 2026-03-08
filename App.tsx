@@ -122,6 +122,7 @@ const RANDOMIZER_KIND_OPTIONS: { value: "none" | DrillRandomizerKind; label: str
   { value: "triad", label: "Random Triad" },
   { value: "fingers4", label: "Random 4 Fingers" },
 ];
+const DRILL_CARD_COMPACT_MAX_WIDTH = 430;
 
 const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: "b1", label: "7-Day Streak", icon: "🔥" },
@@ -1788,7 +1789,8 @@ export function SessionBuilder(props: {
   const canSaveDrill =
     isDrillEditorEnabled && isDrillNameValid && isDurationValid && isBpmValid && isRandomEveryBarsValid;
   const noDrillSelected = drills.length > 0 && !selectedDrillId;
-  const useCompactDrillCard = width <= 390;
+  const useCompactDrillCard = width <= DRILL_CARD_COMPACT_MAX_WIDTH;
+  const drillTitleLineLimit = useCompactDrillCard ? 3 : 2;
 
   function handleSaveTemplatePress(): void {
     if (!isTemplateNameValid) return;
@@ -1931,7 +1933,7 @@ export function SessionBuilder(props: {
         </Text>
         <View
           testID="builder-stats"
-          accessibilityLabel={`${drills.length} drills ${totalXp} xp`}
+          accessibilityLabel={`${drills.length} drills ${totalXp} xp lineLimit:${drillTitleLineLimit}`}
           style={styles.builderStatsProbe}
         />
       </View>
@@ -2162,12 +2164,20 @@ export function SessionBuilder(props: {
                 <View style={styles.drillTextBlock}>
                   <Text
                     style={styles.drillName}
-                    numberOfLines={3}
+                    numberOfLines={drillTitleLineLimit}
                     ellipsizeMode="tail"
                     testID={`builder-drill-title-${item.id}`}
                   >
                     {item.name}
                   </Text>
+                  {index === 0 ? (
+                    <Text
+                      testID="builder-drill-title-lines-first"
+                      style={styles.drillLineLimitProbe}
+                    >
+                      {String(drillTitleLineLimit)}
+                    </Text>
+                  ) : null}
                   <Text style={styles.drillMeta}>
                     {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
                   </Text>
@@ -2757,6 +2767,7 @@ const styles = StyleSheet.create({
   drillName: {
     color: COLORS.text,
     fontSize: 16,
+    lineHeight: 21,
     fontWeight: "700",
     flexShrink: 1,
   },
@@ -2770,6 +2781,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 12,
     fontWeight: "700",
+  },
+  drillLineLimitProbe: {
+    fontSize: 1,
+    lineHeight: 1,
+    height: 1,
+    marginTop: 0,
+    color: "transparent",
   },
   builderCardActions: {
     flexDirection: "row",
