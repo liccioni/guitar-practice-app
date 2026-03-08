@@ -9,7 +9,7 @@ This package contains UI screen exports and a Figma-ready handoff spec for rebui
 
 ## Included Screens
 1. `home.png`
-2. `onboarding-suggestion.png`
+2. `builder-random-cue-preview.png`
 3. `session-builder.png`
 4. `builder-empty.png`
 5. `builder-validation-error.png`
@@ -26,4 +26,4 @@ This package contains UI screen exports and a Figma-ready handoff spec for rebui
 
 ## Notes
 - These are image exports (not editable layers).
-- Onboarding screenshot is sourced from a run that failed after capture; the captured frame itself is valid and included.
+- Sources are the latest passing visual suites from `2026-03-08` after the redesign.

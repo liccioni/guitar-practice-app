@@ -11,15 +11,15 @@
 
 ## 2. Design Tokens
 Use these as Figma color styles:
-- `Background / Base`: `#121212`
-- `Surface / Card`: `#1A1A1A`
-- `Surface / Elevated`: `#222222`
-- `Border / Divider`: `#2A2A2A`
+- `Background / Base`: `#0F0F10`
+- `Surface / Card`: `#171718`
+- `Surface / Elevated`: `#222224`
+- `Border / Divider`: `#2E2E31`
 - `Accent / Primary`: `#D97706`
-- `Accent / Secondary`: `#E6B980`
-- `Accent / XP`: `#EAB308`
-- `Text / Primary`: `#F5F5F5`
-- `Text / Secondary`: `#B3B3B3`
+- `Accent / Secondary`: `#F59E0B`
+- `Accent / XP`: `#FACC15`
+- `Text / Primary`: `#F5F5F4`
+- `Text / Secondary`: `#B8B8B5`
 - `Text / Disabled`: `#6B7280`
 
 ## 3. Typography Mapping
@@ -76,7 +76,7 @@ Create text styles:
 
 ## 6. Screen Mapping
 - `home.png`: dashboard default state
-- `onboarding-suggestion.png`: onboarding recommendation surface
+- `builder-random-cue-preview.png`: builder random cue configured state
 - `session-builder.png`: populated builder state
 - `builder-empty.png`: empty builder state
 - `builder-validation-error.png`: inline validation state
@@ -101,4 +101,4 @@ Create text styles:
 - Color styles match token list exactly.
 - CTA sizes are consistent across frames.
 - Drill card long-title variant has no text overlap.
-- Onboarding recommendation frame included.
+- Random-cue preview frame included.
