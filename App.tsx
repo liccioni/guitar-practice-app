@@ -55,6 +55,8 @@ import {
   savePersistedState,
   type PersistedPracticeState,
 } from "./src/persistence/LocalStorageGateway";
+import { GlowCard } from "./src/ui/primitives/GlowCard";
+import { COLORS } from "./src/ui/theme";
 
 type Screen = "home" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
 
@@ -70,33 +72,6 @@ interface BadgeDefinition {
   label: string;
   icon: string;
 }
-
-const TOKENS = {
-  background: "#0F0F10",
-  surface: "#171718",
-  elevated: "#222224",
-  divider: "#2E2E31",
-  primaryAccent: "#D97706",
-  secondaryAccent: "#F59E0B",
-  xpHighlight: "#FACC15",
-  textPrimary: "#F5F5F4",
-  textSecondary: "#B8B8B5",
-  disabled: "#6B7280",
-};
-
-const COLORS = {
-  bg: TOKENS.background,
-  card: TOKENS.surface,
-  cardSoft: TOKENS.elevated,
-  text: TOKENS.textPrimary,
-  muted: TOKENS.textSecondary,
-  accent: TOKENS.primaryAccent,
-  accentAlt: TOKENS.secondaryAccent,
-  xp: TOKENS.xpHighlight,
-  divider: TOKENS.divider,
-  danger: "#C2410C",
-  disabled: TOKENS.disabled,
-};
 
 const DRILL_POOL: CreateDrillInput[] = [
   { name: "Chromatic Warmup", durationMinutes: 4, targetBpm: 90, tags: ["warmup"] },
@@ -2672,10 +2647,6 @@ function ProgressRing(props: {
   );
 }
 
-function GlowCard(props: { children: React.ReactNode; style?: object }) {
-  return <View style={[styles.glowCard, props.style]}>{props.children}</View>;
-}
-
 interface LevelState {
   level: number;
   currentLevelXp: number;
@@ -2759,19 +2730,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(234,179,8,0.16)",
     borderRadius: 999,
     overflow: "hidden",
-  },
-  glowCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: COLORS.divider,
-    shadowColor: "#000000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    gap: 10,
   },
   homeHeroPanel: {
     borderColor: "rgba(217,119,6,0.55)",
