@@ -2475,16 +2475,19 @@ function ActivePractice(props: {
 
   const pulseScale = completionPulse.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.07],
+    outputRange: [1, 1.045],
   });
   const cueScale = randomCuePulse.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.08],
+    outputRange: [1, 1.06],
   });
 
   return (
     <View style={styles.screenBody} testID="active-screen">
-      <Text style={styles.cardLabel}>Practice Mode</Text>
+      <View style={styles.activeTopRow}>
+        <Text style={styles.cardLabel}>Practice Mode</Text>
+        <Text style={styles.activeModeHint}>Focus</Text>
+      </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
       </View>
@@ -2493,7 +2496,7 @@ function ActivePractice(props: {
         <ProgressRing size={272} strokeWidth={16} progress={drillProgress} color={COLORS.accent} />
         <View style={styles.timerOverlay}>
           <Text style={styles.timerValue}>{formatClock(remainingSec)}</Text>
-          <Text style={styles.cardLabel}>Now Playing</Text>
+          <Text style={styles.timerNowLabel}>Now Playing</Text>
           <Text style={styles.timerLabel}>{drill.name}</Text>
           <Text style={styles.xpInline}>Reward +{toXp(drill)} XP</Text>
         </View>
@@ -2501,18 +2504,20 @@ function ActivePractice(props: {
 
       <GlowCard>
         <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Rig Control: Metronome</Text>
+          <Text style={styles.cardLabel}>Metronome Rig</Text>
           <TouchableOpacity style={styles.pillButton} onPress={onMetronomeToggle}>
             <Text style={styles.pillButtonText}>{metronomeEnabled ? "On" : "Off"}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.inlineRowSpace}>
-          <TouchableOpacity style={styles.smallActionButton} onPress={() => onMetronomeStep(-5)}>
+        <View style={styles.metronomeStrip}>
+          <TouchableOpacity style={[styles.smallActionButton, styles.metronomeStepButton]} onPress={() => onMetronomeStep(-5)}>
             <Text style={styles.smallActionText}>-5</Text>
           </TouchableOpacity>
-          <Text style={styles.metronomeBpmLabel}>{metronomeBpm} BPM</Text>
-          <TouchableOpacity style={styles.smallActionButton} onPress={() => onMetronomeStep(5)}>
+          <View style={styles.bpmPill}>
+            <Text style={styles.metronomeBpmLabel}>{metronomeBpm} BPM</Text>
+          </View>
+          <TouchableOpacity style={[styles.smallActionButton, styles.metronomeStepButton]} onPress={() => onMetronomeStep(5)}>
             <Text style={styles.smallActionText}>+5</Text>
           </TouchableOpacity>
         </View>
@@ -3053,7 +3058,7 @@ const styles = StyleSheet.create({
   activeCard: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   activeCardHighlight: {
     shadowColor: COLORS.accent,
@@ -3070,9 +3075,16 @@ const styles = StyleSheet.create({
   },
   timerValue: {
     color: COLORS.text,
-    fontSize: 64,
+    fontSize: 72,
     fontWeight: "900",
     letterSpacing: 1.2,
+  },
+  timerNowLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   timerLabel: {
     color: COLORS.text,
@@ -3095,6 +3107,18 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: "row",
     gap: 12,
+  },
+  activeTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  activeModeHint: {
+    color: COLORS.accentAlt,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   controlButton: {
     flex: 1,
@@ -3358,6 +3382,25 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 17,
     fontWeight: "800",
+  },
+  metronomeStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  metronomeStepButton: {
+    minWidth: 56,
+  },
+  bpmPill: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
   beatDot: {
     width: 14,
