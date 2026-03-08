@@ -1,10 +1,10 @@
 screen_id,file,width,height,source_artifact,source_status
-home,home.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-48-42Z,pass
-builder_random_cue_preview,builder-random-cue-preview.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-48-42Z,pass
-session_builder,session-builder.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-48-42Z,pass
-builder_empty,builder-empty.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-45-03Z,pass
-builder_validation_error,builder-validation-error.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-45-03Z,pass
-builder_long_name_layout,builder-long-name-layout.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-45-03Z,pass
-active_practice,active-practice.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-48-42Z,pass
-active_paused,active-paused.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-45-03Z,pass
-session_complete,session-complete.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 18-48-42Z,pass
+home,home.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-14Z,pass
+builder_random_cue_preview,builder-random-cue-preview.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-14Z,pass
+session_builder,session-builder.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-14Z,pass
+builder_empty,builder-empty.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-53Z,pass
+builder_validation_error,builder-validation-error.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-53Z,pass
+builder_long_name_layout,builder-long-name-layout.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-53Z,pass
+active_practice,active-practice.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-14Z,pass
+active_paused,active-paused.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-53Z,pass
+session_complete,session-complete.png,1170,2532,artifacts/ios.sim.debug.2026-03-08 20-35-14Z,pass
