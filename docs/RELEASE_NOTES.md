@@ -1,21 +1,25 @@
 # Release Notes
 
-## Latest Validation (2026-03-07)
-- Validation date: `2026-03-07`
+## Latest Validation (2026-03-08)
+- Validation date: `2026-03-08`
 - Commands:
   - `npm run check`
   - `npm run e2e:detox:build:ios`
   - `npm run e2e:detox:test:ios`
+  - `npm run e2e:detox:test:ios -- e2e/visual-states.e2e.js`
+  - `npm run e2e:detox:test:ios -- e2e/visual-edge-states.e2e.js`
+  - `npm run e2e:android:onboarding` (with emulator online + metro/app running)
 - Result:
   - Quality gate passed (`lint`, `typecheck`, coverage)
-  - iOS Detox passed (`3/3` suites, `6/6` tests)
+  - iOS Detox passed (core + visual + edge + onboarding suites)
+  - Android onboarding smoke passed
 - Notes:
-  - A transient Detox startup failure (`CFBundleIdentifier not found`) was resolved by rebuilding the iOS Detox app binary before test execution.
+  - Detox requires rebuilding iOS app when new testIDs/layout probes are added.
+  - Android smoke requires valid `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`.
 
-## Current Stable Baseline
-- Tag: `stable-2026-03-07-builder-validation-green`
-- Commit: `43aedef`
-- Scope: builder-validation local iOS Detox baseline.
+## Latest Verified Main
+- Commit: `e7cfc3f`
+- Scope: current main with onboarding, random-cue UX, strict coverage, updated visual regressions.
 
 ## Stable Baseline
 - Tag: `stable-2026-03-04-ci-green`
@@ -83,7 +87,7 @@ After the stable tag, branch `main` may include additional CI hardening commits.
 - Drill reorder now uses explicit per-card up/down controls.
 11. Detox smoke stabilization on local iOS baseline (`bacf971`).
 - Builder smoke navigation/start/skip flow hardened with retries and stable waits.
-- E2E launch changed to avoid per-test uninstall (`delete: true` removed from `e2e/init.js`) to reduce Detox connection flakes.
+- E2E launch currently uses per-test fresh install (`delete: true` in `e2e/init.js`) with Detox synchronization disabled for deterministic timer-heavy flows.
 12. Remove-drill smoke case re-enabled with deterministic builder control.
 - Added `builder-remove-first-control` in `SessionBuilder` for stable first-drill removal interaction.
 - `Session builder e2e -> removes a drill when tapping Remove` is now enabled and green.

@@ -14,6 +14,7 @@ This is the implementation contract for the current project state.
 1. Home Dashboard
 - Shows level, XP progress, goal streak, goal progress, badges.
 - Shows weekly summary analytics and recent-session insights (duration, avg BPM, completion).
+- Includes onboarding questionnaire for suggested starter session (level, duration, focus, outcome).
 - Primary CTA: Start Practice.
 - Reminder toggle + reminder time controls.
 - Goal type controls (`minutes`, `sessions`, `drills`) and editable goal target.
@@ -21,12 +22,14 @@ This is the implementation contract for the current project state.
 2. Session Builder
 - Template operations: New, Duplicate, Save, Delete, Select.
 - Drill operations: Add (deterministic editable defaults), Remove, Reorder (up/down controls), Edit fields.
+- Drill supports optional random cue configuration (`note` / `triad` / `fingers4`, every N bars).
 - Validation and errors surfaced in UI (no uncaught crashes).
 
 3. Active Practice
 - Drill countdown + session progress.
 - Metronome default-on when session starts, with On/Off and BPM +/-5 controls.
 - Metronome must produce audible tick playback from bundled offline asset.
+- Random cue card shows current cue, upcoming cue, and beats to next trigger when configured.
 - Pause/Resume + Skip controls.
 
 4. Session Complete
@@ -37,6 +40,7 @@ This is the implementation contract for the current project state.
 - Drill name is required.
 - Drill duration must be 1-30 minutes.
 - Drill BPM must be 40-240 when provided.
+- Random cue interval must be 1-16 bars when random cue is enabled.
 - Session template total duration must be >= 5 minutes.
 
 2. Session accounting
@@ -66,7 +70,7 @@ This is the implementation contract for the current project state.
 
 ## 4. Data Contract
 1. drills
-- `id`, `name`, `description?`, `durationSeconds`, `targetBpm?`, `tags[]`, `createdAt`, `updatedAt`
+- `id`, `name`, `description?`, `durationSeconds`, `targetBpm?`, `tags[]`, `randomizer?`, `createdAt`, `updatedAt`
 
 2. sessionTemplates
 - `id`, `name`, `drillIds[]`, `totalDurationSeconds`, `isPreset`, `createdAt`, `updatedAt`
@@ -78,7 +82,7 @@ This is the implementation contract for the current project state.
 - `dailyMinutesTarget`, `goalType`, `goalTarget`, `reminderEnabled`, `reminderTime`
 
 5. profile
-- `totalXp`, `unlockedBadgeIds[]`
+- `totalXp`, `unlockedBadgeIds[]`, `onboarding`
 
 6. persistence envelope
 - `{ version, state }`
@@ -158,7 +162,7 @@ Current repository mode (cost-control): workflows are manual-only (`workflow_dis
 - Accounts/sync
 - Social features
 
-## 9. Stable Milestone
-- Reference stability marker: `stable-2026-03-07-builder-validation-green`
-- Reference commit: `43aedef`
-- This marker indicates local quality + iOS Detox stable baseline.
+## 9. Verified Milestone
+- Latest verified main commit (runtime/features): `e7cfc3f`
+- Historical stable tag reference: `stable-2026-03-08-builder-layout-green`
+- Rebuild instructions are authoritative in `docs/PROJECT_RUNBOOK.md`.

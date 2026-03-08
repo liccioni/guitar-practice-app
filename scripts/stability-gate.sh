@@ -46,6 +46,34 @@ ensure_android_device() {
   return 1
 }
 
+ANDROID_RUN_PID=""
+
+cleanup() {
+  if [ -n "$ANDROID_RUN_PID" ] && kill -0 "$ANDROID_RUN_PID" >/dev/null 2>&1; then
+    kill "$ANDROID_RUN_PID" >/dev/null 2>&1 || true
+    wait "$ANDROID_RUN_PID" 2>/dev/null || true
+  fi
+}
+
+start_android_runtime() {
+  echo "Starting Android runtime (expo run:android) in background..."
+  npm run android >/tmp/stability-android.log 2>&1 &
+  ANDROID_RUN_PID=$!
+
+  for _ in {1..72}; do
+    if adb shell pidof net.liccioni.guitarpractice >/dev/null 2>&1; then
+      echo "Android app process detected."
+      return
+    fi
+    sleep 5
+  done
+
+  echo "Android app process was not detected in time. See /tmp/stability-android.log"
+  return 1
+}
+
+trap cleanup EXIT
+
 echo "== Quality gate =="
 npm run check
 
@@ -58,7 +86,7 @@ npm run e2e:detox:test:ios -- e2e/visual-edge-states.e2e.js
 
 echo "== Android stability gate =="
 ensure_android_device
-npm run android
+start_android_runtime
 npm run e2e:android:regression:start-session
 npm run e2e:android:smoke
 

@@ -1,157 +1,130 @@
-# Project Runbook (Rebuild From Scratch)
+# Project Runbook (Reproduce Current Main From Scratch)
 
-This runbook is designed to reproduce the project up to the exact stable baseline.
+This runbook reproduces the repository exactly as it exists on `origin/main` at the time you run it.
+For a bit-for-bit reproduction of the audited state in this document, use commit `e7cfc3f`.
 
-## 1. Target Baseline
-- Stable tag: `stable-2026-03-07-builder-validation-green`
-- Stable commit: `43aedef`
-- Canonical repo: `https://github.com/liccioni/guitar-practice-app`
+## 1. Host Requirements (macOS)
+1. Xcode + iOS Simulator.
+2. Node.js 20.x + npm.
+3. CocoaPods.
+4. Homebrew.
+5. Java 21 (OpenJDK).
+6. Android command-line SDK + emulator packages.
 
-## 2. Prerequisites
-1. Node.js 20.x and npm.
-2. Xcode + iOS Simulator (for local iOS and Detox).
-3. CocoaPods (`sudo gem install cocoapods -N`).
-4. Homebrew package for Detox simulator utility:
+Install core tooling:
 ```bash
+brew install node cocoapods openjdk@21 android-commandlinetools
 brew tap wix/brew
 brew install applesimutils
 ```
 
-## 3. Fresh Clone to Stable State
+## 2. Required Environment Variables
+Set these in every terminal used for Android/Expo/Gradle:
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+```
+
+## 3. Android SDK/AVD Bootstrap (First-Time Only)
+```bash
+yes | sdkmanager --install "platform-tools" "emulator" "platforms;android-35" "build-tools;36.0.0" "system-images;android-35;google_apis;arm64-v8a"
+echo "no" | avdmanager create avd -n Pixel_8_API_35 -k "system-images;android-35;google_apis;arm64-v8a" --device "pixel_8"
+```
+
+Verify:
+```bash
+/opt/homebrew/share/android-commandlinetools/emulator/emulator -list-avds
+adb version
+```
+
+## 4. Clone And Sync
 ```bash
 git clone git@github.com:liccioni/guitar-practice-app.git
 cd guitar-practice-app
-git fetch --tags
-git checkout stable-2026-03-07-builder-validation-green
+git checkout main
+git pull --ff-only
+# Optional exact-state pin (recommended for reproducibility audit):
+git checkout e7cfc3f
+git rev-parse --short HEAD
 npm ci
 ```
 
-## 4. Verify Baseline Locally
-1. Quality gate:
+## 5. Quality Gate (Required)
 ```bash
 npm run check
 ```
-Expected: lint + typecheck + coverage pass.
 
-2. iOS e2e validation:
+Expected:
+- eslint clean
+- TypeScript clean
+- Vitest passing with strict per-file/global 95% thresholds
+
+## 6. iOS E2E Reproduction
+Build once:
 ```bash
 npm run e2e:detox:build:ios
-npm run e2e:detox:test:ios
-npm run e2e:detox:visual:ios
-npm run e2e:detox:visual:edge:ios
 ```
-Expected: all `Session builder e2e` tests pass.
-Expected: visual run emits Home/Builder/Active/Complete snapshots.
-Expected: edge visual run emits Empty Builder, validation error, and paused Active snapshots.
-Expected names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
 
-3. Android deterministic regression and smoke validation:
+Run suites:
+```bash
+npm run e2e:detox:test:ios -- e2e/home-scroll.e2e.js
+npm run e2e:detox:test:ios -- e2e/builder-smoke.e2e.js
+npm run e2e:detox:test:ios -- e2e/onboarding-smoke.e2e.js
+npm run e2e:detox:test:ios -- e2e/visual-states.e2e.js
+npm run e2e:detox:test:ios -- e2e/visual-edge-states.e2e.js
+```
+
+Notes:
+- If Detox fails with bundle/startup drift after code changes, rebuild iOS binary first (`npm run e2e:detox:build:ios`).
+- Visual artifact names are locked in `docs/VISUAL_SNAPSHOT_MANIFEST.md`.
+
+## 7. Android Reproduction
+Start emulator (if not running):
+```bash
+/opt/homebrew/share/android-commandlinetools/emulator/emulator -avd Pixel_8_API_35
+```
+
+In terminal A (keep running):
+```bash
+npm run android
+```
+
+In terminal B:
 ```bash
 npm run e2e:android:regression:start-session
+npm run e2e:android:onboarding
 npm run e2e:android:smoke
 ```
-Expected:
-- `e2e:android:regression:start-session` prints `PASS` and does not require emulator/device.
-- `e2e:android:smoke` prints `PASS` with emulator/device online and app installed (`npm run android`).
 
-## 5. Run App Locally
+## 8. Full Stability Gate (Local)
 ```bash
-npm run ios:local
-```
-Alternative:
-```bash
-npm run start
+npm run stability:all
 ```
 
-## 5.1 Distribution Constraints
-- Android internal distribution is available through EAS preview builds.
-- iOS internal/store distribution requires a paid Apple Developer team.
-- If Apple enrollment is not active, continue iOS via simulator/local QA only.
+This command enforces:
+- strict quality gate
+- iOS Detox suite set
+- Android smoke/regression
 
-## 6. CI Design (Important for Reproducibility)
-The repo intentionally ignores generated native folders in git (`/ios`, `/android`).
+## 9. CI State
+- `.github/workflows/ci.yml`: manual trigger only.
+- `.github/workflows/detox-ios.yml`: manual trigger only.
+- This is intentional while GitHub Actions credits are constrained.
 
-CI therefore must always generate and normalize native iOS files during the workflow:
-1. `npm run e2e:prebuild:ios`
-2. `bash scripts/force-ios-deployment-target.sh 17.0` (pre-pods)
-3. `pod install --repo-update`
-4. `bash scripts/force-ios-deployment-target.sh 17.0` (post-pods)
-5. `npm run e2e:detox:build:ios`
-6. `npx detox clean-framework-cache && npx detox build-framework-cache`
-7. `npm run e2e:detox:test:ios`
+## 10. Troubleshooting
+1. `Unable to locate a Java Runtime`
+- Ensure `JAVA_HOME` points to OpenJDK 21 as above.
 
-This flow is implemented in `.github/workflows/detox-ios.yml`.
+2. `Failed to resolve Android SDK path` / `SDK location not found`
+- Ensure `ANDROID_HOME` and `ANDROID_SDK_ROOT` are exported.
 
-Current cost-control mode:
-- `.github/workflows/ci.yml` and `.github/workflows/detox-ios.yml` are set to manual trigger only (`workflow_dispatch`).
-- Push/PR automatic runs are intentionally paused until Actions credits are available.
+3. Android redbox: `Unable to load script`
+- Start/keep Metro via `npm run android` before smoke commands.
 
-## 7. Why These Hardening Steps Exist
-1. Path safety
-- Build scripts patch generated Xcode project scripts to handle spaces in workspace paths.
-- Script: `scripts/patch-ios-project-scripts.js`
+4. Detox startup flake (`CFBundleIdentifier not found`)
+- Re-run `npm run e2e:detox:build:ios` and then rerun test.
 
-2. Deployment/SDK drift
-- Expo prebuild/pods can drift SDK/deployment values.
-- Script `scripts/force-ios-deployment-target.sh` forces:
-  - `IPHONEOS_DEPLOYMENT_TARGET = 17.0`
-  - generic `SDKROOT` values (`iphonesimulator` / `iphoneos`)
-
-3. Detox synchronization
-- App has frequent timers/animations.
-- E2E setup disables Detox synchronization per test launch for stability.
-- File: `e2e/init.js`
-
-4. Metronome audio engine
-- Active practice metronome uses bundled offline tick sound playback.
-- Service file: `src/application/metronomeAudio.ts`
-- Asset file: `assets/audio/metronome-tick.wav`
-
-## 8. Test Surfaces and Expected Results
-1. Unit + integration
-- 62 tests expected passing on current main.
-- Coverage thresholds must pass (`lines >= 88`, `statements >= 80`, `functions >= 88`, `branches >= 60`).
-
-2. Detox iOS
-- `e2e/builder-smoke.e2e.js` expects 5 passing tests:
-  - add drill
-  - remove drill
-  - start session
-  - complete session by skip
-  - template-name validation for short names
-
-3. Android deterministic runtime checks
-- `npm run e2e:android:regression:start-session`
-  - Runs start-session regression suite (`tests/startSessionPreparation.test.ts`).
-- `npm run e2e:android:smoke`
-  - Verifies Android cold launch reaches a known screen, then runs start-session regression suite.
-
-## 9. Recovery Procedures
-1. If Detox reports framework cache validation errors:
-```bash
-npx detox clean-framework-cache
-npx detox build-framework-cache
-```
-
-2. If iOS workspace is missing:
-```bash
-npm run e2e:prebuild:ios
-```
-
-3. If iOS SDK/deployment mismatch appears in CI:
-- Confirm `EXPO_IOS_DEPLOYMENT_TARGET=17.0` in workflow.
-- Ensure `scripts/force-ios-deployment-target.sh 17.0` is run pre/post pods.
-
-4. If screen navigation shows flicker/flash:
-- Check `App.tsx` global fade transition.
-- It must remain a soft fade-in (no `1 -> 0 -> 1` full fade-out sequence).
-- Reference bug report: `docs/BUG_REPORTS.md` (`BR-2026-03-04-001`).
-
-## 10. How to Mark a New Stable Baseline
-1. Ensure local + CI are green.
-2. Create and push annotated tag:
-```bash
-git tag -a stable-YYYY-MM-DD-<suffix> -m "Stable baseline"
-git push origin stable-YYYY-MM-DD-<suffix>
-```
-3. Create GitHub release from tag.
+5. Missing simulator helper
+- `applesimutils` is mandatory for Detox script wrappers.

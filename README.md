@@ -2,10 +2,11 @@
 
 Gamified mobile guitar practice coach built with Expo + React Native + TypeScript.
 
-## Stable Baseline
-- Stable tag: `stable-2026-03-07-builder-validation-green`
-- Stable commit: `43aedef`
-- GitHub release: `stable-2026-03-07-builder-validation-green`
+## Reproducibility Status
+- Last audited app baseline: `e7cfc3f`
+- Bit-for-bit rebuild target: `git checkout e7cfc3f`
+- CI workflows are intentionally manual-only (`workflow_dispatch`) due to Actions credit constraints.
+- Canonical rebuild guide: [docs/PROJECT_RUNBOOK.md](/Users/liccioni/CodexProjects/guitar practice app/docs/PROJECT_RUNBOOK.md)
 
 ## App Identity
 - iOS bundle identifier: `net.liccioni.guitarpractice`
@@ -18,15 +19,27 @@ npm run check
 npm run ios:local
 ```
 
+## Android Environment (Required For `npm run android`)
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+```
+
 ## Test Commands
 ```bash
 npm run test:coverage
 npm run e2e:detox:build:ios
 npm run e2e:detox:test:ios
 npm run e2e:detox:test:ios:onboarding
+npm run e2e:detox:test:ios -- e2e/visual-states.e2e.js
+npm run e2e:detox:test:ios -- e2e/visual-edge-states.e2e.js
 npm run e2e:android:onboarding
+npm run e2e:android:smoke
 npm run e2e:detox:visual:ios
 npm run e2e:detox:visual:edge:ios
+npm run stability:all
 ```
 
 ## Documentation

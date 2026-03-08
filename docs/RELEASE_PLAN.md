@@ -4,7 +4,8 @@
 - Android: Active release track (internal distribution available).
 - iOS: Store/TestFlight distribution blocked pending paid Apple Developer enrollment.
 - CI automation: temporarily paused (manual workflows only) to reduce GitHub Actions usage.
-- Latest stable checkpoint tag: `stable-2026-03-07-builder-validation-green` (`43aedef`).
+- Latest stable checkpoint tag: `stable-2026-03-08-strict-coverage-green`.
+- Latest verified runtime/features commit on `main`: `e7cfc3f`.
 
 ## Android Track (Active)
 ### Current build
