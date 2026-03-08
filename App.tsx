@@ -1223,6 +1223,7 @@ export default function App() {
               onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
               onResetOnboarding={resetOnboardingQuestionnaire}
               onStartPractice={startPracticeFlow}
+              onOpenSessions={() => setScreen("sessions")}
             />
           ) : null}
 
@@ -1374,6 +1375,7 @@ function HomeDashboard(props: {
   onApplyOnboardingSuggestion: () => void;
   onResetOnboarding: () => void;
   onStartPractice: () => void;
+  onOpenSessions: () => void;
 }) {
   const {
     levelState,
@@ -1400,6 +1402,7 @@ function HomeDashboard(props: {
     onApplyOnboardingSuggestion,
     onResetOnboarding,
     onStartPractice,
+    onOpenSessions,
   } = props;
 
   const [timeInput, setTimeInput] = useState(reminderTime);
@@ -1483,26 +1486,25 @@ function HomeDashboard(props: {
 
         <TouchableOpacity
           style={styles.smallActionButton}
-          onPress={onStartPractice}
+          onPress={onOpenSessions}
           accessibilityRole="button"
           testID="home-quick-start-practice"
         >
-          <Text style={styles.smallActionText}>Open Session Builder</Text>
+          <Text style={styles.smallActionText}>Customize Session</Text>
         </TouchableOpacity>
       </GlowCard>
 
       <View style={styles.homeStatStrip}>
-        <GlowCard style={styles.flexCard}>
-          <Text style={styles.cardLabel}>Streak</Text>
-          <Text style={styles.bigValue}>{streak} days</Text>
-        </GlowCard>
-        <GlowCard style={styles.flexCard}>
-          <Text style={styles.cardLabel}>Goal</Text>
-          <Text style={styles.bigValue}>
-            {goalCurrentValue}/{goalTarget}
+        <View style={styles.statChip}>
+          <Text style={styles.statChipLabel}>Streak</Text>
+          <Text style={styles.statChipValue}>{streak} days</Text>
+        </View>
+        <View style={styles.statChip}>
+          <Text style={styles.statChipLabel}>Goal</Text>
+          <Text style={styles.statChipValue}>
+            {goalCurrentValue}/{goalTarget} {goalUnitLabel}
           </Text>
-          <Text style={styles.helperText}>{goalUnitLabel}</Text>
-        </GlowCard>
+        </View>
       </View>
 
       <GlowCard>
@@ -1663,7 +1665,7 @@ function HomeDashboard(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Weekly Summary</Text>
+        <Text style={styles.cardLabel}>Progress Snapshot</Text>
         <Text style={styles.helperText}>
           {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
           {weeklySummary.weekMinutesDelta} vs last week)
@@ -1674,9 +1676,7 @@ function HomeDashboard(props: {
         <Text style={styles.helperText}>
           {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
         </Text>
-      </GlowCard>
-
-      <GlowCard>
+        <View style={styles.cardSectionDivider} />
         <Text style={styles.cardLabel}>Recent Sessions</Text>
         {sessionInsights.length === 0 ? (
           <Text style={styles.helperText}>No sessions yet. Start one to unlock progress tracking.</Text>
@@ -2781,14 +2781,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
   },
-  flexCard: {
+  statChip: {
     flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 4,
   },
-  bigValue: {
-    color: COLORS.accent,
-    fontSize: 24,
+  statChipLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  statChipValue: {
+    color: COLORS.text,
+    fontSize: 20,
     fontWeight: "800",
-    marginTop: 2,
   },
   ringText: {
     color: COLORS.text,
@@ -3270,6 +3283,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.divider,
     paddingTop: 8,
+  },
+  cardSectionDivider: {
+    height: 1,
+    backgroundColor: COLORS.divider,
+    marginVertical: 4,
   },
   sessionsList: {
     gap: 12,
