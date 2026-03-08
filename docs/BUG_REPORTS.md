@@ -1,5 +1,20 @@
 # Bug Reports
 
+## BR-2026-03-08-001 - Session Builder Drill Card XP Label Overlap
+
+- Status: Open
+- Date reported: 2026-03-08
+- Area: Session Builder drill card layout (`App.tsx`)
+- Severity: Medium (UI readability and edit affordance clarity)
+
+### Symptom
+In Session Builder drill cards, the XP label can overlap the drill title text (example observed: `58 XP` overlaps `Alternate Picking Burst`), causing clipping and reduced readability.
+
+### Notes for future fix
+- Update drill-card row layout to reserve fixed space for XP/actions.
+- Ensure title text truncates safely (`numberOfLines`/ellipsize) before overlap.
+- Add visual regression coverage for long drill names + XP badge in the same card.
+
 ## BR-2026-03-06-001 - Detox Remove Drill Control Flake (iOS Simulator)
 
 - Status: Fixed
