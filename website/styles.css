@@ -1,0 +1,185 @@
+:root {
+  --bg: #0d0d0f;
+  --surface: #16161b;
+  --surface-alt: #1d1d24;
+  --line: #2a2a35;
+  --text: #f4f4f5;
+  --muted: #b6b6be;
+  --accent: #ff8a00;
+  --accent-2: #ffd08a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  background: radial-gradient(circle at 20% 0%, #1e1f2a 0%, var(--bg) 60%);
+  color: var(--text);
+}
+
+.hero {
+  padding: 1.2rem 1.2rem 3rem;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  font-family: "Archivo", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.hero-content {
+  max-width: 760px;
+  margin: 3rem auto 0;
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Archivo", sans-serif;
+  margin: 0;
+}
+
+h1 {
+  margin-top: 0.8rem;
+  font-size: clamp(2rem, 6vw, 3.7rem);
+  line-height: 1.05;
+}
+
+.hero-copy {
+  margin-top: 1rem;
+  color: var(--muted);
+  max-width: 58ch;
+}
+
+.hero-actions {
+  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #111;
+  border-color: var(--accent);
+}
+
+.btn-secondary,
+.nav-cta {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.2rem;
+}
+
+.section h2 {
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.card p,
+.pricing-copy,
+.section p {
+  color: var(--muted);
+}
+
+.section-accent {
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, rgba(255, 138, 0, 0.09), rgba(255, 138, 0, 0));
+}
+
+.price-chip {
+  display: inline-block;
+  margin-top: 0.7rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-weight: 800;
+}
+
+.waitlist-form {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+input[type="email"] {
+  min-width: min(100%, 280px);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.8rem;
+}
+
+.waitlist-message {
+  min-height: 1.2rem;
+  font-size: 0.95rem;
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  margin-top: 2rem;
+  padding: 1rem 1.2rem 2rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding-top: 0.9rem;
+  }
+
+  .nav {
+    align-items: flex-start;
+  }
+}

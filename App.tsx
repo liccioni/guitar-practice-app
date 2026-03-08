@@ -353,6 +353,7 @@ export default function App() {
   const [metronomeBpm, setMetronomeBpm] = useState(100);
   const [beatFlash, setBeatFlash] = useState(false);
   const [randomCueLabel, setRandomCueLabel] = useState<string | null>(null);
+  const [randomCueNextLabel, setRandomCueNextLabel] = useState<string | null>(null);
   const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
 
   const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
@@ -575,9 +576,11 @@ export default function App() {
         const nextRemaining = randomCueRemainingRef.current - 1;
         if (nextRemaining <= 0) {
           const resetBeats = randomizer.everyBars * 4;
+          const nextCue = pickRandomCueValue(randomizer.kind);
+          setRandomCueLabel(randomCueNextLabel ?? nextCue);
+          setRandomCueNextLabel(nextCue);
           randomCueRemainingRef.current = resetBeats;
           setRandomCueBeatsRemaining(resetBeats);
-          setRandomCueLabel(pickRandomCueValue(randomizer.kind));
           randomCuePulse.setValue(0);
           Animated.sequence([
             Animated.timing(randomCuePulse, {
@@ -607,7 +610,7 @@ export default function App() {
     }, intervalMs);
 
     return () => clearInterval(beatTimer);
-  }, [activeDrill, isPaused, metronomeBpm, metronomeEnabled, randomCuePulse, screen]);
+  }, [activeDrill, isPaused, metronomeBpm, metronomeEnabled, randomCueNextLabel, randomCuePulse, screen]);
 
   useEffect(() => {
     if (screen !== "active" || !metronomeEnabled) return;
@@ -693,14 +696,18 @@ export default function App() {
     if (!randomizer) {
       randomCueRemainingRef.current = 0;
       setRandomCueLabel(null);
+      setRandomCueNextLabel(null);
       setRandomCueBeatsRemaining(0);
       randomCuePulse.setValue(0);
       return;
     }
 
     const initialBeats = randomizer.everyBars * 4;
+    const currentCue = pickRandomCueValue(randomizer.kind);
+    const nextCue = pickRandomCueValue(randomizer.kind);
     randomCueRemainingRef.current = initialBeats;
-    setRandomCueLabel(pickRandomCueValue(randomizer.kind));
+    setRandomCueLabel(currentCue);
+    setRandomCueNextLabel(nextCue);
     setRandomCueBeatsRemaining(initialBeats);
     randomCuePulse.setValue(0);
   }, [activeDrill, randomCuePulse, screen]);
@@ -1289,6 +1296,7 @@ export default function App() {
               metronomeBpm={metronomeBpm}
               beatFlash={beatFlash}
               randomCueLabel={randomCueLabel}
+              randomCueNextLabel={randomCueNextLabel}
               randomCueBeatsRemaining={randomCueBeatsRemaining}
               randomCuePulse={randomCuePulse}
               onMetronomeToggle={() => setMetronomeEnabled((current) => !current)}
@@ -1494,6 +1502,7 @@ function HomeDashboard(props: {
                   key={focus}
                   style={[styles.templatePill, focusInput === focus ? styles.templatePillActive : null]}
                   onPress={() => setFocusInput(focus)}
+                  testID={`onboarding-focus-${focus}`}
                 >
                   <Text style={styles.templatePillText}>{focus}</Text>
                 </TouchableOpacity>
@@ -1507,6 +1516,7 @@ function HomeDashboard(props: {
                   key={outcome}
                   style={[styles.templatePill, outcomeInput === outcome ? styles.templatePillActive : null]}
                   onPress={() => setOutcomeInput(outcome)}
+                  testID={`onboarding-outcome-${outcome}`}
                 >
                   <Text style={styles.templatePillText}>{outcome}</Text>
                 </TouchableOpacity>
@@ -1537,7 +1547,11 @@ function HomeDashboard(props: {
               >
                 <Text style={styles.smallActionText}>Apply to Builder</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding}>
+              <TouchableOpacity
+                style={styles.smallActionButton}
+                onPress={onResetOnboarding}
+                testID="onboarding-retake"
+              >
                 <Text style={styles.smallActionText}>Retake</Text>
               </TouchableOpacity>
             </View>
@@ -2153,6 +2167,11 @@ export function SessionBuilder(props: {
                 <Text style={styles.drillMeta}>
                   {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
                 </Text>
+                {item.randomizer ? (
+                  <Text style={styles.drillRandomMeta}>
+                    Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
+                  </Text>
+                ) : null}
               </View>
             </View>
 
@@ -2222,6 +2241,7 @@ function ActivePractice(props: {
   metronomeBpm: number;
   beatFlash: boolean;
   randomCueLabel: string | null;
+  randomCueNextLabel: string | null;
   randomCueBeatsRemaining: number;
   randomCuePulse: Animated.Value;
   onMetronomeToggle: () => void;
@@ -2241,6 +2261,7 @@ function ActivePractice(props: {
     metronomeBpm,
     beatFlash,
     randomCueLabel,
+    randomCueNextLabel,
     randomCueBeatsRemaining,
     randomCuePulse,
     onMetronomeToggle,
@@ -2298,7 +2319,10 @@ function ActivePractice(props: {
         </View>
         {randomCueLabel ? (
           <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
-            <Text style={styles.randomCueLabel}>Random Cue: {randomCueLabel}</Text>
+            <Text style={styles.randomCueLabel}>Now: {randomCueLabel}</Text>
+            {randomCueNextLabel ? (
+              <Text style={styles.helperText}>Upcoming: {randomCueNextLabel}</Text>
+            ) : null}
             <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
           </Animated.View>
         ) : null}
@@ -2725,6 +2749,12 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     marginTop: 2,
     fontSize: 12,
+  },
+  drillRandomMeta: {
+    color: COLORS.accentAlt,
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "700",
   },
   builderCardActions: {
     flexDirection: "row",

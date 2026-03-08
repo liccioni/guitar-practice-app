@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guitar Practice App | Practice With Momentum</title>
+    <meta
+      name="description"
+      content="Build consistent guitar practice with guided sessions, smart drill cues, and progress that keeps you motivated."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav">
+        <div class="brand">Guitar Practice App</div>
+        <a class="nav-cta" href="#waitlist">Join Waitlist</a>
+      </nav>
+      <div class="hero-content">
+        <p class="eyebrow">Practice smarter, not longer</p>
+        <h1>Turn random practice into a clear daily progression.</h1>
+        <p class="hero-copy">
+          Session Builder, metronome pacing, random musical cues, and streak-driven rewards designed for guitarists.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#waitlist">Get Early Access</a>
+          <a class="btn btn-secondary" href="#features">See Features</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section" id="features">
+        <h2>What you get</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Session Builder</h3>
+            <p>Create drills, reorder fast, and launch focused sessions in seconds.</p>
+          </article>
+          <article class="card">
+            <h3>Random Cue Engine</h3>
+            <p>Add optional random notes, triads, or finger patterns every N bars.</p>
+          </article>
+          <article class="card">
+            <h3>Progress & Motivation</h3>
+            <p>Track streaks, XP, and weekly completion so momentum compounds.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-accent" id="pricing">
+        <h2>Planned pricing</h2>
+        <p class="pricing-copy">Start free, then unlock advanced plans and premium session packs.</p>
+        <div class="price-chip">$7.99 / month (target)</div>
+      </section>
+
+      <section class="section" id="waitlist">
+        <h2>Join the waitlist</h2>
+        <p>Leave your email and we will notify you when subscriptions open.</p>
+        <form id="waitlist-form" class="waitlist-form">
+          <input id="email" type="email" required placeholder="you@guitar.com" />
+          <button class="btn btn-primary" type="submit">Notify Me</button>
+        </form>
+        <p id="waitlist-message" class="waitlist-message" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© <span id="year"></span> Guitar Practice App</p>
+    </footer>
+    <script src="./main.js"></script>
+  </body>
+</html>

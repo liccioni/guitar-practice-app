@@ -23,6 +23,8 @@ npm run ios:local
 npm run test:coverage
 npm run e2e:detox:build:ios
 npm run e2e:detox:test:ios
+npm run e2e:detox:test:ios:onboarding
+npm run e2e:android:onboarding
 npm run e2e:detox:visual:ios
 npm run e2e:detox:visual:edge:ios
 ```
@@ -35,3 +37,4 @@ npm run e2e:detox:visual:edge:ios
 - Active release execution plan: `docs/RELEASE_PLAN.md`
 - Next feature roadmap (variation + onboarding + website): `docs/NEXT_FEATURE_PLAN.md`
 - Visual screenshot expectations: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
+- `gh-pages` website runbook (manual deploy): `docs/GH_PAGES_RUNBOOK.md`

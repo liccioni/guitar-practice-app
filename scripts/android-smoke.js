@@ -86,6 +86,10 @@ function coldLaunchApp() {
   run(`adb shell am start -n ${ACTIVITY}`);
 }
 
+function clearAppData() {
+  run(`adb shell pm clear ${PACKAGE}`);
+}
+
 function runStartSessionRegression() {
   run("npm run test -- tests/startSessionPreparation.test.ts", {
     stdio: "inherit",
@@ -104,16 +108,48 @@ function runFullSmoke() {
   console.log("PASS: Android deterministic smoke (cold launch + start-session regression)");
 }
 
+function runOnboardingSmoke() {
+  clearAppData();
+  coldLaunchApp();
+
+  if (!waitForAnyId(["onboarding-generate"], 25000)) {
+    throw new Error("Onboarding smoke failed: onboarding controls were not visible after clean launch.");
+  }
+
+  const xml = dumpUiXml();
+  const requiredIds = [
+    "onboarding-level-beginner",
+    "onboarding-duration-30",
+    "onboarding-focus-technique",
+    "onboarding-outcome-consistency",
+    "onboarding-generate",
+  ];
+  const missing = requiredIds.filter((id) => !hasId(xml, id));
+  if (missing.length > 0) {
+    throw new Error(`Onboarding smoke failed: missing controls: ${missing.join(", ")}`);
+  }
+
+  console.log("PASS: Android onboarding smoke (clean launch + onboarding controls present)");
+}
+
 function main() {
   const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
   const mode = modeArg ? modeArg.split("=")[1] : "full";
 
-  if (!["full", "start-session"].includes(mode)) {
-    throw new Error(`Unsupported mode "${mode}". Use --mode=full or --mode=start-session.`);
+  if (!["full", "start-session", "onboarding"].includes(mode)) {
+    throw new Error(`Unsupported mode "${mode}". Use --mode=full, --mode=start-session, or --mode=onboarding.`);
   }
 
   if (mode === "start-session") {
     runStartSessionRegression();
+    return;
+  }
+
+  if (mode === "onboarding") {
+    ensureAdb();
+    ensureDevice();
+    ensureAppInstalled();
+    runOnboardingSmoke();
     return;
   }
 
