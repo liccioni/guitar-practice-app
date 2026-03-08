@@ -3,6 +3,11 @@ import type { PracticeHistoryEntry } from "../domain/history/types";
 import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
 import type { Drill, DrillRandomizerKind } from "../domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "../domain/goals/types";
+import {
+  DEFAULT_PRACTICE_ONBOARDING_STATE,
+  type PracticeOnboardingAnswers,
+  type PracticeOnboardingState,
+} from "../domain/profile/onboarding";
 import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill";
 import { isValidBpm } from "../domain/metronome/metronome";
 
@@ -12,6 +17,7 @@ export const PERSISTENCE_SCHEMA_VERSION = 3;
 export interface PersistedProfileState {
   totalXp: number;
   unlockedBadgeIds: string[];
+  onboarding: PracticeOnboardingState;
 }
 
 export interface PersistedPracticeState {
@@ -25,6 +31,7 @@ export interface PersistedPracticeState {
 const DEFAULT_PROFILE_STATE: PersistedProfileState = {
   totalXp: 0,
   unlockedBadgeIds: [],
+  onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
 };
 
 export const EMPTY_PRACTICE_STATE: PersistedPracticeState = {
@@ -252,9 +259,54 @@ function sanitizeProfileState(input: unknown): PersistedProfileState {
       )
     : [];
 
+  const onboarding = sanitizeOnboardingState(input.onboarding);
+
   return {
     totalXp: Number.isFinite(totalXp) && totalXp >= 0 ? Math.round(totalXp) : DEFAULT_PROFILE_STATE.totalXp,
     unlockedBadgeIds,
+    onboarding,
+  };
+}
+
+function sanitizeOnboardingAnswers(input: unknown): PracticeOnboardingAnswers | undefined {
+  if (!isPlainObject(input)) return undefined;
+
+  const level =
+    input.level === "beginner" || input.level === "intermediate" || input.level === "expert"
+      ? input.level
+      : null;
+  const duration = Number(input.durationMinutes);
+  const focus =
+    input.focus === "technique" || input.focus === "rhythm" || input.focus === "fretboard" || input.focus === "improv"
+      ? input.focus
+      : null;
+  const outcome =
+    input.outcome === "consistency" || input.outcome === "speed" || input.outcome === "song-prep"
+      ? input.outcome
+      : null;
+
+  if (!level || !focus || !outcome) return undefined;
+  if (!(duration === 20 || duration === 30 || duration === 60)) return undefined;
+
+  return {
+    level,
+    durationMinutes: duration,
+    focus,
+    outcome,
+  };
+}
+
+function sanitizeOnboardingState(input: unknown): PracticeOnboardingState {
+  if (!isPlainObject(input)) return DEFAULT_PRACTICE_ONBOARDING_STATE;
+  const answers = sanitizeOnboardingAnswers(input.answers);
+
+  return {
+    completed: Boolean(input.completed),
+    answers,
+    lastSuggestedTemplateName:
+      typeof input.lastSuggestedTemplateName === "string" && input.lastSuggestedTemplateName.trim().length > 0
+        ? input.lastSuggestedTemplateName.trim()
+        : undefined,
   };
 }
 

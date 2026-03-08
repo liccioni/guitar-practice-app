@@ -31,6 +31,7 @@ describe("persistence migration", () => {
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(20);
     expect(parsed.profile.totalXp).toBe(420);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b4"]);
+    expect(parsed.profile.onboarding.completed).toBe(false);
   });
 
   it("migrates legacy direct payload", () => {
@@ -45,6 +46,7 @@ describe("persistence migration", () => {
     expect(parsed.goalSettings.reminderEnabled).toBe(false);
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
+    expect(parsed.profile.onboarding.completed).toBe(false);
   });
 
   it("falls back to empty state on invalid json", () => {
@@ -54,6 +56,7 @@ describe("persistence migration", () => {
     expect(parsed.history).toEqual([]);
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
+    expect(parsed.profile.onboarding.completed).toBe(false);
   });
 
   it("drops malformed drills and invalid template drill references", () => {
@@ -100,5 +103,6 @@ describe("persistence migration", () => {
     expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
+    expect(parsed.profile.onboarding.completed).toBe(false);
   });
 });

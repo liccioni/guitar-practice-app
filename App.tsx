@@ -34,6 +34,17 @@ import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/m
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
 import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
 import {
+  buildPracticeOnboardingSuggestion,
+  DEFAULT_PRACTICE_ONBOARDING_STATE,
+  selectSuggestedDrills,
+  type PracticeFocus,
+  type PracticeOnboardingAnswers,
+  type PracticeOnboardingState,
+  type PracticeOutcome,
+  type PracticeDurationMinutes,
+  type GuitarLevel,
+} from "./src/domain/profile/onboarding";
+import {
   calculateTotalDurationSeconds,
   createSessionTemplate,
   type SessionTemplate,
@@ -121,6 +132,7 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
 const DEFAULT_PROFILE = {
   totalXp: 0,
   unlockedBadgeIds: [] as string[],
+  onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
 };
 
 interface WeeklySummary {
@@ -344,6 +356,9 @@ export default function App() {
   const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
 
   const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
+  const [onboardingState, setOnboardingState] = useState<PracticeOnboardingState>(
+    DEFAULT_PROFILE.onboarding,
+  );
   const [sessionXp, setSessionXp] = useState(0);
   const [leveledUp, setLeveledUp] = useState(false);
   const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
@@ -474,6 +489,7 @@ export default function App() {
         setHistory(seed.history);
         setGoalSettings(seed.goalSettings);
         setTotalXp(seed.profile.totalXp);
+        setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
@@ -486,6 +502,7 @@ export default function App() {
         setHistory(seed.history);
         setGoalSettings(seed.goalSettings);
         setTotalXp(seed.profile.totalXp);
+        setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
         setTemplateNameInput(seed.templates[0]?.name ?? "");
@@ -509,9 +526,10 @@ export default function App() {
       profile: {
         totalXp,
         unlockedBadgeIds: getUnlockedBadgeIds(badges),
+        onboarding: onboardingState,
       },
     });
-  }, [allDrills, badges, goalSettings, history, isHydrated, templates, totalXp]);
+  }, [allDrills, badges, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
 
   useEffect(() => {
     fadeAnim.stopAnimation();
@@ -1135,6 +1153,59 @@ export default function App() {
     setMetronomeEnabled(false);
   }
 
+  const onboardingSuggestion = useMemo(() => {
+    if (!onboardingState.answers) return null;
+    return buildPracticeOnboardingSuggestion(onboardingState.answers);
+  }, [onboardingState.answers]);
+
+  function saveOnboardingAnswers(answers: PracticeOnboardingAnswers): void {
+    const suggestion = buildPracticeOnboardingSuggestion(answers);
+    setOnboardingState({
+      completed: true,
+      answers,
+      lastSuggestedTemplateName: suggestion.sessionName,
+    });
+    setGoalSettings((current) => ({
+      ...current,
+      goalType: "minutes",
+      goalTarget: suggestion.recommendedMinutes,
+      dailyMinutesTarget: suggestion.recommendedMinutes,
+    }));
+  }
+
+  function applyOnboardingSuggestionToBuilder(): void {
+    if (!onboardingSuggestion) return;
+    const now = new Date().toISOString();
+    const suggestedInputs = selectSuggestedDrills(DRILL_POOL, onboardingSuggestion);
+    const createdDrills = suggestedInputs.map((input) =>
+      createDrillFromInput(makeId("drill"), input, now),
+    );
+
+    while (calculateTotalDurationSeconds(createdDrills) < 5 * 60) {
+      createdDrills.push(createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now));
+    }
+
+    const template = createSessionTemplate({
+      id: makeId("template"),
+      name: onboardingSuggestion.sessionName,
+      drillIds: createdDrills.map((drill) => drill.id),
+      totalDurationSeconds: calculateTotalDurationSeconds(createdDrills),
+      nowIso: now,
+    });
+
+    setAllDrills((current) => [...current, ...createdDrills]);
+    setTemplates((current) => [...current, template]);
+    setActiveTemplateId(template.id);
+    setTemplateNameInput(template.name);
+    setSelectedDrillId(createdDrills[0]?.id ?? null);
+    setBuilderError(null);
+    setScreen("builder");
+  }
+
+  function resetOnboardingQuestionnaire(): void {
+    setOnboardingState(DEFAULT_PRACTICE_ONBOARDING_STATE);
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -1158,10 +1229,15 @@ export default function App() {
               reminderEnabled={goalSettings.reminderEnabled}
               reminderTime={goalSettings.reminderTime}
               reminderError={reminderError}
+              onboardingState={onboardingState}
+              onboardingSuggestion={onboardingSuggestion}
               onGoalTypeChange={setGoalType}
               onSaveGoalTarget={saveGoalTarget}
               onToggleReminder={toggleReminder}
               onSaveReminderTime={saveReminderTime}
+              onSaveOnboardingAnswers={saveOnboardingAnswers}
+              onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
+              onResetOnboarding={resetOnboardingQuestionnaire}
               onStartPractice={startPracticeFlow}
             />
           ) : null}
@@ -1271,10 +1347,15 @@ function HomeDashboard(props: {
   reminderEnabled: boolean;
   reminderTime: string;
   reminderError: string | null;
+  onboardingState: PracticeOnboardingState;
+  onboardingSuggestion: ReturnType<typeof buildPracticeOnboardingSuggestion> | null;
   onGoalTypeChange: (goalType: GoalType) => void;
   onSaveGoalTarget: (target: string) => void;
   onToggleReminder: () => void;
   onSaveReminderTime: (time: string) => void;
+  onSaveOnboardingAnswers: (answers: PracticeOnboardingAnswers) => void;
+  onApplyOnboardingSuggestion: () => void;
+  onResetOnboarding: () => void;
   onStartPractice: () => void;
 }) {
   const {
@@ -1293,15 +1374,28 @@ function HomeDashboard(props: {
     reminderEnabled,
     reminderTime,
     reminderError,
+    onboardingState,
+    onboardingSuggestion,
     onGoalTypeChange,
     onSaveGoalTarget,
     onToggleReminder,
     onSaveReminderTime,
+    onSaveOnboardingAnswers,
+    onApplyOnboardingSuggestion,
+    onResetOnboarding,
     onStartPractice,
   } = props;
 
   const [timeInput, setTimeInput] = useState(reminderTime);
   const [goalTargetInput, setGoalTargetInput] = useState(String(goalTarget));
+  const [levelInput, setLevelInput] = useState<GuitarLevel>(onboardingState.answers?.level ?? "beginner");
+  const [durationInput, setDurationInput] = useState<PracticeDurationMinutes>(
+    onboardingState.answers?.durationMinutes ?? 30,
+  );
+  const [focusInput, setFocusInput] = useState<PracticeFocus>(onboardingState.answers?.focus ?? "technique");
+  const [outcomeInput, setOutcomeInput] = useState<PracticeOutcome>(
+    onboardingState.answers?.outcome ?? "consistency",
+  );
 
   useEffect(() => {
     setTimeInput(reminderTime);
@@ -1310,6 +1404,23 @@ function HomeDashboard(props: {
   useEffect(() => {
     setGoalTargetInput(String(goalTarget));
   }, [goalTarget]);
+
+  useEffect(() => {
+    if (!onboardingState.answers) return;
+    setLevelInput(onboardingState.answers.level);
+    setDurationInput(onboardingState.answers.durationMinutes);
+    setFocusInput(onboardingState.answers.focus);
+    setOutcomeInput(onboardingState.answers.outcome);
+  }, [onboardingState.answers]);
+
+  function submitOnboardingAnswers(): void {
+    onSaveOnboardingAnswers({
+      level: levelInput,
+      durationMinutes: durationInput,
+      focus: focusInput,
+      outcome: outcomeInput,
+    });
+  }
 
   return (
     <ScrollView
@@ -1342,6 +1453,97 @@ function HomeDashboard(props: {
       >
         <Text style={styles.smallActionText}>Quick Start</Text>
       </TouchableOpacity>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Practice Starter</Text>
+        {!onboardingState.completed ? (
+          <>
+            <Text style={styles.helperText}>Answer 4 quick questions to get a suggested first session.</Text>
+            <Text style={styles.helperText}>Level</Text>
+            <View style={styles.templatePillsRow}>
+              {(["beginner", "intermediate", "expert"] as const).map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[styles.templatePill, levelInput === level ? styles.templatePillActive : null]}
+                  onPress={() => setLevelInput(level)}
+                  testID={`onboarding-level-${level}`}
+                >
+                  <Text style={styles.templatePillText}>{level}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.helperText}>Practice Time</Text>
+            <View style={styles.templatePillsRow}>
+              {([20, 30, 60] as const).map((minutes) => (
+                <TouchableOpacity
+                  key={minutes}
+                  style={[styles.templatePill, durationInput === minutes ? styles.templatePillActive : null]}
+                  onPress={() => setDurationInput(minutes)}
+                  testID={`onboarding-duration-${minutes}`}
+                >
+                  <Text style={styles.templatePillText}>{minutes} min</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.helperText}>Focus</Text>
+            <View style={styles.templatePillsRow}>
+              {(["technique", "rhythm", "fretboard", "improv"] as const).map((focus) => (
+                <TouchableOpacity
+                  key={focus}
+                  style={[styles.templatePill, focusInput === focus ? styles.templatePillActive : null]}
+                  onPress={() => setFocusInput(focus)}
+                >
+                  <Text style={styles.templatePillText}>{focus}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.helperText}>Primary Goal</Text>
+            <View style={styles.templatePillsRow}>
+              {(["consistency", "speed", "song-prep"] as const).map((outcome) => (
+                <TouchableOpacity
+                  key={outcome}
+                  style={[styles.templatePill, outcomeInput === outcome ? styles.templatePillActive : null]}
+                  onPress={() => setOutcomeInput(outcome)}
+                >
+                  <Text style={styles.templatePillText}>{outcome}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.smallActionButton}
+              onPress={submitOnboardingAnswers}
+              testID="onboarding-generate"
+            >
+              <Text style={styles.smallActionText}>Generate Suggestion</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.helperText}>
+              {onboardingSuggestion?.summary ?? "Starter profile saved."}
+            </Text>
+            <Text style={styles.helperText}>
+              Suggested session: {onboardingSuggestion?.sessionName ?? onboardingState.lastSuggestedTemplateName}
+            </Text>
+            <View style={styles.inlineRow}>
+              <TouchableOpacity
+                style={styles.smallActionButton}
+                onPress={onApplyOnboardingSuggestion}
+                testID="onboarding-apply-suggestion"
+              >
+                <Text style={styles.smallActionText}>Apply to Builder</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding}>
+                <Text style={styles.smallActionText}>Retake</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </GlowCard>
 
       <GlowCard>
         <Text style={styles.cardLabel}>XP Progress</Text>

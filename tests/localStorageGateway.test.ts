@@ -108,6 +108,7 @@ describe("LocalStorageGateway", () => {
         profile: {
           totalXp: 0,
           unlockedBadgeIds: [],
+          onboarding: { completed: false },
         },
       }),
     ).resolves.toBeUndefined();
@@ -417,5 +418,75 @@ describe("LocalStorageGateway", () => {
     expect(parsed.history[1]?.drillsSnapshot).toEqual([]);
     expect(parsed.goalSettings.reminderTime).toBe("18:00");
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
+    expect(parsed.profile.onboarding.completed).toBe(false);
+  });
+
+  it("preserves valid onboarding answers and drops invalid ones", () => {
+    const valid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            goalType: "minutes",
+            goalTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 10,
+            unlockedBadgeIds: [],
+            onboarding: {
+              completed: true,
+              answers: {
+                level: "intermediate",
+                durationMinutes: 30,
+                focus: "technique",
+                outcome: "speed",
+              },
+              lastSuggestedTemplateName: "Starter",
+            },
+          },
+        },
+      }),
+    );
+
+    const invalid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 10,
+            unlockedBadgeIds: [],
+            onboarding: {
+              completed: true,
+              answers: {
+                level: "wrong",
+                durationMinutes: 999,
+                focus: "none",
+                outcome: "none",
+              },
+            },
+          },
+        },
+      }),
+    );
+
+    expect(valid.profile.onboarding.completed).toBe(true);
+    expect(valid.profile.onboarding.answers?.level).toBe("intermediate");
+    expect(valid.profile.onboarding.lastSuggestedTemplateName).toBe("Starter");
+    expect(invalid.profile.onboarding.completed).toBe(true);
+    expect(invalid.profile.onboarding.answers).toBeUndefined();
   });
 });
