@@ -134,6 +134,8 @@ This is the implementation contract for the current project state.
 - Merge policy:
   - New features/fixes must include tests that prevent regression of changed behavior.
   - Work that cannot immediately satisfy the 95% threshold must include an explicit gap note and a scheduled follow-up task before release signoff.
+- Enforcement command:
+  - `npm run stability:all` (cross-platform local gate for quality + iOS suites + Android smoke/regression).
 
 ## 7. CI Contract
 Current repository mode (cost-control): workflows are manual-only (`workflow_dispatch`).

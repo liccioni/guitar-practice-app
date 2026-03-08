@@ -9,7 +9,7 @@ function run(command, options = {}) {
   return execSync(command, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
-    timeout: 20000,
+    timeout: 60000,
     ...options,
   });
 }
@@ -55,8 +55,15 @@ function ensureAppInstalled() {
 }
 
 function dumpUiXml() {
-  runIgnore("adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1");
-  return run("adb exec-out cat /sdcard/ui.xml");
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    runIgnore("adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1");
+    try {
+      return run("adb exec-out cat /sdcard/ui.xml");
+    } catch {
+      sleep(300);
+    }
+  }
+  throw new Error("Could not dump Android UI XML after retries.");
 }
 
 function hasId(xml, id) {

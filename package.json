@@ -25,6 +25,7 @@
     "e2e:detox:ios": "npm run e2e:prebuild:ios && npm run e2e:detox:build:ios && npm run e2e:detox:test:ios",
     "e2e:android:regression:start-session": "node scripts/android-smoke.js --mode=start-session",
     "e2e:android:smoke": "node scripts/android-smoke.js --mode=full",
+    "stability:all": "bash scripts/stability-gate.sh",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run test:coverage",
     "e2e:patch:ios": "node scripts/patch-ios-project-scripts.js"
