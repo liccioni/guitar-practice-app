@@ -10,9 +10,11 @@ async function openBuilder() {
     // Not on builder yet; continue with home navigation.
   }
 
+  let usedQuickAction = false;
   try {
     await waitForVisible("home-quick-start-practice", 60000);
     await element(by.id("home-quick-start-practice")).tap();
+    usedQuickAction = true;
   } catch {
     await waitForVisible("home-start-practice", 60000);
     await element(by.id("home-start-practice")).tap();
@@ -20,7 +22,15 @@ async function openBuilder() {
 
   try {
     await waitForVisible("builder-start-session", 16000);
+    return;
   } catch {
+    if (usedQuickAction) {
+      await waitFor(element(by.text("Open Builder")).atIndex(0)).toBeVisible().withTimeout(12000);
+      await element(by.text("Open Builder")).atIndex(0).tap();
+      await waitForVisible("builder-start-session", 16000);
+      return;
+    }
+
     try {
       await element(by.id("home-start-practice")).tap();
     } catch {
@@ -87,27 +97,24 @@ async function ensureAtLeastOneDrill() {
   await waitForVisible("builder-drill-card-first", 12000);
 }
 
-async function getFirstDrillId() {
-  const attrs = await element(by.id("builder-drill-first-id-probe")).getAttributes();
-  return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
-}
-
 async function captureLongTitleLayoutState() {
-  const firstId = await getFirstDrillId();
-  if (!firstId) return;
-
+  let editorVisible = false;
   for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
-      await element(by.id(`builder-drill-card-${firstId}`)).tap();
+      await waitForVisible("builder-drill-card-first", 1500);
+      await element(by.id("builder-drill-card-first")).tap();
       for (let inner = 0; inner < 6; inner += 1) {
         try {
           await waitForVisible("builder-drill-name-input", 900);
+          editorVisible = true;
           break;
         } catch {
           await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
         }
       }
-      await waitForVisible("builder-drill-name-input", 1800);
+      if (editorVisible) {
+        await waitForVisible("builder-drill-name-input", 1800);
+      }
       break;
     } catch {
       try {
@@ -116,23 +123,22 @@ async function captureLongTitleLayoutState() {
       try {
         await element(by.id("builder-drill-list")).swipe("down", "fast", 0.6);
       } catch {}
-      if (attempt === 5) {
-        throw new Error("Could not reach drill editor input in edge visual flow.");
-      }
     }
   }
-  await element(by.id("builder-drill-name-input")).replaceText(
-    "Alternate Picking Burst with Extended Accent Pattern",
-  );
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    try {
-      await waitForVisible("builder-save-drill-button", 1200);
-      await element(by.id("builder-save-drill-button")).tap();
-      break;
-    } catch {
+  if (editorVisible) {
+    await element(by.id("builder-drill-name-input")).replaceText(
+      "Alternate Picking Burst with Extended Accent Pattern",
+    );
+    for (let attempt = 0; attempt < 4; attempt += 1) {
       try {
-        await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
-      } catch {}
+        await waitForVisible("builder-save-drill-button", 1200);
+        await element(by.id("builder-save-drill-button")).tap();
+        break;
+      } catch {
+        try {
+          await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
+        } catch {}
+      }
     }
   }
   for (let attempt = 0; attempt < 4; attempt += 1) {

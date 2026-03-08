@@ -3,14 +3,26 @@ async function waitForVisible(id, timeout = 12000) {
 }
 
 async function openBuilderFromHome() {
+  let usedQuickAction = false;
   try {
     await waitForVisible("home-quick-start-practice", 3000);
     await element(by.id("home-quick-start-practice")).tap();
-    return;
+    usedQuickAction = true;
   } catch {}
 
-  await waitForVisible("home-start-practice", 8000);
-  await element(by.id("home-start-practice")).tap();
+  if (!usedQuickAction) {
+    await waitForVisible("home-start-practice", 8000);
+    await element(by.id("home-start-practice")).tap();
+    return;
+  }
+
+  try {
+    await waitForVisible("builder-start-session", 5000);
+    return;
+  } catch {
+    await waitFor(element(by.text("Open Builder")).atIndex(0)).toBeVisible().withTimeout(12000);
+    await element(by.text("Open Builder")).atIndex(0).tap();
+  }
 }
 
 async function ensureBuilderReady() {

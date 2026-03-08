@@ -3,12 +3,34 @@ async function waitForVisible(id, timeout = 12000) {
 }
 
 async function openBuilderScreen() {
+  let usedQuickAction = false;
   try {
     await waitForVisible("home-quick-start-practice", 60000);
     await element(by.id("home-quick-start-practice")).tap();
+    usedQuickAction = true;
   } catch {
+    // Fallback to primary practice CTA.
+  }
+
+  if (!usedQuickAction) {
     await waitForVisible("home-start-practice", 60000);
     await element(by.id("home-start-practice")).tap();
+  } else {
+    try {
+      // Legacy flow: quick action opens builder directly.
+      await waitForVisible("builder-start-session", 5000);
+      return;
+    } catch {
+      // Current flow: quick action opens Sessions list. Jump into first builder preset.
+      try {
+        await waitFor(element(by.text("Open Builder")).atIndex(0)).toBeVisible().withTimeout(12000);
+        await element(by.text("Open Builder")).atIndex(0).tap();
+      } catch {
+        // If sessions entry is unavailable, fallback to primary CTA.
+        await waitForVisible("home-start-practice", 12000);
+        await element(by.id("home-start-practice")).tap();
+      }
+    }
   }
   await waitForVisible("builder-start-session", 30000);
 }

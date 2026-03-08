@@ -2574,21 +2574,37 @@ function SessionComplete(props: {
       <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
 
       <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>
+        <Text style={styles.cardLabel}>Session Complete</Text>
         <Text style={styles.completeTitle}>Session Crushed</Text>
         <Text style={styles.completeXp}>+{sessionXp} XP</Text>
         <Text style={styles.completeSubtext}>Clean reps stacked. Your playing moved forward today.</Text>
 
-        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
-        <Text style={styles.streakLine}>🔥 Streak protected: {streak} days</Text>
-
-        <View style={styles.badgeRow}>
-          {badges.slice(0, 4).map((badge) => (
-            <View key={badge.id} style={styles.badge}>
-              <Text style={styles.badgeIcon}>{badge.icon}</Text>
-              <Text style={styles.badgeLabel}>{badge.label}</Text>
-            </View>
-          ))}
+        <View style={styles.completeStatsRow}>
+          <View style={styles.completeStatChip}>
+            <Text style={styles.completeStatLabel}>Current Level</Text>
+            <Text style={styles.completeStatValue}>Lv {level}</Text>
+          </View>
+          <View style={styles.completeStatChip}>
+            <Text style={styles.completeStatLabel}>Streak</Text>
+            <Text style={styles.completeStatValue}>{streak} days</Text>
+          </View>
         </View>
+
+        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
+        <Text style={styles.streakLine}>Streak protected and momentum locked in.</Text>
+
+        {badges.length > 0 ? (
+          <View style={styles.badgeRow}>
+            {badges.slice(0, 4).map((badge) => (
+              <View key={badge.id} style={styles.badge}>
+                <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                <Text style={styles.badgeLabel}>{badge.label}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.helperText}>Keep stacking sessions to unlock your first badge.</Text>
+        )}
       </Animated.View>
 
       <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
@@ -3142,35 +3158,61 @@ const styles = StyleSheet.create({
   },
   rewardGlow: {
     position: "absolute",
-    top: 86,
+    top: 72,
     alignSelf: "center",
-    width: 260,
-    height: 260,
-    borderRadius: 130,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
     backgroundColor: COLORS.accent,
   },
   completeCard: {
-    marginTop: 20,
+    marginTop: 8,
     borderRadius: 20,
-    padding: 20,
+    padding: 22,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.divider,
-    gap: 8,
+    borderColor: "rgba(245,158,11,0.42)",
+    gap: 10,
   },
   completeTitle: {
     color: COLORS.text,
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "800",
   },
   completeXp: {
     color: COLORS.xp,
-    fontSize: 54,
+    fontSize: 56,
     fontWeight: "900",
   },
   completeSubtext: {
     color: COLORS.muted,
     lineHeight: 20,
+  },
+  completeStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  completeStatChip: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 3,
+  },
+  completeStatLabel: {
+    color: COLORS.muted,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  completeStatValue: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: "800",
   },
   levelUp: {
     color: COLORS.text,
@@ -3181,7 +3223,7 @@ const styles = StyleSheet.create({
   streakLine: {
     color: COLORS.accent,
     fontWeight: "700",
-    marginTop: 4,
+    marginTop: 2,
   },
   inlineRow: {
     flexDirection: "row",
