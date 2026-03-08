@@ -1231,6 +1231,7 @@ export default function App() {
             <SessionsLibrary
               templates={templates}
               drills={allDrills}
+              activeTemplateId={selectedTemplate?.id ?? null}
               onOpenBuilder={(templateId) => {
                 setActiveTemplateId(templateId);
                 setScreen("builder");
@@ -2257,16 +2258,48 @@ export function SessionBuilder(props: {
 function SessionsLibrary(props: {
   templates: SessionTemplate[];
   drills: Drill[];
+  activeTemplateId: string | null;
   onOpenBuilder: (templateId: string) => void;
 }) {
-  const { templates, drills, onOpenBuilder } = props;
+  const { templates, drills, activeTemplateId, onOpenBuilder } = props;
+  const featuredTemplate = templates.find((template) => template.id === activeTemplateId) ?? templates[0] ?? null;
+  const featuredDrillNames = featuredTemplate
+    ? featuredTemplate.drillIds
+        .map((id) => drills.find((drill) => drill.id === id)?.name)
+        .filter((name): name is string => Boolean(name))
+        .slice(0, 3)
+    : [];
 
   return (
     <View style={styles.screenBody}>
       <View style={styles.topRow}>
         <Text style={styles.title}>Sessions</Text>
       </View>
-      <Text style={styles.helperText}>Select a routine preset and jump into your chain builder.</Text>
+      <Text style={styles.helperText}>Pick a preset chain, then tweak it in the builder.</Text>
+
+      {featuredTemplate ? (
+        <GlowCard style={[styles.homeHeroPanel, styles.sessionsHeroCard]}>
+          <Text style={styles.cardLabel}>Featured Preset</Text>
+          <Text style={styles.heroHeadline}>{featuredTemplate.name}</Text>
+          <Text style={styles.heroSubline}>
+            {featuredTemplate.drillIds.length} drills • {Math.max(0, Math.round(featuredTemplate.totalDurationSeconds / 60))} min
+          </Text>
+          {featuredDrillNames.length > 0 ? (
+            <View style={styles.sessionsPresetChipRow}>
+              {featuredDrillNames.map((name) => (
+                <View key={name} style={styles.sessionsPresetChip}>
+                  <Text style={styles.sessionsPresetChipText} numberOfLines={1}>
+                    {name}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          <TouchableOpacity style={styles.primaryCta} onPress={() => onOpenBuilder(featuredTemplate.id)}>
+            <Text style={styles.primaryCtaText}>Edit Featured Preset</Text>
+          </TouchableOpacity>
+        </GlowCard>
+      ) : null}
 
       <ScrollView contentContainerStyle={styles.sessionsList} showsVerticalScrollIndicator={false}>
         {templates.map((template) => {
@@ -2284,6 +2317,9 @@ function SessionsLibrary(props: {
               </View>
               <Text style={styles.helperText}>
                 {items.length} drills • {totalMinutes} min
+              </Text>
+              <Text style={styles.sessionsPresetPreview} numberOfLines={1}>
+                {items.slice(0, 3).map((item) => item.name).join(" • ") || "No drills yet"}
               </Text>
               <TouchableOpacity style={styles.primaryCta} onPress={() => onOpenBuilder(template.id)}>
                 <Text style={styles.primaryCtaText}>Open Builder</Text>
@@ -2366,6 +2402,10 @@ function ProfileAchievements(props: {
 }) {
   const { levelState, totalXp, badges, onboardingState, onResetOnboarding } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
+  const xpProgressPercent = Math.max(
+    6,
+    Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100),
+  );
 
   return (
     <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
@@ -2377,6 +2417,12 @@ function ProfileAchievements(props: {
         <Text style={styles.cardLabel}>Player Identity</Text>
         <Text style={styles.heroHeadline}>Level {levelState.level} Guitarist</Text>
         <Text style={styles.heroSubline}>{totalXp} total XP • {unlocked} badges unlocked</Text>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${xpProgressPercent}%` }]} />
+        </View>
+        <Text style={styles.helperText}>
+          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
+        </Text>
       </GlowCard>
 
       <GlowCard>
@@ -3364,8 +3410,30 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 24,
   },
+  sessionsHeroCard: {
+    gap: 10,
+  },
+  sessionsPresetChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  sessionsPresetChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    maxWidth: "100%",
+  },
+  sessionsPresetChipText: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   sessionPresetCard: {
-    gap: 12,
+    gap: 10,
   },
   sessionPresetTitle: {
     color: COLORS.text,
@@ -3373,6 +3441,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     flex: 1,
     paddingRight: 8,
+  },
+  sessionsPresetPreview: {
+    color: COLORS.muted,
+    fontSize: 13,
   },
   skillRow: {
     gap: 6,

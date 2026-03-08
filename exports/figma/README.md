@@ -26,4 +26,4 @@ This package contains UI screen exports and a Figma-ready handoff spec for rebui
 
 ## Notes
 - These are image exports (not editable layers).
-- Sources are the latest passing visual suites from `2026-03-08` (`20-35-14Z` primary + `20-35-53Z` edge).
+- Sources are the latest passing visual suites from `2026-03-08` (`20-56-37Z` primary + `20-55-22Z` edge).
