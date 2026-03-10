@@ -1,6 +1,7 @@
 # Visual Snapshot Manifest
 
 This file defines the expected screenshot names produced by Detox visual suites.
+Design intent reference for these states: `docs/design-import/stitch/stitch/*`.
 
 ## 1. Primary Flow Snapshots
 Run:

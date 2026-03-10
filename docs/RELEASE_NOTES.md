@@ -1,5 +1,22 @@
 # Release Notes
 
+## Latest Validation (2026-03-10)
+- Validation date: `2026-03-10`
+- Commands:
+  - `npm run check`
+  - `npm run e2e:detox:build:ios`
+  - `npm run e2e:detox:test:ios -- e2e/onboarding-smoke.e2e.js`
+  - `npm run e2e:detox:test:ios -- e2e/builder-smoke.e2e.js`
+  - `npm run e2e:android:onboarding`
+  - `npm run e2e:android:smoke`
+- Result:
+  - Quality gate passed (`lint`, `typecheck`, coverage)
+  - iOS onboarding and builder smoke suites passed
+  - Android onboarding and smoke suites passed
+- Notes:
+  - Stitch import parity is tracked by `docs/STITCH_FLOW_FEATURE_PLAN.md`.
+  - CI remains manual-only by design (`workflow_dispatch`) due to Actions credit limits.
+
 ## Latest Validation (2026-03-08)
 - Validation date: `2026-03-08`
 - Commands:
@@ -18,8 +35,12 @@
   - Android smoke requires valid `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`.
 
 ## Latest Verified Main
-- Commit: `a2867de`
-- Scope: current main with onboarding, random-cue UX, strict coverage, updated visual regressions.
+- Commit: `2a09696`
+- Scope: Stitch flow screens integration (home/songs/builder/practice/summary/progress) with green cross-platform smoke gates.
+
+## Latest Stable Stitch Checkpoint
+- Tag: `stable-2026-03-10-stitch-flow-batchc-green`
+- Commit: `2a09696`
 
 ## Stable Baseline
 - Tag: `stable-2026-03-04-ci-green`

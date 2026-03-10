@@ -1,34 +1,39 @@
-# Fretline UX/UI Implementation Plan (No Regression)
+# Fretline UX/UI Implementation Plan (Stitch Alignment, No Regression)
 
-## Batch 1: Token + Shared Components
-- Extract and centralize tokens from `App.tsx` into reusable constants.
-- Introduce shared primitives for button/card/chip/text styles.
-- Keep current visuals functionally equivalent.
-- Verify: `npm run check` + iOS builder smoke.
+## Source Of Truth
+- Imported designs: `docs/design-import/stitch/stitch/*`
+- Feature parity tracker: `docs/STITCH_FLOW_FEATURE_PLAN.md`
 
-## Batch 2: Dashboard Hierarchy Upgrade
-- Strengthen single primary CTA (`Start Practice`).
-- Reduce card density and improve section rhythm.
-- Preserve all existing actions and testIDs.
-- Verify: `npm run check` + `e2e/home-scroll.e2e.js`.
+## Completed Batches
+1. Batch A
+- Stitch token direction and shared visual primitives established.
+- Home + Builder hierarchy refresh landed.
 
-## Batch 3: Session Builder Tactile Flow
-- Apply session-builder override rules.
-- Ensure drill title readability under long names.
-- Maintain reorder/remove behavior and tests.
-- Verify: `npm run check` + `e2e/builder-smoke.e2e.js`.
+2. Batch B
+- Practice screen controls and completion summary updates landed.
+- Share action stub added (no external service dependency).
 
-## Batch 4: Practice Immersion
-- Improve timer dominance and metronome control strip clarity.
-- Add subtle reward/transition motion with reduced-motion fallback.
-- Verify: `npm run check` + `e2e/visual-states.e2e.js`.
+3. Batch C
+- Songs & Library screen and primary actions landed.
+- Progress milestone/skills lane direction integrated into app flow.
 
-## Batch 5: Reward Moments
-- Improve drill-complete and session-complete visual feedback.
-- Maintain XP/streak logic untouched.
-- Verify: `npm run check` + visual edge suite.
+## Remaining Batches
+1. Batch D (Parity Hardening)
+- Add/expand visual parity checks against Stitch screen references.
+- Verify no layout regressions on long content and small devices.
+
+2. Batch E (Polish)
+- Tighten microcopy consistency across all Stitch-aligned screens.
+- Final spacing/typography cleanup pass without changing behavior.
+
+## Regression Gate For Every Batch
+- `npm run check`
+- `npm run e2e:detox:test:ios -- e2e/onboarding-smoke.e2e.js`
+- `npm run e2e:detox:test:ios -- e2e/builder-smoke.e2e.js`
+- `npm run e2e:android:onboarding`
+- `npm run e2e:android:smoke`
 
 ## Exit Criteria
-- Unit/integration and required e2e suites green.
-- No regressions on iOS/Android smoke checks.
-- Docs updated when screen contracts change.
+- Stitch source screens are represented in app IA and core user journey.
+- iOS and Android smoke gates remain green.
+- Docs and runbooks remain synchronized with the active stable tag.

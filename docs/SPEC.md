@@ -18,22 +18,36 @@ This is the implementation contract for the current project state.
 - Primary CTA: Start Practice.
 - Reminder toggle + reminder time controls.
 - Goal type controls (`minutes`, `sessions`, `drills`) and editable goal target.
+- Stitch target parity: hero "start now" framing, cleaner section hierarchy, and reduced card overload.
 
 2. Session Builder
 - Template operations: New, Duplicate, Save, Delete, Select.
-- Drill operations: Add (deterministic editable defaults), Remove, Reorder (up/down controls), Edit fields.
+- Drill operations: Add (deterministic editable defaults), Remove, Reorder (up/down controls), Edit fields (inline autosave).
 - Drill supports optional random cue configuration (`note` / `triad` / `fingers4`, every N bars).
 - Validation and errors surfaced in UI (no uncaught crashes).
+- Stitch target parity: "Build Your Chain" composition, stronger routine summary, no title/action overlap.
 
-3. Active Practice
+3. Songs & Library
+- Search/filter songs.
+- Browse featured challenges and status labels (`New`, `Mastered`).
+- Per-song actions: add to routine and quick start.
+- Stitch source path: `docs/design-import/stitch/stitch/songs_library`.
+
+4. Active Practice
 - Drill countdown + session progress.
 - Metronome default-on when session starts, with On/Off and BPM +/-5 controls.
 - Metronome must produce audible tick playback from bundled offline asset.
 - Random cue card shows current cue, upcoming cue, and beats to next trigger when configured.
 - Pause/Resume + Skip controls.
+- Focus toggle and beat-pulse lock states are exposed in practice mode.
 
-4. Session Complete
+5. Session Complete
 - XP gain display, level-up state when applicable, streak confirmation, badges.
+- Relative performance delta and share CTA are shown.
+
+6. Progress / Stats
+- Show skill-lane progress, milestones, consistency, and long-term practice trends.
+- Stitch source path: `docs/design-import/stitch/stitch/progress_dashboard`.
 
 ## 3. Domain Rules (Must Hold)
 1. Validation
@@ -87,8 +101,15 @@ This is the implementation contract for the current project state.
 6. persistence envelope
 - `{ version, state }`
 
-## 5. UI Contract (Locked)
+## 5. UI Contract (Stitch-Aligned)
 - Dark-mode only.
+- Canonical imported design references:
+  - `docs/design-import/stitch/stitch/main_practice_hub`
+  - `docs/design-import/stitch/stitch/songs_library`
+  - `docs/design-import/stitch/stitch/drill_builder`
+  - `docs/design-import/stitch/stitch/practice_session`
+  - `docs/design-import/stitch/stitch/session_summary`
+  - `docs/design-import/stitch/stitch/progress_dashboard`
 - Token palette:
   - Background `#0F0F10`
   - Surface `#171718`
@@ -163,6 +184,6 @@ Current repository mode (cost-control): workflows are manual-only (`workflow_dis
 - Social features
 
 ## 9. Verified Milestone
-- Latest verified main commit (runtime/features): `a2867de`
-- Historical stable tag reference: `stable-2026-03-08-strict-coverage-green`
+- Latest verified main commit (runtime/features): `2a09696`
+- Historical stable tag reference: `stable-2026-03-10-stitch-flow-batchc-green`
 - Rebuild instructions are authoritative in `docs/PROJECT_RUNBOOK.md`.

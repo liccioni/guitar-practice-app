@@ -1,7 +1,7 @@
 # Project Runbook (Reproduce Current Main From Scratch)
 
 This runbook reproduces the repository exactly as it exists on `origin/main` at the time you run it.
-For a bit-for-bit reproduction of the audited state in this document, use commit `a2867de`.
+For a bit-for-bit reproduction of the audited Stitch-aligned state in this document, use tag `stable-2026-03-10-stitch-flow-batchc-green` (commit `2a09696`).
 
 ## 1. Host Requirements (macOS)
 1. Xcode + iOS Simulator.
@@ -47,7 +47,7 @@ cd guitar-practice-app
 git checkout main
 git pull --ff-only
 # Optional exact-state pin (recommended for reproducibility audit):
-git checkout a2867de
+git checkout stable-2026-03-10-stitch-flow-batchc-green
 git rev-parse --short HEAD
 npm ci
 ```
@@ -108,6 +108,18 @@ This command enforces:
 - strict quality gate
 - iOS Detox suite set
 - Android smoke/regression
+
+## 8b. Stitch Design Source Of Truth Check
+Imported design references used for implementation are stored at:
+- `docs/design-import/stitch/stitch/main_practice_hub`
+- `docs/design-import/stitch/stitch/songs_library`
+- `docs/design-import/stitch/stitch/drill_builder`
+- `docs/design-import/stitch/stitch/practice_session`
+- `docs/design-import/stitch/stitch/session_summary`
+- `docs/design-import/stitch/stitch/progress_dashboard`
+
+Design/implementation status and deltas are tracked in:
+- `docs/STITCH_FLOW_FEATURE_PLAN.md`
 
 ## 9. CI State
 - `.github/workflows/ci.yml`: manual trigger only.

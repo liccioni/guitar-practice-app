@@ -1,6 +1,7 @@
 # Fretline Design System Master (Mobile)
 
 This file is the Fretline-adapted output derived from `ui-ux-pro-max-skill`, constrained to the current React Native/Expo codebase and product direction.
+Screen-level source references now come from Stitch imports at `docs/design-import/stitch/stitch/*`.
 
 Use page overrides first: `docs/design-system/fretline/pages/<screen>.md`.
 

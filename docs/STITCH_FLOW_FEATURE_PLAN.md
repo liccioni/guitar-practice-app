@@ -8,48 +8,56 @@ Source assets:
 - `docs/design-import/stitch/stitch/session_summary`
 - `docs/design-import/stitch/stitch/progress_dashboard`
 
-## Newly Identified Feature Deltas
-1. Songs & Library vertical:
-- Search/filter songs
-- Featured challenge card
-- Add-to-routine and quick start actions per song
-- Difficulty/lifecycle labels (`New`, `Mastered`)
+## Status Snapshot
+- Reference stable tag: `stable-2026-03-10-stitch-flow-batchc-green`
+- Reference commit: `2a09696`
+- Goal: keep Stitch imports as visual/flow source of truth while preserving current functional stability gates.
 
-2. Builder workflow enhancements:
-- "Preview Routine" step before start
-- Stronger chain summary framing ("Total Reward", "Estimated Time")
-- Richer drill card composition
+## Screen Parity Map
+1. Practice Hub (`main_practice_hub`)
+- Status: Implemented
+- Notes: hierarchy and CTA flow integrated; onboarding/goal modules preserved.
 
-3. Practice-mode interaction deltas:
-- Focus toggle state in header
-- "Beat pulse locked" explicit control
-- Expanded metronome rig grouping and copy
+2. Songs & Library (`songs_library`)
+- Status: Implemented
+- Notes: search/filter, per-song actions, and song-state chips are present.
 
-4. Session summary deltas:
-- Relative performance deltas (`+15% from last session`)
-- Explicit share action for achievements
+3. Build Your Chain (`drill_builder`)
+- Status: Implemented with constraints
+- Notes: inline autosave editing is active; reorder remains deterministic up/down (no drag).
 
-5. Progress deltas:
-- Skills mastered leveling lanes
-- Upcoming milestone cards and unlock previews
+4. Practice Mode (`practice_session`)
+- Status: Implemented
+- Notes: focus mode and beat-pulse lock controls integrated with existing timing/metronome logic.
 
-## Delivery Plan
-Batch A (current):
-- Introduce Stitch-aligned design tokens.
-- Refresh Home + Builder visual hierarchy only.
-- Keep behavior and all existing testIDs unchanged.
+5. Session Summary (`session_summary`)
+- Status: Implemented
+- Notes: reward emphasis + share action stub included.
 
-Batch B:
-- Practice screen + Summary visual/state updates.
-- Add share-action stub (local callback, no external deps).
+6. Progress & Stats (`progress_dashboard`)
+- Status: Implemented
+- Notes: skill lanes and milestones integrated.
 
-Batch C:
-- Implement Songs & Library domain model + screen.
-- Wire "Add to chain" and "Start now" into existing flow.
+## Remaining Gaps (Non-Blocking)
+1. Add dedicated Stitch parity visual assertions for Songs/Progress screens.
+2. Final microcopy and spacing polish pass for full text consistency.
+3. Optional tactile drag reorder in builder (future enhancement, not required for current stable flow).
 
-Batch D:
-- Progress milestone/skills module parity.
-- Add e2e coverage for new Songs/Library flow and milestone rendering.
+## Delivery Tracking
+1. Batch A: Completed
+- Stitch tokens + Home/Builder hierarchy.
+
+2. Batch B: Completed
+- Practice + Session Summary.
+
+3. Batch C: Completed
+- Songs/Library + progress parity direction.
+
+4. Batch D: Pending
+- Expand parity-focused visual e2e coverage for Stitch-imported screens.
+
+5. Batch E: Pending
+- Final polish pass with no behavior changes.
 
 ## Regression Rules
 - `npm run check` must stay green.

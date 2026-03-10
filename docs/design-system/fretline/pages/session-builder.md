@@ -1,5 +1,7 @@
 # Session Builder Override
 
+Reference import: `docs/design-import/stitch/stitch/drill_builder`.
+
 ## Purpose
 Assemble a playable drill chain quickly, not a CRUD table.
 

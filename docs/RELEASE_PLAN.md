@@ -4,8 +4,9 @@
 - Android: Active release track (internal distribution available).
 - iOS: Store/TestFlight distribution blocked pending paid Apple Developer enrollment.
 - CI automation: temporarily paused (manual workflows only) to reduce GitHub Actions usage.
-- Latest stable checkpoint tag: `stable-2026-03-08-strict-coverage-green`.
-- Latest verified runtime/features commit on `main`: `a2867de`.
+- Latest stable checkpoint tag: `stable-2026-03-10-stitch-flow-batchc-green`.
+- Latest verified runtime/features commit on `main`: `2a09696`.
+- Stitch design source of truth: `docs/STITCH_FLOW_FEATURE_PLAN.md` + `docs/design-import/stitch/stitch/*`.
 
 ## Android Track (Active)
 ### Current build

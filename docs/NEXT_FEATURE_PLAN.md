@@ -3,6 +3,12 @@
 Date: 2026-03-07
 Status: Approved for implementation batching
 
+## Superseded Notice (2026-03-10)
+This pre-Stitch roadmap is retained for historical context only.
+Active roadmap and parity tracking moved to:
+- `docs/STITCH_FLOW_FEATURE_PLAN.md`
+- `docs/UI_UX_IMPLEMENTATION_PLAN.md`
+
 ## Objectives
 1. Add optional random variation events to drills with clear visual timing cues.
 2. Add a short onboarding questionnaire that generates a personalized starter training plan.

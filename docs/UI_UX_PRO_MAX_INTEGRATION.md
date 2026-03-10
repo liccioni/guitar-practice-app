@@ -11,6 +11,7 @@ Use `ui-ux-pro-max-skill` as a design reasoning assistant, then map output into 
 ## Integration Decision
 - Use: design system ideation + stack heuristics.
 - Do not use directly: generated web-first tokens/components without adaptation.
+- Stitch imports in `docs/design-import/stitch/stitch/*` are now the primary UI reference for screen-level parity.
 
 ## Why Adaptation Is Required
 Raw generator output defaults to web/light patterns and generic categories that do not match:
