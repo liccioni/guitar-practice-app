@@ -2594,16 +2594,31 @@ function ProgressStats(props: {
   ];
 
   return (
-    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
+    <ScrollView
+      style={styles.homeScroll}
+      contentContainerStyle={styles.homeScrollContent}
+      testID="progress-screen"
+    >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Progress & Stats</Text>
+        <Text style={styles.title}>Progress Dashboard</Text>
       </View>
+      <Text style={styles.headerSubline}>Track your mastery lanes and upcoming unlocks.</Text>
       <GlowCard style={styles.homeHeroPanel}>
         <Text style={styles.cardLabel}>This Week</Text>
         <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min played</Text>
         <Text style={styles.heroSubline}>
           {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills
         </Text>
+        <View style={styles.homeStatStrip}>
+          <View style={styles.statChip}>
+            <Text style={styles.statChipLabel}>Avg BPM</Text>
+            <Text style={styles.statChipValue}>{Math.max(0, averageBpm)}</Text>
+          </View>
+          <View style={styles.statChip}>
+            <Text style={styles.statChipLabel}>Current Streak</Text>
+            <Text style={styles.statChipValue}>{streak} days</Text>
+          </View>
+        </View>
       </GlowCard>
       <GlowCard>
         <Text style={styles.cardLabel}>Skills Mastered</Text>
@@ -2677,9 +2692,14 @@ function SongsLibrary(props: {
   const featuredSong = songs[0] ?? null;
 
   return (
-    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.homeScroll}
+      contentContainerStyle={styles.homeScrollContent}
+      showsVerticalScrollIndicator={false}
+      testID="songs-screen"
+    >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Songs</Text>
+        <Text style={styles.title}>Songs & Library</Text>
       </View>
       <Text style={styles.headerSubline}>Discover tracks and add them directly to your routine.</Text>
 
@@ -2714,6 +2734,16 @@ function SongsLibrary(props: {
           <Text style={styles.heroSubline}>
             {featuredSong.artist} • {featuredSong.level}
           </Text>
+          <View style={styles.homeStatStrip}>
+            <View style={styles.statChip}>
+              <Text style={styles.statChipLabel}>Est. Time</Text>
+              <Text style={styles.statChipValue}>{featuredSong.durationMinutes} min</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statChipLabel}>Target BPM</Text>
+              <Text style={styles.statChipValue}>{featuredSong.targetBpm}</Text>
+            </View>
+          </View>
           <View style={styles.inlineRow}>
             <TouchableOpacity
               style={styles.smallActionButton}
@@ -2852,6 +2882,7 @@ function AppTabBar(props: {
           key={tab.id}
           style={[styles.tabItem, selectedTab === tab.id ? styles.tabItemActive : null]}
           onPress={() => onNavigate(tab.id)}
+          testID={`tab-${tab.id}`}
         >
           <Text style={[styles.tabLabel, selectedTab === tab.id ? styles.tabLabelActive : null]}>{tab.label}</Text>
         </TouchableOpacity>
