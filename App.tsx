@@ -1676,7 +1676,7 @@ function HomeDashboard(props: {
         <View>
           <Text style={styles.brandEyebrow}>FRETLINE</Text>
           <Text style={styles.title}>Ready to play?</Text>
-          <Text style={styles.headerSubline}>Welcome back to Fretline</Text>
+          <Text style={styles.headerSubline}>Welcome back. Keep the momentum today.</Text>
         </View>
         <Text style={styles.levelChip}>Level {levelState.level}</Text>
       </View>
@@ -1715,7 +1715,7 @@ function HomeDashboard(props: {
           accessibilityRole="button"
           testID="home-quick-start-practice"
         >
-          <Text style={styles.smallActionText}>Customize Session</Text>
+          <Text style={styles.smallActionText}>Open Session Builder</Text>
         </TouchableOpacity>
       </GlowCard>
 
@@ -1733,11 +1733,11 @@ function HomeDashboard(props: {
       </View>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Starter Questionnaire</Text>
+        <Text style={styles.cardLabel}>Practice Starter</Text>
         {!onboardingState.completed ? (
           <>
-            <Text style={styles.helperText}>Answer 6 quick questions and get a focused starting routine.</Text>
-            <Text style={styles.helperText}>Level</Text>
+            <Text style={styles.helperText}>Answer 6 quick questions to generate a focused starter routine.</Text>
+            <Text style={styles.helperText}>Guitar Level</Text>
             <View style={styles.templatePillsRow}>
               {(["beginner", "intermediate", "expert"] as const).map((level) => (
                 <TouchableOpacity
@@ -1751,7 +1751,7 @@ function HomeDashboard(props: {
               ))}
             </View>
 
-            <Text style={styles.helperText}>Practice Time</Text>
+            <Text style={styles.helperText}>Session Length</Text>
             <View style={styles.templatePillsRow}>
               {([20, 30, 60] as const).map((minutes) => (
                 <TouchableOpacity
@@ -1765,7 +1765,7 @@ function HomeDashboard(props: {
               ))}
             </View>
 
-            <Text style={styles.helperText}>Focus</Text>
+            <Text style={styles.helperText}>Primary Focus</Text>
             <View style={styles.templatePillsRow}>
               {(["technique", "rhythm", "fretboard", "improv"] as const).map((focus) => (
                 <TouchableOpacity
@@ -1779,7 +1779,7 @@ function HomeDashboard(props: {
               ))}
             </View>
 
-            <Text style={styles.helperText}>Primary Goal</Text>
+            <Text style={styles.helperText}>Desired Outcome</Text>
             <View style={styles.templatePillsRow}>
               {(["consistency", "speed", "song-prep"] as const).map((outcome) => (
                 <TouchableOpacity
@@ -1793,7 +1793,7 @@ function HomeDashboard(props: {
               ))}
             </View>
 
-            <Text style={styles.helperText}>Weekly Frequency</Text>
+            <Text style={styles.helperText}>Practice Frequency</Text>
             <View style={styles.templatePillsRow}>
               {([3, 5, 7] as const).map((days) => (
                 <TouchableOpacity
@@ -1829,7 +1829,7 @@ function HomeDashboard(props: {
               onPress={submitOnboardingAnswers}
               testID="onboarding-generate"
             >
-              <Text style={styles.smallActionText}>Generate Practice Plan</Text>
+              <Text style={styles.smallActionText}>Generate Starter Plan</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -1846,14 +1846,14 @@ function HomeDashboard(props: {
                 onPress={onApplyOnboardingSuggestion}
                 testID="onboarding-apply-suggestion"
               >
-                <Text style={styles.smallActionText}>Build This Session</Text>
+                <Text style={styles.smallActionText}>Open Suggested Session</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.smallActionButton}
                 onPress={onResetOnboarding}
                 testID="onboarding-retake"
               >
-                <Text style={styles.smallActionText}>Retake</Text>
+                <Text style={styles.smallActionText}>Retake Questions</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -1861,7 +1861,7 @@ function HomeDashboard(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Practice Controls</Text>
+        <Text style={styles.cardLabel}>Goal & Reminder</Text>
         <View style={styles.inlineRow}>
           <TouchableOpacity
             style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
@@ -1893,7 +1893,7 @@ function HomeDashboard(props: {
             style={styles.timeInput}
           />
           <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveGoalTarget(goalTargetInput)}>
-            <Text style={styles.smallActionText}>Save</Text>
+            <Text style={styles.smallActionText}>Update Goal</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.inlineRowSpace}>
@@ -1912,7 +1912,7 @@ function HomeDashboard(props: {
             style={styles.timeInput}
           />
           <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveReminderTime(timeInput)}>
-            <Text style={styles.smallActionText}>Save</Text>
+            <Text style={styles.smallActionText}>Update Time</Text>
           </TouchableOpacity>
         </View>
 
@@ -1921,7 +1921,7 @@ function HomeDashboard(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Progress Snapshot</Text>
+        <Text style={styles.cardLabel}>Weekly Snapshot</Text>
         <Text style={styles.helperText}>
           {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
           {weeklySummary.weekMinutesDelta} vs last week)
@@ -1933,9 +1933,9 @@ function HomeDashboard(props: {
           {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
         </Text>
         <View style={styles.cardSectionDivider} />
-        <Text style={styles.cardLabel}>Recent Sessions</Text>
+        <Text style={styles.cardLabel}>Recent Practice</Text>
         {sessionInsights.length === 0 ? (
-          <Text style={styles.helperText}>No sessions yet. Start one to unlock progress tracking.</Text>
+          <Text style={styles.helperText}>No sessions yet. Complete one to unlock trend tracking.</Text>
         ) : (
           sessionInsights.map((insight) => (
             <View key={insight.id} style={styles.recentSessionRow}>
@@ -2179,7 +2179,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap a drill card to edit it in place. Changes autosave.</Text>
+        <Text style={styles.helperText}>Tap any drill card to edit in place. Changes autosave instantly.</Text>
         <Text style={styles.helperText} testID="builder-drill-count">
           {drills.length} drills
         </Text>
@@ -2386,7 +2386,7 @@ export function SessionBuilder(props: {
                     <Text style={styles.pillButtonText}>+5 BPM</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.helperText}>Optional random cue</Text>
+                    <Text style={styles.helperText}>Random cue (optional)</Text>
                 <View style={styles.templatePillsRow}>
                   {RANDOMIZER_KIND_OPTIONS.map((option) => (
                     <TouchableOpacity
@@ -2500,7 +2500,7 @@ function SessionsLibrary(props: {
       <View style={styles.topRow}>
         <Text style={styles.title}>Sessions</Text>
       </View>
-      <Text style={styles.helperText}>Pick a preset chain, then tweak it in the builder.</Text>
+      <Text style={styles.headerSubline}>Choose a routine, then refine it in Session Builder.</Text>
 
       {featuredTemplate ? (
         <GlowCard style={[styles.homeHeroPanel, styles.sessionsHeroCard]}>
@@ -2602,7 +2602,7 @@ function ProgressStats(props: {
       <View style={styles.topRow}>
         <Text style={styles.title}>Progress Dashboard</Text>
       </View>
-      <Text style={styles.headerSubline}>Track your mastery lanes and upcoming unlocks.</Text>
+      <Text style={styles.headerSubline}>Track mastery lanes, milestones, and consistency.</Text>
       <GlowCard style={styles.homeHeroPanel}>
         <Text style={styles.cardLabel}>This Week</Text>
         <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min played</Text>
@@ -2621,7 +2621,7 @@ function ProgressStats(props: {
         </View>
       </GlowCard>
       <GlowCard>
-        <Text style={styles.cardLabel}>Skills Mastered</Text>
+        <Text style={styles.cardLabel}>Skill Lanes</Text>
         {skillBars.map((skill) => (
           <View key={skill.label} style={styles.skillRow}>
             <View style={styles.inlineRowSpace}>
@@ -2701,10 +2701,10 @@ function SongsLibrary(props: {
       <View style={styles.topRow}>
         <Text style={styles.title}>Songs & Library</Text>
       </View>
-      <Text style={styles.headerSubline}>Discover tracks and add them directly to your routine.</Text>
+      <Text style={styles.headerSubline}>Discover songs and route them straight into your session chain.</Text>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Search</Text>
+        <Text style={styles.cardLabel}>Find Songs</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -2849,9 +2849,9 @@ function ProfileAchievements(props: {
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Onboarding Plan</Text>
-        <Text style={styles.helperText}>
-          {onboardingState.completed ? "Questionnaire completed." : "Questionnaire not completed yet."}
+        <Text style={styles.cardLabel}>Starter Plan</Text>
+          <Text style={styles.helperText}>
+          {onboardingState.completed ? "Questionnaire completed and ready to apply." : "Questionnaire not completed yet."}
         </Text>
         <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding}>
           <Text style={styles.smallActionText}>Reset Questionnaire</Text>
@@ -2996,7 +2996,7 @@ function ActivePractice(props: {
         <TouchableOpacity style={styles.inlineRow} onPress={onToggleBeatPulseLocked} testID="active-beat-pulse-toggle">
           <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
           <Text style={styles.helperText}>
-            Beat pulse {beatPulseLocked && metronomeEnabled ? "locked" : "free"}
+            Beat pulse: {beatPulseLocked && metronomeEnabled ? "locked" : "free"}
           </Text>
         </TouchableOpacity>
         {randomCueLabel ? (
@@ -3005,7 +3005,7 @@ function ActivePractice(props: {
             {randomCueNextLabel ? (
               <Text style={styles.helperText}>Upcoming: {randomCueNextLabel}</Text>
             ) : null}
-            {randomCuePulseWindowActive ? <Text style={styles.helperText}>Cue incoming...</Text> : null}
+            {randomCuePulseWindowActive ? <Text style={styles.helperText}>Cue incoming</Text> : null}
             <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
           </Animated.View>
         ) : null}
@@ -3050,7 +3050,7 @@ function SessionComplete(props: {
 
       <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>
         <Text style={styles.cardLabel}>Session Complete</Text>
-        <Text style={styles.completeTitle}>Session Crushed</Text>
+        <Text style={styles.completeTitle}>Great Session</Text>
         <Text style={styles.completeXp}>+{sessionXp} XP</Text>
         <Text style={styles.completeSubtext}>Clean reps stacked. Your playing moved forward today.</Text>
 
@@ -3090,7 +3090,7 @@ function SessionComplete(props: {
         onPress={() => setShared(true)}
         testID="complete-share-button"
       >
-        <Text style={styles.secondaryCtaText}>{shared ? "Shared to clipboard-ready summary" : "Share Achievements"}</Text>
+        <Text style={styles.secondaryCtaText}>{shared ? "Summary copied. Ready to share." : "Share Achievements"}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -3204,7 +3204,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.pageX,
     paddingTop: 16,
     paddingBottom: 120,
-    gap: SPACING.sectionGap,
+    gap: 20,
   },
   topRow: {
     flexDirection: "row",
@@ -3214,14 +3214,16 @@ const styles = StyleSheet.create({
   },
   title: {
     color: COLORS.text,
-    fontSize: 52,
+    fontSize: 46,
+    lineHeight: 50,
     fontWeight: "800",
-    letterSpacing: 0.1,
+    letterSpacing: 0,
   },
   headerSubline: {
     color: COLORS.muted,
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 15,
+    lineHeight: 20,
+    marginTop: 6,
   },
   brandEyebrow: {
     color: COLORS.accentAlt,
@@ -3250,9 +3252,9 @@ const styles = StyleSheet.create({
   },
   heroHeadline: {
     color: COLORS.text,
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: "800",
-    lineHeight: 38,
+    lineHeight: 36,
   },
   heroSubline: {
     color: COLORS.muted,
@@ -3263,7 +3265,7 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   progressTrack: {
@@ -3308,7 +3310,7 @@ const styles = StyleSheet.create({
   },
   statChipValue: {
     color: COLORS.text,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
   },
   ringText: {
@@ -3363,12 +3365,12 @@ const styles = StyleSheet.create({
   },
   primaryCtaText: {
     color: COLORS.text,
-    fontSize: 21,
+    fontSize: 20,
     fontWeight: "800",
     letterSpacing: 0.4,
   },
   secondaryCta: {
-    minHeight: 48,
+    minHeight: 50,
     borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3398,7 +3400,8 @@ const styles = StyleSheet.create({
   },
   helperText: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 21,
   },
   builderStatsProbe: {
     width: 1,
