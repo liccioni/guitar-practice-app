@@ -27,7 +27,7 @@ import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "
 import { appendDrillToTemplate } from "./src/application/sessionBuilder";
 import { prepareSessionStart } from "./src/application/startSessionPreparation";
 import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
-import type { CreateDrillInput, Drill, DrillRandomizerKind } from "./src/domain/exercises/types";
+import type { CreateDrillInput, Drill, DrillRandomizerKind, DrillTag } from "./src/domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "./src/domain/goals/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
@@ -59,9 +59,9 @@ import {
   type PersistedPracticeState,
 } from "./src/persistence/LocalStorageGateway";
 import { GlowCard } from "./src/ui/primitives/GlowCard";
-import { COLORS } from "./src/ui/theme";
+import { COLORS, RADII, SPACING } from "./src/ui/theme";
 
-type Screen = "home" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
+type Screen = "home" | "songs" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
 
 interface Badge {
   id: string;
@@ -74,6 +74,18 @@ interface BadgeDefinition {
   id: string;
   label: string;
   icon: string;
+}
+
+interface SongLibraryItem {
+  id: string;
+  title: string;
+  artist: string;
+  level: "beginner" | "intermediate" | "advanced";
+  mastered?: boolean;
+  isNew?: boolean;
+  durationMinutes: number;
+  targetBpm: number;
+  tags: DrillTag[];
 }
 
 const DRILL_POOL: CreateDrillInput[] = [
@@ -107,6 +119,47 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: "b2", label: "Rhythm Keeper", icon: "🎵" },
   { id: "b3", label: "XP Hunter", icon: "⚡" },
   { id: "b4", label: "Session Beast", icon: "🏆" },
+];
+
+const SONG_LIBRARY: SongLibraryItem[] = [
+  {
+    id: "song_wish_you_were_here",
+    title: "Wish You Were Here",
+    artist: "Pink Floyd",
+    level: "beginner",
+    mastered: true,
+    durationMinutes: 6,
+    targetBpm: 76,
+    tags: ["chords", "rhythm"],
+  },
+  {
+    id: "song_horse_with_no_name",
+    title: "Horse with No Name",
+    artist: "America",
+    level: "beginner",
+    isNew: true,
+    durationMinutes: 5,
+    targetBpm: 92,
+    tags: ["chords", "rhythm"],
+  },
+  {
+    id: "song_sultans_of_swing",
+    title: "Sultans of Swing",
+    artist: "Dire Straits",
+    level: "intermediate",
+    durationMinutes: 8,
+    targetBpm: 148,
+    tags: ["technique", "improv"],
+  },
+  {
+    id: "song_blackbird",
+    title: "Blackbird",
+    artist: "The Beatles",
+    level: "intermediate",
+    durationMinutes: 7,
+    targetBpm: 126,
+    tags: ["technique", "scales"],
+  },
 ];
 
 const DEFAULT_PROFILE = {
@@ -332,6 +385,8 @@ export default function App() {
   const [metronomeEnabled, setMetronomeEnabled] = useState(true);
   const [metronomeBpm, setMetronomeBpm] = useState(100);
   const [beatFlash, setBeatFlash] = useState(false);
+  const [focusModeEnabled, setFocusModeEnabled] = useState(true);
+  const [beatPulseLocked, setBeatPulseLocked] = useState(true);
   const [randomCueLabel, setRandomCueLabel] = useState<string | null>(null);
   const [randomCueNextLabel, setRandomCueNextLabel] = useState<string | null>(null);
   const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
@@ -851,6 +906,42 @@ export default function App() {
     setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
   }
 
+  function addSongToBuilder(song: SongLibraryItem): void {
+    try {
+      const nowIso = new Date().toISOString();
+      const created = createDrillFromInput(
+        makeId("drill"),
+        {
+          name: `${song.title} (${song.artist})`,
+          durationMinutes: song.durationMinutes,
+          targetBpm: song.targetBpm,
+          tags: song.tags,
+        },
+        nowIso,
+      );
+      const result = appendDrillToTemplate({
+        templates,
+        activeTemplateId: activeTemplateId ?? null,
+        drill: created,
+        nowIso,
+      });
+
+      setAllDrills((current) => [...current, created]);
+      setTemplates(result.templates);
+      setActiveTemplateId(result.targetTemplateId);
+      setSelectedDrillId(created.id);
+      setBuilderError(null);
+      setScreen("builder");
+    } catch (error) {
+      setBuilderError(error instanceof Error ? error.message : "Could not add song drill");
+      setScreen("builder");
+    }
+  }
+
+  function startSongNow(song: SongLibraryItem): void {
+    addSongToBuilder(song);
+  }
+
   function addDrillToTemplate(): void {
     try {
       const nowIso = new Date().toISOString();
@@ -1242,7 +1333,7 @@ export default function App() {
     setMetronomeEnabled(false);
   }
 
-  function navigateFromTab(next: "home" | "sessions" | "progress" | "profile"): void {
+  function navigateFromTab(next: "home" | "songs" | "sessions" | "progress" | "profile"): void {
     setScreen(next);
   }
 
@@ -1349,6 +1440,14 @@ export default function App() {
             />
           ) : null}
 
+          {screen === "songs" ? (
+            <SongsLibrary
+              songs={SONG_LIBRARY}
+              onAddToBuilder={addSongToBuilder}
+              onStartNow={startSongNow}
+            />
+          ) : null}
+
           {screen === "progress" ? (
             <ProgressStats
               weeklySummary={weeklySummary}
@@ -1418,8 +1517,12 @@ export default function App() {
               randomCueBeatsRemaining={randomCueBeatsRemaining}
               randomCuePulseWindowActive={randomCuePulseWindowActive}
               randomCuePulse={randomCuePulse}
+              focusModeEnabled={focusModeEnabled}
+              beatPulseLocked={beatPulseLocked}
               onMetronomeToggle={() => setMetronomeEnabled((current) => !current)}
               onMetronomeStep={(delta) => setMetronomeBpm((current) => stepBpm(current, delta))}
+              onToggleFocusMode={() => setFocusModeEnabled((current) => !current)}
+              onToggleBeatPulseLocked={() => setBeatPulseLocked((current) => !current)}
               onPauseToggle={() => setIsPaused((current) => !current)}
               onSkip={skipDrill}
             />
@@ -1573,6 +1676,7 @@ function HomeDashboard(props: {
         <View>
           <Text style={styles.brandEyebrow}>FRETLINE</Text>
           <Text style={styles.title}>Ready to play?</Text>
+          <Text style={styles.headerSubline}>Welcome back to Fretline</Text>
         </View>
         <Text style={styles.levelChip}>Level {levelState.level}</Text>
       </View>
@@ -2011,6 +2115,7 @@ export function SessionBuilder(props: {
           <Text style={styles.title}>Build Your Chain</Text>
           <Text style={styles.levelChip}>{totalXp} XP</Text>
         </View>
+        <Text style={styles.headerSubline}>Assemble your routine, then hit play.</Text>
 
         <GlowCard style={styles.builderHeroCard}>
           <Text style={styles.heroSubline}>Shape your drill flow, then hit play.</Text>
@@ -2467,11 +2572,31 @@ function ProgressStats(props: {
     { label: "Fretboard", value: Math.min(100, Math.round((weeklySummary.weekSessions / 7) * 100)) },
     { label: "Consistency", value: Math.min(100, Math.round((streak / 14) * 100)) },
   ];
+  const milestones = [
+    {
+      id: "level_unlock",
+      title: `Level ${Math.max(2, Math.round((averageBpm + weeklySummary.weekSessions) / 12))} Unlocks`,
+      detail: "New blues soloing module",
+      progress: Math.max(10, Math.min(98, Math.round((weeklySummary.weekMinutes / 180) * 100))),
+    },
+    {
+      id: "streak_unlock",
+      title: "30 Day Streak",
+      detail: "Exclusive profile badge",
+      progress: Math.max(0, Math.min(100, Math.round((streak / 30) * 100))),
+    },
+    {
+      id: "speed_unlock",
+      title: "Speed Demon",
+      detail: "Hit 140 BPM on scales",
+      progress: Math.max(0, Math.min(100, Math.round((averageBpm / 140) * 100))),
+    },
+  ];
 
   return (
     <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
       <View style={styles.topRow}>
-        <Text style={styles.title}>Progress</Text>
+        <Text style={styles.title}>Progress & Stats</Text>
       </View>
       <GlowCard style={styles.homeHeroPanel}>
         <Text style={styles.cardLabel}>This Week</Text>
@@ -2481,18 +2606,33 @@ function ProgressStats(props: {
         </Text>
       </GlowCard>
       <GlowCard>
-        <Text style={styles.cardLabel}>Skill Breakdown</Text>
+        <Text style={styles.cardLabel}>Skills Mastered</Text>
         {skillBars.map((skill) => (
           <View key={skill.label} style={styles.skillRow}>
             <View style={styles.inlineRowSpace}>
               <Text style={styles.badgeLabel}>{skill.label}</Text>
-              <Text style={styles.helperText}>{skill.value}%</Text>
+              <Text style={styles.helperText}>Level {Math.max(1, Math.round(skill.value / 10))}</Text>
             </View>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${Math.max(4, skill.value)}%` }]} />
             </View>
           </View>
         ))}
+      </GlowCard>
+      <GlowCard>
+        <Text style={styles.cardLabel}>Upcoming Milestones</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.milestoneRow}>
+          {milestones.map((milestone) => (
+            <View key={milestone.id} style={styles.milestoneCard}>
+              <Text style={styles.badgeLabel}>{milestone.title}</Text>
+              <Text style={styles.helperText}>{milestone.detail}</Text>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.max(4, milestone.progress)}%` }]} />
+              </View>
+              <Text style={styles.helperText}>{milestone.progress}% complete</Text>
+            </View>
+          ))}
+        </ScrollView>
       </GlowCard>
       <GlowCard>
         <Text style={styles.cardLabel}>Recent Form</Text>
@@ -2505,6 +2645,127 @@ function ProgressStats(props: {
               <Text style={styles.helperText}>
                 {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}
               </Text>
+            </View>
+          ))
+        )}
+      </GlowCard>
+    </ScrollView>
+  );
+}
+
+function SongsLibrary(props: {
+  songs: SongLibraryItem[];
+  onAddToBuilder: (song: SongLibraryItem) => void;
+  onStartNow: (song: SongLibraryItem) => void;
+}) {
+  const { songs, onAddToBuilder, onStartNow } = props;
+  const [query, setQuery] = useState("");
+  const [levelFilter, setLevelFilter] = useState<"all" | SongLibraryItem["level"]>("all");
+
+  const visibleSongs = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return songs.filter((song) => {
+      const levelMatches = levelFilter === "all" || song.level === levelFilter;
+      const textMatches =
+        normalized.length === 0 ||
+        song.title.toLowerCase().includes(normalized) ||
+        song.artist.toLowerCase().includes(normalized);
+      return levelMatches && textMatches;
+    });
+  }, [levelFilter, query, songs]);
+
+  const featuredSong = songs[0] ?? null;
+
+  return (
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent} showsVerticalScrollIndicator={false}>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Songs</Text>
+      </View>
+      <Text style={styles.headerSubline}>Discover tracks and add them directly to your routine.</Text>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Search</Text>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search songs, artists, or tabs"
+          placeholderTextColor={COLORS.muted}
+          style={styles.templateInput}
+          testID="songs-search-input"
+        />
+        <View style={styles.templatePillsRow}>
+          {(["all", "beginner", "intermediate", "advanced"] as const).map((level) => (
+            <TouchableOpacity
+              key={level}
+              style={[styles.templatePill, levelFilter === level ? styles.templatePillActive : null]}
+              onPress={() => setLevelFilter(level)}
+              testID={`songs-filter-${level}`}
+            >
+              <Text style={styles.templatePillText}>{level === "all" ? "All Levels" : level}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </GlowCard>
+
+      {featuredSong ? (
+        <GlowCard style={styles.homeHeroPanel}>
+          <Text style={styles.cardLabel}>Featured Challenge</Text>
+          <Text style={styles.heroHeadline}>{featuredSong.title}</Text>
+          <Text style={styles.heroSubline}>
+            {featuredSong.artist} • {featuredSong.level}
+          </Text>
+          <View style={styles.inlineRow}>
+            <TouchableOpacity
+              style={styles.smallActionButton}
+              onPress={() => onAddToBuilder(featuredSong)}
+              testID="songs-featured-add"
+            >
+              <Text style={styles.smallActionText}>Add to Chain</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.primaryCta}
+              onPress={() => onStartNow(featuredSong)}
+              testID="songs-featured-start"
+            >
+              <Text style={styles.primaryCtaText}>Start Now</Text>
+            </TouchableOpacity>
+          </View>
+        </GlowCard>
+      ) : null}
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Library</Text>
+        {visibleSongs.length === 0 ? (
+          <Text style={styles.helperText}>No songs matched this filter.</Text>
+        ) : (
+          visibleSongs.map((song) => (
+            <View key={song.id} style={styles.songRow}>
+              <View style={styles.songMeta}>
+                <View style={styles.inlineRow}>
+                  <Text style={styles.songTitle}>{song.title}</Text>
+                  {song.mastered ? <Text style={styles.songTagMastered}>Mastered</Text> : null}
+                  {song.isNew ? <Text style={styles.songTagNew}>New</Text> : null}
+                </View>
+                <Text style={styles.helperText}>
+                  {song.artist} • {song.level} • {song.durationMinutes} min • {song.targetBpm} BPM
+                </Text>
+              </View>
+              <View style={styles.songActions}>
+                <TouchableOpacity
+                  style={styles.smallActionButton}
+                  onPress={() => onAddToBuilder(song)}
+                  testID={`songs-add-${song.id}`}
+                >
+                  <Text style={styles.smallActionText}>Add</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.smallActionButton}
+                  onPress={() => onStartNow(song)}
+                  testID={`songs-start-${song.id}`}
+                >
+                  <Text style={styles.smallActionText}>Play</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         )}
@@ -2572,11 +2833,12 @@ function ProfileAchievements(props: {
 
 function AppTabBar(props: {
   screen: Screen;
-  onNavigate: (screen: "home" | "sessions" | "progress" | "profile") => void;
+  onNavigate: (screen: "home" | "songs" | "sessions" | "progress" | "profile") => void;
 }) {
   const { screen, onNavigate } = props;
-  const tabs: { id: "home" | "sessions" | "progress" | "profile"; label: string }[] = [
+  const tabs: { id: "home" | "songs" | "sessions" | "progress" | "profile"; label: string }[] = [
     { id: "home", label: "Practice" },
+    { id: "songs", label: "Songs" },
     { id: "sessions", label: "Sessions" },
     { id: "progress", label: "Progress" },
     { id: "profile", label: "Profile" },
@@ -2614,8 +2876,12 @@ function ActivePractice(props: {
   randomCueBeatsRemaining: number;
   randomCuePulseWindowActive: boolean;
   randomCuePulse: Animated.Value;
+  focusModeEnabled: boolean;
+  beatPulseLocked: boolean;
   onMetronomeToggle: () => void;
   onMetronomeStep: (delta: number) => void;
+  onToggleFocusMode: () => void;
+  onToggleBeatPulseLocked: () => void;
   onPauseToggle: () => void;
   onSkip: () => void;
 }) {
@@ -2635,8 +2901,12 @@ function ActivePractice(props: {
     randomCueBeatsRemaining,
     randomCuePulseWindowActive,
     randomCuePulse,
+    focusModeEnabled,
+    beatPulseLocked,
     onMetronomeToggle,
     onMetronomeStep,
+    onToggleFocusMode,
+    onToggleBeatPulseLocked,
     onPauseToggle,
     onSkip,
   } = props;
@@ -2654,7 +2924,9 @@ function ActivePractice(props: {
     <View style={styles.screenBody} testID="active-screen">
       <View style={styles.activeTopRow}>
         <Text style={styles.cardLabel}>Practice Mode</Text>
-        <Text style={styles.activeModeHint}>Focus</Text>
+        <TouchableOpacity style={styles.pillButton} onPress={onToggleFocusMode} testID="active-focus-toggle">
+          <Text style={styles.pillButtonText}>{focusModeEnabled ? "Focus On" : "Focus Off"}</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
@@ -2690,10 +2962,12 @@ function ActivePractice(props: {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.inlineRow}>
-          <View style={[styles.beatDot, beatFlash && metronomeEnabled ? styles.beatDotActive : null]} />
-          <Text style={styles.helperText}>Beat pulse {metronomeEnabled ? "locked" : "stopped"}</Text>
-        </View>
+        <TouchableOpacity style={styles.inlineRow} onPress={onToggleBeatPulseLocked} testID="active-beat-pulse-toggle">
+          <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
+          <Text style={styles.helperText}>
+            Beat pulse {beatPulseLocked && metronomeEnabled ? "locked" : "free"}
+          </Text>
+        </TouchableOpacity>
         {randomCueLabel ? (
           <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
             <Text style={styles.randomCueLabel}>Now: {randomCueLabel}</Text>
@@ -2735,6 +3009,7 @@ function SessionComplete(props: {
   onContinue: () => void;
 }) {
   const { sessionXp, leveledUp, level, streak, badges, rewardGlow, rewardScale, onContinue } = props;
+  const [shared, setShared] = useState(false);
 
   const glowOpacity = rewardGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
 
@@ -2778,6 +3053,13 @@ function SessionComplete(props: {
 
       <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
         <Text style={styles.primaryCtaText}>Back to Practice Hub</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.secondaryCta}
+        onPress={() => setShared(true)}
+        testID="complete-share-button"
+      >
+        <Text style={styles.secondaryCtaText}>{shared ? "Shared to clipboard-ready summary" : "Share Achievements"}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -2879,19 +3161,19 @@ const styles = StyleSheet.create({
   },
   screenBody: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.pageX,
     paddingTop: 16,
     paddingBottom: 100,
-    gap: 16,
+    gap: SPACING.sectionGap,
   },
   homeScroll: {
     flex: 1,
   },
   homeScrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.pageX,
     paddingTop: 16,
     paddingBottom: 120,
-    gap: 16,
+    gap: SPACING.sectionGap,
   },
   topRow: {
     flexDirection: "row",
@@ -2901,45 +3183,50 @@ const styles = StyleSheet.create({
   },
   title: {
     color: COLORS.text,
-    fontSize: 42,
+    fontSize: 52,
     fontWeight: "800",
     letterSpacing: 0.1,
   },
+  headerSubline: {
+    color: COLORS.muted,
+    fontSize: 14,
+    marginTop: 4,
+  },
   brandEyebrow: {
     color: COLORS.accentAlt,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.6,
   },
   levelChip: {
     color: COLORS.xp,
     fontSize: 13,
     fontWeight: "700",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     backgroundColor: "rgba(234,179,8,0.16)",
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     overflow: "hidden",
   },
   homeHeroPanel: {
-    borderColor: "rgba(217,119,6,0.55)",
+    borderColor: "rgba(230,126,0,0.52)",
     shadowColor: COLORS.accent,
-    shadowOpacity: 0.2,
-    shadowRadius: 14,
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
   },
   builderHeroCard: {
     borderColor: "rgba(217,119,6,0.45)",
   },
   heroHeadline: {
     color: COLORS.text,
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: "800",
-    lineHeight: 32,
+    lineHeight: 38,
   },
   heroSubline: {
     color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 21,
   },
   cardLabel: {
     color: COLORS.muted,
@@ -2950,8 +3237,8 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     width: "100%",
-    height: 12,
-    borderRadius: 999,
+    height: 13,
+    borderRadius: RADII.pill,
     backgroundColor: COLORS.divider,
     overflow: "hidden",
   },
@@ -2973,11 +3260,11 @@ const styles = StyleSheet.create({
   },
   statChip: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 14,
     gap: 4,
   },
@@ -3027,8 +3314,8 @@ const styles = StyleSheet.create({
   },
   primaryCta: {
     backgroundColor: COLORS.accent,
-    minHeight: 56,
-    borderRadius: 18,
+    minHeight: 58,
+    borderRadius: RADII.card,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -3045,13 +3332,13 @@ const styles = StyleSheet.create({
   },
   primaryCtaText: {
     color: COLORS.text,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "800",
     letterSpacing: 0.4,
   },
   secondaryCta: {
-    minHeight: 46,
-    borderRadius: 14,
+    minHeight: 48,
+    borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,
@@ -3066,7 +3353,7 @@ const styles = StyleSheet.create({
   topActionButton: {
     minHeight: 44,
     minWidth: 64,
-    borderRadius: 12,
+    borderRadius: RADII.chip,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3128,7 +3415,7 @@ const styles = StyleSheet.create({
   },
   drillCard: {
     minHeight: 102,
-    borderRadius: 18,
+    borderRadius: RADII.card,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3342,7 +3629,7 @@ const styles = StyleSheet.create({
   },
   completeCard: {
     marginTop: 8,
-    borderRadius: 20,
+    borderRadius: RADII.card,
     padding: 22,
     backgroundColor: COLORS.card,
     borderWidth: 1,
@@ -3369,7 +3656,7 @@ const styles = StyleSheet.create({
   },
   completeStatChip: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,
@@ -3417,7 +3704,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14,
@@ -3433,7 +3720,7 @@ const styles = StyleSheet.create({
   },
   templatePill: {
     minHeight: 36,
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3451,7 +3738,7 @@ const styles = StyleSheet.create({
   },
   templateInput: {
     minHeight: 44,
-    borderRadius: 12,
+    borderRadius: RADII.chip,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3461,7 +3748,7 @@ const styles = StyleSheet.create({
   timeInput: {
     flex: 1,
     minHeight: 44,
-    borderRadius: 12,
+    borderRadius: RADII.chip,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3470,7 +3757,7 @@ const styles = StyleSheet.create({
   },
   smallActionButton: {
     minHeight: 38,
-    borderRadius: 10,
+    borderRadius: RADII.chip,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3487,7 +3774,7 @@ const styles = StyleSheet.create({
   },
   smallDangerButton: {
     minHeight: 38,
-    borderRadius: 10,
+    borderRadius: RADII.chip,
     backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -3502,7 +3789,7 @@ const styles = StyleSheet.create({
   },
   removeChip: {
     minHeight: 30,
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     borderColor: COLORS.divider,
     paddingHorizontal: 10,
@@ -3512,7 +3799,7 @@ const styles = StyleSheet.create({
   moveChip: {
     minHeight: 30,
     minWidth: 30,
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     borderColor: COLORS.divider,
     alignItems: "center",
@@ -3539,6 +3826,66 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 24,
   },
+  songRow: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+    paddingTop: 10,
+    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  songMeta: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  songTitle: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "800",
+    maxWidth: "78%",
+  },
+  songActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  songTagMastered: {
+    color: "#22c55e",
+    borderColor: "rgba(34,197,94,0.35)",
+    borderWidth: 1,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  songTagNew: {
+    color: COLORS.text,
+    backgroundColor: COLORS.accent,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  milestoneRow: {
+    gap: 10,
+    paddingRight: 6,
+  },
+  milestoneCard: {
+    width: 220,
+    borderRadius: RADII.chip,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    padding: 12,
+    gap: 8,
+  },
   sessionsHeroCard: {
     gap: 10,
   },
@@ -3548,7 +3895,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sessionsPresetChip: {
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,
@@ -3588,7 +3935,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
-    borderRadius: 20,
+    borderRadius: RADII.card,
     padding: 8,
     flexDirection: "row",
     alignItems: "center",
@@ -3598,7 +3945,7 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     minHeight: 46,
-    borderRadius: 14,
+    borderRadius: RADII.chip,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
@@ -3638,7 +3985,7 @@ const styles = StyleSheet.create({
   bpmPill: {
     flex: 1,
     minHeight: 40,
-    borderRadius: 999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,
@@ -3659,7 +4006,7 @@ const styles = StyleSheet.create({
   },
   randomCueCard: {
     marginTop: 10,
-    borderRadius: 12,
+    borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
     backgroundColor: COLORS.cardSoft,

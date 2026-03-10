@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e67e00",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231a0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-primary/10">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold tracking-tight">Ready to play?</h1>
+<p class="text-sm text-slate-500 dark:text-slate-400">Welcome back to Fretline</p>
+</div>
+<div class="bg-primary/20 border border-primary/30 px-3 py-1 rounded-full">
+<span class="text-primary font-bold text-sm">Level 1</span>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Main Session Card -->
+<div class="p-4">
+<div class="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-primary/5 border border-primary/10 shadow-lg">
+<div class="aspect-video w-full bg-slate-200 dark:bg-slate-800 relative">
+<img class="w-full h-full object-cover opacity-80" data-alt="A close up of a person playing an acoustic guitar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpz2k_t3PtCu8Fa2SUUwCP9K4EtLoXTLVc4lKeHKCDQJvKZOpXm3Auk_QllWvbL6HwUrz2v9SfvveKzqiHuG8safRE1k6TsWOntviSQJw_pMUGIttrsvkQM5huiOzuurlGxd74FS7EnbGEG_xr5yH8x5qQMzCNhgYjICEzCldEBfpXaNkPxRvl6QGOLq2SJDG-r_OboOUeqzd3xIGC4rjOu085kV_tGJ-QednC5PzB9sZkp56j-x5zdtcigU4831W52eC59qFiIMwl"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<h2 class="text-xl font-bold text-white">Today's Session</h2>
+<p class="text-primary-100 text-slate-200">Keep your streak alive</p>
+</div>
+</div>
+<div class="p-5 space-y-4">
+<!-- Progress Bar -->
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span>Daily Practice Goal</span>
+<span class="text-primary">0 / 30m</span>
+</div>
+<div class="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-0"></div>
+</div>
+</div>
+<!-- CTA Buttons -->
+<div class="flex flex-col gap-3">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">play_arrow</span>
+                            Start Practice
+                        </button>
+<button class="w-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold py-3 rounded-xl transition-colors">
+                            Customize Session
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Stats Grid -->
+<div class="grid grid-cols-2 gap-4 px-4 mb-6">
+<div class="p-4 rounded-xl border border-primary/10 bg-slate-100 dark:bg-primary/5">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-xl">local_fire_department</span>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Streak</p>
+</div>
+<p class="text-2xl font-bold">0 days</p>
+</div>
+<div class="p-4 rounded-xl border border-primary/10 bg-slate-100 dark:bg-primary/5">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-xl">military_tech</span>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Next Level</p>
+</div>
+<p class="text-2xl font-bold">0/250 XP</p>
+</div>
+</div>
+<!-- Questionnaire Section -->
+<div class="px-4 mb-6">
+<div class="bg-slate-100 dark:bg-primary/5 rounded-xl border border-primary/10 p-5">
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">assignment</span>
+                    Starter Questionnaire
+                </h3>
+<div class="space-y-6">
+<!-- Difficulty -->
+<div>
+<label class="text-sm font-semibold mb-3 block text-slate-600 dark:text-slate-300">Choose your skill level</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 px-1 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold">Beginner</button>
+<button class="py-2 px-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 text-xs font-bold">Intermediate</button>
+<button class="py-2 px-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 text-xs font-bold">Expert</button>
+</div>
+</div>
+<!-- Time Selection -->
+<div>
+<label class="text-sm font-semibold mb-3 block text-slate-600 dark:text-slate-300">Daily practice goal</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 px-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 text-xs font-bold">20 min</button>
+<button class="py-2 px-1 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold">30 min</button>
+<button class="py-2 px-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 text-xs font-bold">60 min</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-primary/10 bg-background-light dark:bg-background-dark pb-6 pt-2 px-2">
+<div class="flex justify-around items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 active-tab text-primary" href="#">
+<span class="material-symbols-outlined text-[28px]">play_circle</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Practice</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[28px]">music_note</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Sessions</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[28px]">leaderboard</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Progress</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[28px]">person</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

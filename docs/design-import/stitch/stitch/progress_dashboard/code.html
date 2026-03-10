@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e67e00",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231a0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Navigation -->
+<header class="flex items-center justify-between p-4 sticky top-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md z-10 border-b border-primary/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary cursor-pointer">arrow_back</span>
+<h1 class="text-lg font-bold tracking-tight">Progress &amp; Stats</h1>
+</div>
+<button class="p-2 rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- User Profile Quick View -->
+<section class="p-4 @container">
+<div class="flex items-center gap-5 bg-primary/5 p-4 rounded-xl border border-primary/10">
+<div class="relative">
+<div class="size-20 rounded-full bg-cover bg-center border-2 border-primary" data-alt="Profile picture of a person playing guitar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBecwXB7K4D0a-abwjcMscljqFKZz65pn5RDrvl8Wu3evgORxl80U03zj2gAqHYez9MD6KBDADoM9xNflU7tnKjpRgl_aH2tnfBRWILGUyR2cCXg4NS3MCobImidirMsjI2Pxr-KJyWzqUi1QvHeHmtRtTTj-5bGamPa8dfkZQjFDe_jhDSoyhwNc3MQy_j7ak_RtdInrjKxcBU3DErNr-NexvKCcXN6acEAsui2L8a3VmC5XYQotPnBvTeguI6q26DhdfJE8qA0jtH')"></div>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-background-dark">LVL 12</div>
+</div>
+<div class="flex-1">
+<h2 class="text-xl font-bold">Guitar Hero</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Intermediate Player</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm fill-icon">military_tech</span>
+<span class="text-xs font-medium text-primary">240 XP to Level 13</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Level Progress Bar -->
+<section class="px-4 py-2">
+<div class="bg-primary/10 p-5 rounded-xl border border-primary/20">
+<div class="flex justify-between items-end mb-3">
+<div>
+<p class="text-xs uppercase tracking-wider font-semibold text-slate-500">Current Rank</p>
+<p class="text-lg font-bold">Apprentice II</p>
+</div>
+<p class="text-sm font-medium">1,260 / 1,500 XP</p>
+</div>
+<div class="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: 84%;"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[10px] font-bold text-slate-400">LEVEL 12</span>
+<span class="text-[10px] font-bold text-primary">LEVEL 13</span>
+</div>
+</div>
+</section>
+<!-- Weekly Practice Consistency -->
+<section class="p-4">
+<div class="bg-slate-50 dark:bg-primary/5 rounded-xl p-5 border border-slate-200 dark:border-primary/10">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-bold text-lg">Practice Consistency</h3>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="text-2xl font-bold">12.5 hrs</span>
+<span class="text-xs font-bold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded">+15%</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400">calendar_month</span>
+</div>
+<div class="flex items-end justify-between h-32 gap-2 px-1">
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/20 rounded-t-sm" style="height: 45%;"></div>
+<span class="text-[10px] font-bold text-slate-500">M</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/20 rounded-t-sm" style="height: 30%;"></div>
+<span class="text-[10px] font-bold text-slate-500">T</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/20 rounded-t-sm" style="height: 60%;"></div>
+<span class="text-[10px] font-bold text-slate-500">W</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/20 rounded-t-sm" style="height: 25%;"></div>
+<span class="text-[10px] font-bold text-slate-500">T</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary rounded-t-sm" style="height: 85%;"></div>
+<span class="text-[10px] font-bold text-slate-500">F</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary rounded-t-sm" style="height: 100%;"></div>
+<span class="text-[10px] font-bold text-slate-500">S</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1">
+<div class="w-full bg-primary/60 rounded-t-sm" style="height: 70%;"></div>
+<span class="text-[10px] font-bold text-slate-500">S</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Skills Breakdown -->
+<section class="p-4">
+<h3 class="font-bold text-lg mb-4">Skills Mastered</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+<div class="size-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined fill-icon">music_note</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="text-sm font-semibold">Chords</span>
+<span class="text-xs text-slate-500">Level 8</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 80%;"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+<div class="size-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined fill-icon">linear_scale</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="text-sm font-semibold">Scales</span>
+<span class="text-xs text-slate-500">Level 5</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 45%;"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+<div class="size-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined fill-icon">speed</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="text-sm font-semibold">Speed &amp; Accuracy</span>
+<span class="text-xs text-slate-500">Level 11</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 92%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Milestones Section -->
+<section class="p-4">
+<h3 class="font-bold text-lg mb-4">Upcoming Milestones</h3>
+<div class="flex gap-4 overflow-x-auto pb-4 snap-x">
+<div class="min-w-[200px] snap-start bg-gradient-to-br from-primary/20 to-transparent p-5 rounded-xl border border-primary/20">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl">workspace_premium</span>
+<h4 class="font-bold text-sm mb-1">Level 13 Unlocks</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">New Blues Soloing Module</p>
+<div class="mt-4 text-[10px] font-bold text-primary px-2 py-1 bg-primary/10 rounded-full inline-block">78% COMPLETE</div>
+</div>
+<div class="min-w-[200px] snap-start bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
+<span class="material-symbols-outlined text-slate-400 mb-3 text-3xl">local_fire_department</span>
+<h4 class="font-bold text-sm mb-1">30 Day Streak</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Exclusive Profile Badge</p>
+<div class="mt-4 text-[10px] font-bold text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full inline-block">24/30 DAYS</div>
+</div>
+<div class="min-w-[200px] snap-start bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
+<span class="material-symbols-outlined text-slate-400 mb-3 text-3xl">timer</span>
+<h4 class="font-bold text-sm mb-1">Speed Demon</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Hit 140 BPM on Scales</p>
+<div class="mt-4 text-[10px] font-bold text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full inline-block">132/140 BPM</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-20">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">library_music</span>
+<span class="text-[10px] font-medium">Learn</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">play_circle</span>
+<span class="text-[10px] font-medium">Practice</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-icon">bar_chart</span>
+<span class="text-[10px] font-medium">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</body></html>

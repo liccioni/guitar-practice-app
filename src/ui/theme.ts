@@ -1,14 +1,14 @@
 export const TOKENS = {
-  background: "#0F0F10",
-  surface: "#171718",
-  elevated: "#222224",
-  divider: "#2E2E31",
-  primaryAccent: "#D97706",
-  secondaryAccent: "#F59E0B",
-  xpHighlight: "#FACC15",
-  textPrimary: "#F5F5F4",
-  textSecondary: "#B8B8B5",
-  disabled: "#6B7280",
+  background: "#110d09",
+  surface: "#1a130d",
+  elevated: "#241b13",
+  divider: "#3d2d1f",
+  primaryAccent: "#e67e00",
+  secondaryAccent: "#f59e0b",
+  xpHighlight: "#facc15",
+  textPrimary: "#f7f3ee",
+  textSecondary: "#b8afa4",
+  disabled: "#736c64",
 } as const;
 
 export const COLORS = {
@@ -23,4 +23,16 @@ export const COLORS = {
   divider: TOKENS.divider,
   danger: "#C2410C",
   disabled: TOKENS.disabled,
+} as const;
+
+export const RADII = {
+  card: 20,
+  chip: 14,
+  pill: 999,
+} as const;
+
+export const SPACING = {
+  pageX: 20,
+  sectionGap: 16,
+  cardPadding: 18,
 } as const;

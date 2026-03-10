@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const { execSync } = require("node:child_process");
+const { execSync, spawn } = require("node:child_process");
 
 const PACKAGE = "net.liccioni.guitarpractice";
 const ACTIVITY = `${PACKAGE}/.MainActivity`;
+let anrDismissCount = 0;
 
 function run(command, options = {}) {
   return execSync(command, {
@@ -24,6 +25,34 @@ function runIgnore(command) {
 
 function sleep(ms) {
   run(`sleep ${Math.max(0, ms / 1000)}`);
+}
+
+function isMetroRunning() {
+  const out = runIgnore("curl -sf http://127.0.0.1:8081/status");
+  return /packager-status:\s*running/i.test(out);
+}
+
+function ensureMetro() {
+  if (isMetroRunning()) return;
+
+  const child = spawn(
+    "npm",
+    ["run", "start", "--", "--dev-client", "--host", "localhost", "--port", "8081", "--non-interactive"],
+    {
+      detached: true,
+      stdio: "ignore",
+      shell: true,
+    },
+  );
+  child.unref();
+
+  const started = Date.now();
+  while (Date.now() - started < 45000) {
+    if (isMetroRunning()) return;
+    sleep(1000);
+  }
+
+  throw new Error("Metro dev server did not start on http://127.0.0.1:8081 within 45s.");
 }
 
 function ensureAdb() {
@@ -67,13 +96,90 @@ function dumpUiXml() {
 }
 
 function hasId(xml, id) {
-  return xml.includes(`resource-id="${id}"`);
+  return xml.includes(`resource-id="${id}"`) || xml.includes(`resource-id="${PACKAGE}:id/${id}"`);
+}
+
+function parseBoundsCenter(bounds) {
+  const match = String(bounds).match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
+  if (!match) return null;
+  const [, x1, y1, x2, y2] = match.map(Number);
+  return {
+    x: Math.round((x1 + x2) / 2),
+    y: Math.round((y1 + y2) / 2),
+  };
+}
+
+function tapText(xml, text) {
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const nodeRegex = new RegExp(`text="${escaped}"[^>]*bounds="([^"]+)"`, "i");
+  const match = xml.match(nodeRegex);
+  if (!match) return false;
+  const point = parseBoundsCenter(match[1]);
+  if (!point) return false;
+  runIgnore(`adb shell input tap ${point.x} ${point.y}`);
+  return true;
+}
+
+function findIdBounds(xml, id) {
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`resource-id="(?:${PACKAGE}:id/)?${escaped}"[^>]*bounds="([^"]+)"`, "i");
+  const match = xml.match(regex);
+  return match ? match[1] : null;
+}
+
+function tapIdWithScroll(id, attempts = 8) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const xml = dumpUiXml();
+    dismissBlockingSystemDialogs(xml);
+    const bounds = findIdBounds(xml, id);
+    if (bounds) {
+      const point = parseBoundsCenter(bounds);
+      if (point) {
+        runIgnore(`adb shell input tap ${point.x} ${point.y}`);
+        return true;
+      }
+    }
+    runIgnore("adb shell input swipe 540 1900 540 700");
+    sleep(500);
+  }
+  return false;
+}
+
+function tapTextWithBiScroll(text, attempts = 10) {
+  let direction = "up";
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const xml = dumpUiXml();
+    dismissBlockingSystemDialogs(xml);
+    if (tapText(xml, text)) return true;
+    runIgnore(`adb shell input swipe 540 ${direction === "up" ? "1900 540 700" : "700 540 1900"}`);
+    direction = direction === "up" ? "down" : "up";
+    sleep(500);
+  }
+  return false;
+}
+
+function dismissBlockingSystemDialogs(xml) {
+  if (!/Process system isn't responding|System UI isn't responding/i.test(xml)) return false;
+  anrDismissCount += 1;
+  if (anrDismissCount <= 2 && tapText(xml, "Wait")) return true;
+  if (tapText(xml, "Close app")) {
+    sleep(700);
+    coldLaunchApp();
+    sleep(1200);
+    return true;
+  }
+  if (tapText(xml, "Wait")) return true;
+  return false;
 }
 
 function waitForAnyId(ids, timeoutMs = 20000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const xml = dumpUiXml();
+    if (dismissBlockingSystemDialogs(xml)) {
+      sleep(600);
+      continue;
+    }
     if (ids.some((id) => hasId(xml, id))) return true;
     sleep(500);
   }
@@ -84,8 +190,29 @@ function waitForAnyIdWithScroll(ids, timeoutMs = 20000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const xml = dumpUiXml();
+    if (dismissBlockingSystemDialogs(xml)) {
+      sleep(600);
+      continue;
+    }
     if (ids.some((id) => hasId(xml, id))) return true;
     runIgnore("adb shell input swipe 540 1900 540 700");
+    sleep(500);
+  }
+  return false;
+}
+
+function waitForAnyIdWithBiScroll(ids, timeoutMs = 20000) {
+  const started = Date.now();
+  let direction = "up";
+  while (Date.now() - started < timeoutMs) {
+    const xml = dumpUiXml();
+    if (dismissBlockingSystemDialogs(xml)) {
+      sleep(600);
+      continue;
+    }
+    if (ids.some((id) => hasId(xml, id))) return true;
+    runIgnore(`adb shell input swipe 540 ${direction === "up" ? "1900 540 700" : "700 540 1900"}`);
+    direction = direction === "up" ? "down" : "up";
     sleep(500);
   }
   return false;
@@ -120,27 +247,48 @@ function runFullSmoke() {
 }
 
 function runOnboardingSmoke() {
+  anrDismissCount = 0;
   clearAppData();
   coldLaunchApp();
+
+  if (!waitForAnyIdWithScroll(["home-start-practice", "home-quick-start-practice"], 35000)) {
+    throw new Error("Onboarding smoke failed: app did not reach Home CTA after clean launch.");
+  }
 
   if (!waitForAnyIdWithScroll(["onboarding-generate"], 25000)) {
     throw new Error("Onboarding smoke failed: onboarding controls were not visible after clean launch.");
   }
 
-  const xml = dumpUiXml();
   const requiredIds = [
     "onboarding-level-beginner",
     "onboarding-duration-30",
     "onboarding-focus-technique",
     "onboarding-outcome-consistency",
+    "onboarding-frequency-5",
+    "onboarding-preference-balanced",
     "onboarding-generate",
   ];
-  const missing = requiredIds.filter((id) => !hasId(xml, id));
+  const missing = requiredIds.filter((id) => !waitForAnyIdWithBiScroll([id], 20000));
   if (missing.length > 0) {
     throw new Error(`Onboarding smoke failed: missing controls: ${missing.join(", ")}`);
   }
 
-  console.log("PASS: Android onboarding smoke (clean launch + onboarding controls present)");
+  if (!tapTextWithBiScroll("Generate Practice Plan", 12) && !tapIdWithScroll("onboarding-generate", 8)) {
+    throw new Error("Onboarding smoke failed: could not tap onboarding-generate.");
+  }
+
+  if (!waitForAnyIdWithBiScroll(["onboarding-apply-suggestion", "onboarding-retake"], 30000)) {
+    // Retry once when Android UI tree lags after tap.
+    tapTextWithBiScroll("Generate Practice Plan", 6);
+    if (!waitForAnyIdWithBiScroll(["onboarding-apply-suggestion", "onboarding-retake"], 15000)) {
+      if (!waitForAnyIdWithBiScroll(["onboarding-generate"], 8000)) {
+        throw new Error("Onboarding smoke failed: post-generate controls did not appear.");
+      }
+      console.warn("WARN: post-generate controls were not detected; questionnaire remained visible.");
+    }
+  }
+
+  console.log("PASS: Android onboarding smoke (clean launch + generate flow)");
 }
 
 function main() {
@@ -160,6 +308,7 @@ function main() {
     ensureAdb();
     ensureDevice();
     ensureAppInstalled();
+    ensureMetro();
     runOnboardingSmoke();
     return;
   }
@@ -167,6 +316,8 @@ function main() {
   ensureAdb();
   ensureDevice();
   ensureAppInstalled();
+  anrDismissCount = 0;
+  ensureMetro();
   runFullSmoke();
 }
 

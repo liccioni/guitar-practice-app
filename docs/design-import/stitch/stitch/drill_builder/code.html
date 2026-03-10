@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Build Your Chain - Guitar Practice</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e67e00",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231a0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 border-b border-primary/10 sticky top-0 z-10">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">arrow_back</span>
+</div>
+<div class="flex-1 px-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Build Your Chain</h2>
+<p class="text-xs text-primary font-medium">Daily Shred Routine</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="text-slate-600 dark:text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all">
+                    Save
+                </button>
+</div>
+</header>
+<main class="flex-1 flex flex-col p-4 max-w-2xl mx-auto w-full">
+<div class="flex items-center justify-between mb-6 pt-4">
+<h1 class="text-2xl font-bold tracking-tight">Your Drill Flow</h1>
+<div class="flex gap-2">
+<button class="flex items-center gap-1 bg-primary/20 text-primary px-3 py-1.5 rounded-lg text-sm font-semibold border border-primary/20">
+<span class="material-symbols-outlined text-sm">add</span> New
+                    </button>
+</div>
+</div>
+<!-- Drill List Container -->
+<div class="space-y-4">
+<!-- Drill Card 1 -->
+<div class="group relative flex flex-col sm:flex-row gap-4 rounded-xl bg-slate-100 dark:bg-primary/5 p-4 border border-transparent dark:border-primary/10 hover:border-primary/30 transition-all">
+<!-- Reorder Controls (Side) -->
+<div class="flex flex-row sm:flex-col justify-center items-center gap-2 border-r border-primary/10 pr-2">
+<button class="p-1 rounded-md hover:bg-primary/20 text-primary transition-colors">
+<span class="material-symbols-outlined">keyboard_arrow_up</span>
+</button>
+<button class="p-1 rounded-md hover:bg-primary/20 text-primary transition-colors">
+<span class="material-symbols-outlined">keyboard_arrow_down</span>
+</button>
+</div>
+<!-- Content -->
+<div class="flex flex-1 flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Chromatic Warmup</h3>
+<div class="flex items-center gap-3 mt-1">
+<span class="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">schedule</span> 5:00
+                                    </span>
+<span class="flex items-center gap-1 text-sm text-primary font-medium">
+<span class="material-symbols-outlined text-sm">bolt</span> 50 XP
+                                    </span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-red-500 transition-colors p-1">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex items-end justify-between">
+<button class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete_outline</span> Remove
+                            </button>
+<div class="h-16 w-28 rounded-lg bg-cover bg-center border border-primary/10" data-alt="Close up of guitar fretboard with hands" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDs7Z5K9ChYu_w3_wylOiBNbf0qCFdT9bzTZJwuJihfkLnPeiEW2-jSIJiIglmCcyi0ptwWSK93mKwQO6oo-VwHAHhn0K2WoYXCl2GMQWdmXPzXoSz9blW-nRdpWHMbBe9_iMiEhAkEmZsnpTZ_5DlzhpnImOptnNyTYMe7GAkjgaDnWlsCdcOCl_JTaCCXCMnUfFaLme55pkcrm6t0m_Ev-Wiu5EkRs1lxUEvT3GYLf-HGH5lWepzGVmSmr8TpDU6cHfqpA3cuGhja");'>
+</div>
+</div>
+</div>
+</div>
+<!-- Drill Card 2 -->
+<div class="group relative flex flex-col sm:flex-row gap-4 rounded-xl bg-slate-100 dark:bg-primary/5 p-4 border border-transparent dark:border-primary/10 hover:border-primary/30 transition-all">
+<!-- Reorder Controls -->
+<div class="flex flex-row sm:flex-col justify-center items-center gap-2 border-r border-primary/10 pr-2">
+<button class="p-1 rounded-md hover:bg-primary/20 text-primary transition-colors">
+<span class="material-symbols-outlined">keyboard_arrow_up</span>
+</button>
+<button class="p-1 rounded-md hover:bg-primary/20 text-primary transition-colors">
+<span class="material-symbols-outlined">keyboard_arrow_down</span>
+</button>
+</div>
+<!-- Content -->
+<div class="flex flex-1 flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Major Scale Ladder</h3>
+<div class="flex items-center gap-3 mt-1">
+<span class="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">schedule</span> 10:00
+                                    </span>
+<span class="flex items-center gap-1 text-sm text-primary font-medium">
+<span class="material-symbols-outlined text-sm">bolt</span> 120 XP
+                                    </span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-red-500 transition-colors p-1">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex items-end justify-between">
+<button class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete_outline</span> Remove
+                            </button>
+<div class="h-16 w-28 rounded-lg bg-cover bg-center border border-primary/10" data-alt="Acoustic guitar resting against a wall" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCPQoogkPo3qGsg4kol3s17q9qLLotwPvGaddzSxZxXZ9T0maW0zCO35obJhtrHW8OAmP55u0ojS3sjn25xVwzbOA754NeIkxYo3t3dq1WFVXqSi1Mx_5N_itmVaGQ2GQKLZCZ7seu1K0M6oFCwTOhLNgbUTEvLYJ5dB9AfJviA2aKcpmSc6XV4WY7wGn2LPbroVxG3c76NVxNi2ZDHnsD8UKH_P55f05wa5BTSUbG6A3xb5_mzMU1rCEh-glke349oZArjTmsxTz0h");'>
+</div>
+</div>
+</div>
+</div>
+<!-- Add Drill Placeholder -->
+<div class="flex items-center justify-center p-8 border-2 border-dashed border-primary/20 rounded-xl hover:border-primary/50 transition-all cursor-pointer group bg-primary/5">
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-full bg-primary flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<span class="text-sm font-bold text-primary uppercase tracking-widest">Add Next Drill</span>
+</div>
+</div>
+</div>
+<!-- Summary Bar -->
+<div class="mt-10 p-4 rounded-xl bg-slate-100 dark:bg-primary/10 border border-primary/20">
+<div class="flex justify-between items-center">
+<div>
+<p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">Total Estimated Time</p>
+<p class="text-2xl font-black text-slate-900 dark:text-slate-100">15 Minutes</p>
+</div>
+<div class="text-right">
+<p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">Total Reward</p>
+<p class="text-2xl font-black text-primary">170 XP</p>
+</div>
+</div>
+</div>
+<div class="h-20"></div>
+</main>
+<!-- Fixed Footer Actions -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-t border-primary/10 flex gap-4 max-w-2xl mx-auto w-full">
+<button class="flex-1 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-900 dark:text-slate-100 font-bold py-4 rounded-xl transition-all">
+                Preview Routine
+            </button>
+<button class="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all">
+                Start Practicing
+            </button>
+</div>
+</div>
+</body></html>

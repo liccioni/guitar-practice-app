@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e67e00",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231a0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10">
+<div class="flex items-center p-4 justify-between">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined text-3xl">music_note</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 ml-2">Songs &amp; Library</h2>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-full size-10 bg-primary/10 text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-full size-10 bg-primary text-white">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Search Bar -->
+<div class="px-4 py-4">
+<label class="flex flex-col w-full">
+<div class="flex w-full items-stretch rounded-xl h-12 bg-primary/5 dark:bg-primary/10 border border-primary/20">
+<div class="text-primary/60 flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full border-none bg-transparent focus:ring-0 text-base px-3 placeholder:text-primary/40" placeholder="Search songs, artists, or tabs"/>
+<div class="flex items-center pr-3">
+<span class="material-symbols-outlined text-primary/60">tune</span>
+</div>
+</div>
+</label>
+</div>
+<!-- Featured Section -->
+<section class="px-4 @container">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary filled-icon">star</span>
+                Featured Challenge
+            </h3>
+<div class="relative overflow-hidden flex flex-col items-stretch justify-start rounded-xl shadow-xl bg-slate-100 dark:bg-zinc-800/50 border border-primary/10">
+<div class="w-full h-48 bg-center bg-cover" data-alt="Electric guitar leaning against a vintage amplifier in a studio" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4JX7KrbNuWh7sUwcCTTMh1QUnjYipKXfuVdKMtk8yIDnlLhQLSeLM69bGOhM2ZRr1UF41_Bx_LmOVr0Syl6TMMx0IiHL2KWmGxEREP5-7ixYgodnJLoSdZ1q_8xTXzksopryPKmzhhDtaI049XhncPQ6ap8A9VE0-fOftvWKi8vwft0HyoGW7Vs8tkikWZYgy_SVvnh1Wgmi4JQsgUGcqfYNgaik3I8p-idyxfAcYaIN4inhELGp39UYbqD0F_B9tpJftoi6OfutG');">
+<div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent"></div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-5 flex flex-col gap-1">
+<p class="text-primary text-xs font-bold tracking-widest uppercase">Daily Masterclass</p>
+<p class="text-white text-2xl font-black leading-tight">Neon Moon</p>
+<div class="flex items-center justify-between mt-2">
+<div class="flex flex-col">
+<p class="text-slate-300 text-sm font-medium">Brooks &amp; Dunn</p>
+<p class="text-slate-400 text-xs mt-1">Difficulty: <span class="text-primary">Intermediate</span></p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white rounded-lg px-6 py-2.5 text-sm font-bold shadow-lg flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm filled-icon">play_arrow</span>
+                            Start Now
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Categories -->
+<section class="mt-8">
+<div class="flex items-center justify-between px-4 mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Categories</h3>
+<a class="text-primary text-sm font-semibold" href="#">View All</a>
+</div>
+<div class="flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
+<button class="flex-none px-5 py-2 rounded-full bg-primary text-white font-bold text-sm">All Levels</button>
+<button class="flex-none px-5 py-2 rounded-full bg-primary/10 dark:bg-primary/20 text-primary font-bold text-sm">Beginner</button>
+<button class="flex-none px-5 py-2 rounded-full bg-primary/10 dark:bg-primary/20 text-primary font-bold text-sm">Intermediate</button>
+<button class="flex-none px-5 py-2 rounded-full bg-primary/10 dark:bg-primary/20 text-primary font-bold text-sm">Advanced</button>
+</div>
+</section>
+<!-- Song List -->
+<section class="px-4 mt-6 space-y-4">
+<!-- Beginner Category -->
+<div>
+<h4 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Beginner Favorites</h4>
+<div class="space-y-3">
+<!-- Song Card 1 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-zinc-800 border border-primary/5 shadow-sm">
+<div class="size-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Abstract musical patterns with purple and orange lights" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDLEfCCgZfR_qyR1JDHCjVvUOqQnyCOhkZP2Blfa_m-067uKtVFKLsYArmKUMmGCr_WW3GthVfATpP-veYRxs25aoCfQ61RokW_sYNRfoDmFCVOMARw6jHwZcyY-KLv7l7s_TxxT0KVu4uiX6F3G288Q5Y_eFU95jmxkrtstcFt5umUJ_4d2N5NhNts_3bCmkFuYKrlp-NiafEpaQK2h6bgClPwJHa7vCEL6v7uqcdo6fNkTGrbnCsmXEmnqe90UIqE03HvY9bv3cy1');"></div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<h5 class="text-slate-900 dark:text-slate-100 font-bold truncate text-base">Wish You Were Here</h5>
+<span class="bg-green-500/10 text-green-500 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">Mastered</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs truncate">Pink Floyd • Beginner</p>
+</div>
+<div class="flex gap-2">
+<button class="size-9 flex items-center justify-center rounded-lg border border-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-xl filled-icon">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Song Card 2 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-zinc-800 border border-primary/5 shadow-sm">
+<div class="size-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Microphone in a dark room with stage lighting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuABe3yaUr0OwzdZM6UpREev204_pqYWneOR6hn7_iqGdovs10nJ8MfVzcTm9MfysAjvlzi1sUgQNU0KtwFqXu1XO0o-yPlCsp5Dl_cBbYHqmTUK6bRxsMq3YLk73fSJ8N0uBAojHlkvCkCLWr3gbzGYTXpIwD04L0yJcGm21uknTufPnXcy5kU04SJamag_ZLvfaVTP7j0cHF34qCunNU4LJNDgxyiJTgGyhU4IWJjrxl9-yDlPUv4GaBxZwDsOK0MxATwE_Avn1Cdr');"></div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<h5 class="text-slate-900 dark:text-slate-100 font-bold truncate text-base">Horse with No Name</h5>
+<span class="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">New</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs truncate">America • Beginner</p>
+</div>
+<div class="flex gap-2">
+<button class="size-9 flex items-center justify-center rounded-lg border border-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-xl filled-icon">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Intermediate Category -->
+<div class="pt-2">
+<h4 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Intermediate Tracks</h4>
+<div class="space-y-3">
+<!-- Song Card 3 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-zinc-800 border border-primary/5 shadow-sm">
+<div class="size-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Hands playing an acoustic guitar close up" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAler45bVX_DvuVIJ-zCLHOZ2SaoEWx0oRo3nLI84cm9yg3K-5D5vCliBKQ1YhqJC2v8iBQ_zyVnruR0jJmRrWJrtCV4ZJEeiSJLuWyX3x5cZ6vyaJ0WUCq3isa44pswDSHRBZkdqohmwzQDtNKQIgCO0b4ptjIwSUJ_2J79EiHJBzKvSvODUWEXWhgBTpiCzz11g8nhHhAFLFOaSdtmTMB0dSXd8lYU8hNQpXl8wxLaCj_q6IwwPS4eVXRJ3s57wNhTAacD35FHcMe');"></div>
+<div class="ml-4 flex-1 min-w-0">
+<h5 class="text-slate-900 dark:text-slate-100 font-bold truncate text-base">Sultans of Swing</h5>
+<p class="text-slate-500 dark:text-slate-400 text-xs truncate">Dire Straits • Intermediate</p>
+</div>
+<div class="flex gap-2">
+<button class="size-9 flex items-center justify-center rounded-lg border border-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-xl filled-icon">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Song Card 4 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-zinc-800 border border-primary/5 shadow-sm">
+<div class="size-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Concert stage with golden backlighting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCJ79kmZyNNIT_g7FKtHCab8yVCUXVNMT5LHMIo0lQ8_soWJKahl7JCrS4go8kSXusEM_rDs8qC7FPtJ5E_1gzfrP5iHScx9BLKqs0CaMyEpiBvTPKgq3CbhlEX7FjyXLU2QIa9yxh5mAbSPqGuvMrIlvCmqdJYnDcLN4kb2xYDOg0BbmXE3MJ3vF_DvKRWRuLAHugoTSHoZ4ygPkElhGJty1xswr8kNrDGVAfDGmSKXcNs04m9jnDN9Ak6PNZzdjo76-6nMKC33GTn');"></div>
+<div class="ml-4 flex-1 min-w-0">
+<h5 class="text-slate-900 dark:text-slate-100 font-bold truncate text-base">Blackbird</h5>
+<p class="text-slate-500 dark:text-slate-400 text-xs truncate">The Beatles • Intermediate</p>
+</div>
+<div class="flex gap-2">
+<button class="size-9 flex items-center justify-center rounded-lg border border-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-xl filled-icon">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-primary/10 bg-background-light dark:bg-background-dark/95 backdrop-blur-md px-6 pb-6 pt-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-primary filled-icon">library_music</span>
+<span class="text-[10px] font-bold text-primary">Library</span>
+</a>
+<div class="relative -top-8">
+<button class="bg-primary size-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/30 border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-2xl filled-icon">play_circle</span>
+</button>
+</div>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">timer</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Practice</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">person</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary">Profile</span>
+</a>
+</nav>
+</body></html>

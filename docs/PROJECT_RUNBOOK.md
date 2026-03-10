@@ -18,8 +18,9 @@ brew tap wix/brew
 brew install applesimutils
 ```
 
-## 2. Required Environment Variables
-Set these in every terminal used for Android/Expo/Gradle:
+## 2. Android Environment Variables
+`npm run android` and Android smoke scripts automatically apply defaults through `scripts/with-android-env.sh`.
+Manual exports are only required when local paths differ:
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools

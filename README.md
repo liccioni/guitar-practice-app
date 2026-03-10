@@ -19,7 +19,9 @@ npm run check
 npm run ios:local
 ```
 
-## Android Environment (Required For `npm run android`)
+## Android Environment
+`npm run android` and Android smoke scripts now auto-load local defaults via `scripts/with-android-env.sh`.
+Manual exports are still supported if your SDK/JDK paths differ:
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
@@ -45,6 +47,7 @@ npm run stability:all
 ## Documentation
 - Product + acceptance criteria: `docs/SPEC.md`
 - Full rebuild runbook (from scratch): `docs/PROJECT_RUNBOOK.md`
+- Latest app completion audit: `docs/APP_AUDIT_2026-03-10.md`
 - Change history + stability markers: `docs/RELEASE_NOTES.md`
 - Bug registry: `docs/BUG_REPORTS.md`
 - Active release execution plan: `docs/RELEASE_PLAN.md`
