@@ -1,120 +1,16 @@
-# Release Notes
+# Release Notes (Minimal)
 
-## Latest Validation (2026-03-10)
-- Validation date: `2026-03-10`
-- Commands:
-  - `npm run check`
-  - `npm run e2e:detox:build:ios`
-  - `npm run e2e:detox:test:ios -- e2e/onboarding-smoke.e2e.js`
-  - `npm run e2e:detox:test:ios -- e2e/builder-smoke.e2e.js`
-  - `npm run e2e:android:onboarding`
-  - `npm run e2e:android:smoke`
-- Result:
-  - Quality gate passed (`lint`, `typecheck`, coverage)
-  - iOS onboarding and builder smoke suites passed
-  - Android onboarding and smoke suites passed
-- Notes:
-  - Stitch import parity is tracked by `docs/STITCH_FLOW_FEATURE_PLAN.md`.
-  - CI remains manual-only by design (`workflow_dispatch`) due to Actions credit limits.
-
-## Latest Validation (2026-03-08)
-- Validation date: `2026-03-08`
-- Commands:
-  - `npm run check`
-  - `npm run e2e:detox:build:ios`
-  - `npm run e2e:detox:test:ios`
-  - `npm run e2e:detox:test:ios -- e2e/visual-states.e2e.js`
-  - `npm run e2e:detox:test:ios -- e2e/visual-edge-states.e2e.js`
-  - `npm run e2e:android:onboarding` (with emulator online + metro/app running)
-- Result:
-  - Quality gate passed (`lint`, `typecheck`, coverage)
-  - iOS Detox passed (core + visual + edge + onboarding suites)
-  - Android onboarding smoke passed
-- Notes:
-  - Detox requires rebuilding iOS app when new testIDs/layout probes are added.
-  - Android smoke requires valid `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`.
-
-## Latest Verified Main
-- Commit: `2a09696`
-- Scope: Stitch flow screens integration (home/songs/builder/practice/summary/progress) with green cross-platform smoke gates.
-
-## Latest Stable Stitch Checkpoint
+## Current Stable
 - Tag: `stable-2026-03-10-stitch-flow-batchc-green`
 - Commit: `2a09696`
 
-## Stable Baseline
-- Tag: `stable-2026-03-04-ci-green`
-- Commit: `fbca806`
-- Release: `https://github.com/liccioni/guitar-practice-app/releases/tag/stable-2026-03-04-ci-green`
+## Latest Docs/UI Commits
+- `f4c4a38` docs: Stitch-aligned docs cleanup
+- `2bf138d` ui: Songs/Progress hierarchy polish
 
-This baseline represents a known-good state with:
-- CI quality job passing (lint, typecheck, unit/integration coverage)
-- CI iOS Detox job passing
-- Deterministic Session Builder e2e coverage (4 core user-path tests)
+## Last Verified Local Gate
+- `npm run check` (lint + typecheck + tests + coverage) passed.
 
-## Major Milestones Leading to Stable Baseline
-1. `02a0dbd` - Stabilized iOS e2e pipeline and script patching.
-2. `c28bf2c` - Deterministic Builder/Session Detox coverage.
-3. `9a6ed6c` - Added GitHub Actions CI (quality + iOS Detox).
-4. `e76f279` - CI prebuild before Detox build.
-5. `4f9fcce` - Initial iOS CI hardening (Xcode/CocoaPods/pods install).
-6. `e26202f` - Moved to newer Xcode in CI for Podfile compatibility.
-7. `b609150` - Expo lint dependency alignment + expanded logic tests.
-8. `331bed7` - Pinned Expo iOS deployment target to 17.0.
-9. `c183e8e` - Enforced deployment target/SDK normalization in generated native files.
-10. `9ec7d28` - Stabilized CI SDK selection and normalized SDKROOT handling.
-11. `fbca806` - Added Detox framework cache refresh in CI.
-
-## Current Branch Position
-After the stable tag, branch `main` may include additional CI hardening commits. Use the tag if you need the exact frozen baseline.
-
-## Post-Tag Fixes
-1. Screen transition flicker fix (`App.tsx`)
-- Root cause: full fade-out/in animation on screen changes caused visible flashing.
-- Resolution: switched to soft one-way fade-in transition.
-- Bug reference: `docs/BUG_REPORTS.md` -> `BR-2026-03-04-001`.
-2. EAS project initialized and Android preview internal build completed.
-- Build id: `b4cb9774-1ca3-4b3a-a2cb-9bdb94e543bb`
-- Artifact: `https://expo.dev/artifacts/eas/ojSxXYtSYjCoSPPosJchFe.apk`
-- iOS distribution remains blocked until Apple Developer enrollment is active.
-3. Metronome upgraded from visual-only feedback to audible offline tick playback.
-- Added audio service: `src/application/metronomeAudio.ts`
-- Added bundled tick asset: `assets/audio/metronome-tick.wav`
-- Added unit tests: `tests/metronomeAudio.test.ts`
-4. Profile progression is now persisted locally.
-- Added persistence schema v3 with `profile.totalXp` and `profile.unlockedBadgeIds`.
-- Added migration-safe defaults for legacy payloads.
-- App now hydrates/saves XP and unlocked badges through local storage.
-5. Badge progression now uses deterministic unlock rules (not visual-only defaults).
-- Added badge engine: `src/domain/gamification/badges.ts`
-- Added tests: `tests/badges.test.ts`
-- Unlock criteria now tied to streak, session quality, session XP, and completed drill count.
-6. Added visual regression snapshot flow on iOS Detox.
-- New test: `e2e/visual-states.e2e.js`
-- New command: `npm run e2e:detox:visual:ios`
-- Captures screenshots of Home, Builder, Active, and Complete states.
-7. Added edge-state visual regression snapshots.
-- New test: `e2e/visual-edge-states.e2e.js`
-- New command: `npm run e2e:detox:visual:edge:ios`
-- Captures empty builder, builder validation error, and paused active states.
-8. Added locked visual snapshot manifest for deterministic review.
-- File: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
-- Defines canonical screenshot names for both visual suites.
-9. Temporarily paused automatic GitHub Actions triggers to control usage.
-- `CI` and `Detox iOS E2E` workflows are currently manual-only (`workflow_dispatch`).
-- This prevents automatic runs on push/PR until credits are replenished.
-10. Session Builder production-hardening (removed mock behavior).
-- `Add Drill` now creates deterministic editable defaults instead of random canned drills.
-- Drill reorder now uses explicit per-card up/down controls.
-11. Detox smoke stabilization on local iOS baseline (`bacf971`).
-- Builder smoke navigation/start/skip flow hardened with retries and stable waits.
-- E2E launch currently uses per-test fresh install (`delete: true` in `e2e/init.js`) with Detox synchronization disabled for deterministic timer-heavy flows.
-12. Remove-drill smoke case re-enabled with deterministic builder control.
-- Added `builder-remove-first-control` in `SessionBuilder` for stable first-drill removal interaction.
-- `Session builder e2e -> removes a drill when tapping Remove` is now enabled and green.
-13. Home analytics + multi-goal system (minutes/sessions/drills).
-- Added weekly summary analytics (weekly minutes, completion rate, sessions, drills, delta vs previous week).
-- Added recent-session insight list on Home dashboard.
-- Added configurable goal type (`minutes`, `sessions`, `drills`) and goal target controls.
-- Goal streak now tracks consecutive days that meet the selected goal type target.
-- Persistence schema remains backward-compatible while storing `goalType` and `goalTarget`.
+## Notes
+- CI workflows are manual-only by design (`workflow_dispatch`).
+- Stitch import assets remain the UI source reference in `docs/design-import/stitch/stitch/*`.
