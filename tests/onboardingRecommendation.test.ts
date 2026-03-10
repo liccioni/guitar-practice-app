@@ -20,6 +20,8 @@ function makeAnswers(overrides: Partial<PracticeOnboardingAnswers>): PracticeOnb
     durationMinutes: 30,
     focus: "technique",
     outcome: "consistency",
+    weeklyFrequencyDays: 5,
+    practicePreference: "balanced",
     ...overrides,
   };
 }
@@ -27,11 +29,18 @@ function makeAnswers(overrides: Partial<PracticeOnboardingAnswers>): PracticeOnb
 describe("onboarding recommendation", () => {
   it("builds recommendation metadata from answers", () => {
     const suggestion = buildPracticeOnboardingSuggestion(
-      makeAnswers({ level: "expert", durationMinutes: 60, focus: "rhythm", outcome: "song-prep" }),
+      makeAnswers({
+        level: "expert",
+        durationMinutes: 60,
+        focus: "rhythm",
+        outcome: "song-prep",
+        weeklyFrequencyDays: 7,
+        practicePreference: "structured",
+      }),
     );
 
-    expect(suggestion.recommendedMinutes).toBe(65);
-    expect(suggestion.drillCount).toBe(6);
+    expect(suggestion.recommendedMinutes).toBe(68);
+    expect(suggestion.drillCount).toBe(7);
     expect(suggestion.sessionName).toContain("Expert");
     expect(suggestion.targetTags).toEqual(expect.arrayContaining(["rhythm", "chords"]));
   });
@@ -77,5 +86,43 @@ describe("onboarding recommendation", () => {
 
     expect(selected).toHaveLength(2);
     expect(selected.map((drill) => drill.name)).toEqual(["No Tags", "Unique"]);
+  });
+
+  it("applies frequency and preference adjustments across all recommendation branches", () => {
+    const beginnerStructured = buildPracticeOnboardingSuggestion(
+      makeAnswers({
+        level: "beginner",
+        durationMinutes: 20,
+        weeklyFrequencyDays: 3,
+        practicePreference: "structured",
+      }),
+    );
+    expect(beginnerStructured.drillCount).toBe(3);
+    expect(beginnerStructured.recommendedMinutes).toBe(20);
+    expect(beginnerStructured.summary).toContain("structured progression");
+
+    const intermediateBalanced = buildPracticeOnboardingSuggestion(
+      makeAnswers({
+        level: "intermediate",
+        durationMinutes: 30,
+        weeklyFrequencyDays: 5,
+        practicePreference: "balanced",
+      }),
+    );
+    expect(intermediateBalanced.drillCount).toBe(4);
+    expect(intermediateBalanced.recommendedMinutes).toBe(39);
+    expect(intermediateBalanced.summary).toContain("balanced progression");
+
+    const expertExploratory = buildPracticeOnboardingSuggestion(
+      makeAnswers({
+        level: "expert",
+        durationMinutes: 60,
+        weeklyFrequencyDays: 7,
+        practicePreference: "exploratory",
+      }),
+    );
+    expect(expertExploratory.drillCount).toBe(8);
+    expect(expertExploratory.recommendedMinutes).toBe(73);
+    expect(expertExploratory.summary).toContain("exploratory progression");
   });
 });

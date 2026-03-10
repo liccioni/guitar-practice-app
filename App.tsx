@@ -37,12 +37,15 @@ import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
 import {
   buildPracticeOnboardingSuggestion,
   DEFAULT_PRACTICE_ONBOARDING_STATE,
+  ONBOARDING_RECOMMENDATION_VERSION,
   selectSuggestedDrills,
   type PracticeFocus,
   type PracticeOnboardingAnswers,
   type PracticeOnboardingState,
+  type PracticePreference,
   type PracticeOutcome,
   type PracticeDurationMinutes,
+  type WeeklyFrequencyDays,
   type GuitarLevel,
 } from "./src/domain/profile/onboarding";
 import {
@@ -332,6 +335,7 @@ export default function App() {
   const [randomCueLabel, setRandomCueLabel] = useState<string | null>(null);
   const [randomCueNextLabel, setRandomCueNextLabel] = useState<string | null>(null);
   const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
+  const [randomCuePulseWindowActive, setRandomCuePulseWindowActive] = useState(false);
 
   const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
   const [onboardingState, setOnboardingState] = useState<PracticeOnboardingState>(
@@ -555,6 +559,7 @@ export default function App() {
           setRandomCueNextLabel(nextCue);
           randomCueRemainingRef.current = resetBeats;
           setRandomCueBeatsRemaining(resetBeats);
+          setRandomCuePulseWindowActive(false);
           randomCuePulse.setValue(0);
           Animated.sequence([
             Animated.timing(randomCuePulse, {
@@ -573,6 +578,25 @@ export default function App() {
         } else {
           randomCueRemainingRef.current = nextRemaining;
           setRandomCueBeatsRemaining(nextRemaining);
+          const enteringPulseWindow = nextRemaining === 1;
+          setRandomCuePulseWindowActive(enteringPulseWindow);
+          if (enteringPulseWindow) {
+            randomCuePulse.setValue(0);
+            Animated.sequence([
+              Animated.timing(randomCuePulse, {
+                toValue: 1,
+                duration: 220,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(randomCuePulse, {
+                toValue: 0,
+                duration: 260,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+            ]).start();
+          }
         }
       }
 
@@ -672,6 +696,7 @@ export default function App() {
       setRandomCueLabel(null);
       setRandomCueNextLabel(null);
       setRandomCueBeatsRemaining(0);
+      setRandomCuePulseWindowActive(false);
       randomCuePulse.setValue(0);
       return;
     }
@@ -683,6 +708,7 @@ export default function App() {
     setRandomCueLabel(currentCue);
     setRandomCueNextLabel(nextCue);
     setRandomCueBeatsRemaining(initialBeats);
+    setRandomCuePulseWindowActive(false);
     randomCuePulse.setValue(0);
   }, [activeDrill, randomCuePulse, screen]);
 
@@ -1231,6 +1257,8 @@ export default function App() {
       completed: true,
       answers,
       lastSuggestedTemplateName: suggestion.sessionName,
+      onboardingCompletedAt: new Date().toISOString(),
+      recommendationVersion: ONBOARDING_RECOMMENDATION_VERSION,
     });
     setGoalSettings((current) => ({
       ...current,
@@ -1388,6 +1416,7 @@ export default function App() {
               randomCueLabel={randomCueLabel}
               randomCueNextLabel={randomCueNextLabel}
               randomCueBeatsRemaining={randomCueBeatsRemaining}
+              randomCuePulseWindowActive={randomCuePulseWindowActive}
               randomCuePulse={randomCuePulse}
               onMetronomeToggle={() => setMetronomeEnabled((current) => !current)}
               onMetronomeStep={(delta) => setMetronomeBpm((current) => stepBpm(current, delta))}
@@ -1497,6 +1526,12 @@ function HomeDashboard(props: {
   const [outcomeInput, setOutcomeInput] = useState<PracticeOutcome>(
     onboardingState.answers?.outcome ?? "consistency",
   );
+  const [weeklyFrequencyInput, setWeeklyFrequencyInput] = useState<WeeklyFrequencyDays>(
+    onboardingState.answers?.weeklyFrequencyDays ?? 5,
+  );
+  const [practicePreferenceInput, setPracticePreferenceInput] = useState<PracticePreference>(
+    onboardingState.answers?.practicePreference ?? "balanced",
+  );
 
   useEffect(() => {
     setTimeInput(reminderTime);
@@ -1512,6 +1547,8 @@ function HomeDashboard(props: {
     setDurationInput(onboardingState.answers.durationMinutes);
     setFocusInput(onboardingState.answers.focus);
     setOutcomeInput(onboardingState.answers.outcome);
+    setWeeklyFrequencyInput(onboardingState.answers.weeklyFrequencyDays);
+    setPracticePreferenceInput(onboardingState.answers.practicePreference);
   }, [onboardingState.answers]);
 
   function submitOnboardingAnswers(): void {
@@ -1520,6 +1557,8 @@ function HomeDashboard(props: {
       durationMinutes: durationInput,
       focus: focusInput,
       outcome: outcomeInput,
+      weeklyFrequencyDays: weeklyFrequencyInput,
+      practicePreference: practicePreferenceInput,
     });
   }
 
@@ -1593,7 +1632,7 @@ function HomeDashboard(props: {
         <Text style={styles.cardLabel}>Starter Questionnaire</Text>
         {!onboardingState.completed ? (
           <>
-            <Text style={styles.helperText}>Answer 4 quick questions and get a focused starting routine.</Text>
+            <Text style={styles.helperText}>Answer 6 quick questions and get a focused starting routine.</Text>
             <Text style={styles.helperText}>Level</Text>
             <View style={styles.templatePillsRow}>
               {(["beginner", "intermediate", "expert"] as const).map((level) => (
@@ -1646,6 +1685,37 @@ function HomeDashboard(props: {
                   testID={`onboarding-outcome-${outcome}`}
                 >
                   <Text style={styles.templatePillText}>{outcome}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.helperText}>Weekly Frequency</Text>
+            <View style={styles.templatePillsRow}>
+              {([3, 5, 7] as const).map((days) => (
+                <TouchableOpacity
+                  key={days}
+                  style={[styles.templatePill, weeklyFrequencyInput === days ? styles.templatePillActive : null]}
+                  onPress={() => setWeeklyFrequencyInput(days)}
+                  testID={`onboarding-frequency-${days}`}
+                >
+                  <Text style={styles.templatePillText}>{days} days</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.helperText}>Practice Style</Text>
+            <View style={styles.templatePillsRow}>
+              {(["structured", "balanced", "exploratory"] as const).map((preference) => (
+                <TouchableOpacity
+                  key={preference}
+                  style={[
+                    styles.templatePill,
+                    practicePreferenceInput === preference ? styles.templatePillActive : null,
+                  ]}
+                  onPress={() => setPracticePreferenceInput(preference)}
+                  testID={`onboarding-preference-${preference}`}
+                >
+                  <Text style={styles.templatePillText}>{preference}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -2542,6 +2612,7 @@ function ActivePractice(props: {
   randomCueLabel: string | null;
   randomCueNextLabel: string | null;
   randomCueBeatsRemaining: number;
+  randomCuePulseWindowActive: boolean;
   randomCuePulse: Animated.Value;
   onMetronomeToggle: () => void;
   onMetronomeStep: (delta: number) => void;
@@ -2562,6 +2633,7 @@ function ActivePractice(props: {
     randomCueLabel,
     randomCueNextLabel,
     randomCueBeatsRemaining,
+    randomCuePulseWindowActive,
     randomCuePulse,
     onMetronomeToggle,
     onMetronomeStep,
@@ -2628,6 +2700,7 @@ function ActivePractice(props: {
             {randomCueNextLabel ? (
               <Text style={styles.helperText}>Upcoming: {randomCueNextLabel}</Text>
             ) : null}
+            {randomCuePulseWindowActive ? <Text style={styles.helperText}>Cue incoming...</Text> : null}
             <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
           </Animated.View>
         ) : null}

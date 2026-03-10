@@ -446,8 +446,12 @@ describe("LocalStorageGateway", () => {
                 durationMinutes: 30,
                 focus: "technique",
                 outcome: "speed",
+                weeklyFrequencyDays: 5,
+                practicePreference: "balanced",
               },
               lastSuggestedTemplateName: "Starter",
+              onboardingCompletedAt: "2026-03-10T10:00:00.000Z",
+              recommendationVersion: "v2",
             },
           },
         },
@@ -485,8 +489,45 @@ describe("LocalStorageGateway", () => {
 
     expect(valid.profile.onboarding.completed).toBe(true);
     expect(valid.profile.onboarding.answers?.level).toBe("intermediate");
+    expect(valid.profile.onboarding.answers?.weeklyFrequencyDays).toBe(5);
+    expect(valid.profile.onboarding.answers?.practicePreference).toBe("balanced");
     expect(valid.profile.onboarding.lastSuggestedTemplateName).toBe("Starter");
+    expect(valid.profile.onboarding.onboardingCompletedAt).toBe("2026-03-10T10:00:00.000Z");
+    expect(valid.profile.onboarding.recommendationVersion).toBe("v2");
     expect(invalid.profile.onboarding.completed).toBe(true);
     expect(invalid.profile.onboarding.answers).toBeUndefined();
+  });
+
+  it("drops invalid onboarding metadata fields while preserving completion state", () => {
+    const parsed = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            goalType: "minutes",
+            goalTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            onboarding: {
+              completed: true,
+              onboardingCompletedAt: "   ",
+              recommendationVersion: "",
+            },
+          },
+        },
+      }),
+    );
+
+    expect(parsed.profile.onboarding.completed).toBe(true);
+    expect(parsed.profile.onboarding.onboardingCompletedAt).toBeUndefined();
+    expect(parsed.profile.onboarding.recommendationVersion).toBeUndefined();
   });
 });

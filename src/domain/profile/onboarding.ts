@@ -4,18 +4,25 @@ export type GuitarLevel = "beginner" | "intermediate" | "expert";
 export type PracticeDurationMinutes = 20 | 30 | 60;
 export type PracticeFocus = "technique" | "rhythm" | "fretboard" | "improv";
 export type PracticeOutcome = "consistency" | "speed" | "song-prep";
+export type WeeklyFrequencyDays = 3 | 5 | 7;
+export type PracticePreference = "structured" | "balanced" | "exploratory";
+export const ONBOARDING_RECOMMENDATION_VERSION = "v2";
 
 export interface PracticeOnboardingAnswers {
   level: GuitarLevel;
   durationMinutes: PracticeDurationMinutes;
   focus: PracticeFocus;
   outcome: PracticeOutcome;
+  weeklyFrequencyDays: WeeklyFrequencyDays;
+  practicePreference: PracticePreference;
 }
 
 export interface PracticeOnboardingState {
   completed: boolean;
   answers?: PracticeOnboardingAnswers;
   lastSuggestedTemplateName?: string;
+  onboardingCompletedAt?: string;
+  recommendationVersion?: string;
 }
 
 export interface PracticeOnboardingSuggestion {
@@ -53,13 +60,24 @@ export function buildPracticeOnboardingSuggestion(
   answers: PracticeOnboardingAnswers,
 ): PracticeOnboardingSuggestion {
   const targetTags = Array.from(new Set([...FOCUS_TAGS[answers.focus], ...OUTCOME_TAGS[answers.outcome]]));
-  const levelOffset = answers.level === "expert" ? 1 : 0;
-  const drillCount = answers.durationMinutes === 20 ? 3 : answers.durationMinutes === 30 ? 4 : 6;
+  const frequencyBonus = answers.weeklyFrequencyDays === 7 ? 1 : answers.weeklyFrequencyDays === 5 ? 0 : -1;
+  const baseDrillCount = answers.durationMinutes === 20 ? 3 : answers.durationMinutes === 30 ? 4 : 6;
+  const preferenceDrillDelta = answers.practicePreference === "exploratory" ? 1 : 0;
+  const drillCount = Math.max(3, baseDrillCount + frequencyBonus + preferenceDrillDelta);
+  const levelOffset = answers.level === "expert" ? 8 : answers.level === "intermediate" ? 4 : 0;
+  const preferenceMinutesOffset = answers.practicePreference === "structured" ? 0 : 5;
+  const recommendedMinutes = answers.durationMinutes + levelOffset + preferenceMinutesOffset;
+  const styleLine =
+    answers.practicePreference === "structured"
+      ? "structured progression"
+      : answers.practicePreference === "balanced"
+        ? "balanced progression"
+        : "exploratory progression";
 
   return {
     sessionName: `${LEVEL_NAME[answers.level]} ${answers.focus} ${answers.durationMinutes}m`,
-    summary: `Start with ${drillCount} drills focused on ${answers.focus} to build ${answers.outcome}.`,
-    recommendedMinutes: answers.durationMinutes + levelOffset * 5,
+    summary: `Start with ${drillCount} drills for ${styleLine} in ${answers.focus}, targeting ${answers.outcome}.`,
+    recommendedMinutes,
     targetTags,
     drillCount,
   };

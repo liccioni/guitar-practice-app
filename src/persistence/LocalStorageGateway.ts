@@ -284,8 +284,20 @@ function sanitizeOnboardingAnswers(input: unknown): PracticeOnboardingAnswers | 
     input.outcome === "consistency" || input.outcome === "speed" || input.outcome === "song-prep"
       ? input.outcome
       : null;
+  const weeklyFrequencyDays =
+    Number(input.weeklyFrequencyDays) === 3 ||
+    Number(input.weeklyFrequencyDays) === 5 ||
+    Number(input.weeklyFrequencyDays) === 7
+      ? (Number(input.weeklyFrequencyDays) as 3 | 5 | 7)
+      : null;
+  const practicePreference =
+    input.practicePreference === "structured" ||
+    input.practicePreference === "balanced" ||
+    input.practicePreference === "exploratory"
+      ? input.practicePreference
+      : null;
 
-  if (!level || !focus || !outcome) return undefined;
+  if (!level || !focus || !outcome || !weeklyFrequencyDays || !practicePreference) return undefined;
   if (!(duration === 20 || duration === 30 || duration === 60)) return undefined;
 
   return {
@@ -293,6 +305,8 @@ function sanitizeOnboardingAnswers(input: unknown): PracticeOnboardingAnswers | 
     durationMinutes: duration,
     focus,
     outcome,
+    weeklyFrequencyDays,
+    practicePreference,
   };
 }
 
@@ -306,6 +320,14 @@ function sanitizeOnboardingState(input: unknown): PracticeOnboardingState {
     lastSuggestedTemplateName:
       typeof input.lastSuggestedTemplateName === "string" && input.lastSuggestedTemplateName.trim().length > 0
         ? input.lastSuggestedTemplateName.trim()
+        : undefined,
+    onboardingCompletedAt:
+      typeof input.onboardingCompletedAt === "string" && input.onboardingCompletedAt.trim().length > 0
+        ? input.onboardingCompletedAt.trim()
+        : undefined,
+    recommendationVersion:
+      typeof input.recommendationVersion === "string" && input.recommendationVersion.trim().length > 0
+        ? input.recommendationVersion.trim()
         : undefined,
   };
 }
