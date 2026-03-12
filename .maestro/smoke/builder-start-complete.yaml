@@ -1,0 +1,22 @@
+appId: net.liccioni.guitarpractice
+name: Builder smoke starts and completes a session
+---
+- runFlow: ../subflows/launch-home.yaml
+- runFlow: ../subflows/open-builder-from-home.yaml
+- assertVisible:
+    id: builder-drill-card-first
+- tapOn:
+    id: builder-start-session
+- assertVisible:
+    id: active-screen
+- assertVisible:
+    id: active-skip-button
+- repeat:
+    while:
+      notVisible:
+        id: complete-continue-button
+    commands:
+      - tapOn:
+          id: active-skip-button
+- assertVisible:
+    id: complete-continue-button

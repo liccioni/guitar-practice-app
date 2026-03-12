@@ -1,0 +1,8 @@
+appId: net.liccioni.guitarpractice
+name: Home hub shows primary practice entry points
+---
+- runFlow: ../subflows/launch-home.yaml
+- assertVisible:
+    id: home-start-practice
+- assertVisible:
+    id: home-quick-start-practice

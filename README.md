@@ -19,6 +19,28 @@ npm run ios:local
 npm run parity:stitch
 ```
 
+## Maestro iOS Smoke
+Install Maestro once:
+
+```bash
+npm run e2e:maestro:install
+```
+
+Prepare the simulator build and run the 3 core smoke flows:
+
+```bash
+npm run e2e:maestro:ios
+```
+
+Run only the flows after the app is already installed:
+
+```bash
+npm run e2e:maestro:test:ios
+```
+
+Migration notes and Detox overlap:
+- `docs/MAESTRO_MIGRATION.md`
+
 ## Core Docs
 - Spec: `docs/SPEC.md`
 - Runbook: `docs/PROJECT_RUNBOOK.md`

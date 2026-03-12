@@ -1,0 +1,8 @@
+appId: net.liccioni.guitarpractice
+---
+- tapOn:
+    id: home-start-practice
+- extendedWaitUntil:
+    visible:
+      id: builder-start-session
+    timeout: 20000

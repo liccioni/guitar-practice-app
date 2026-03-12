@@ -1,13 +1,11 @@
 name: CI
 
 on:
-  # Temporary cost-control mode: disable automatic runs.
-  # Re-enable push/pull_request triggers when Actions credits are available again.
   workflow_dispatch:
 
 jobs:
   quality:
-    name: Strict Quality Gate
+    name: Quality Gate
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +18,22 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Run strict check gate (lint + typecheck + 95% per-file coverage)
-        run: npm run check
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test

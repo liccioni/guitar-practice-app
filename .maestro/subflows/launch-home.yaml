@@ -1,0 +1,8 @@
+appId: net.liccioni.guitarpractice
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home-scroll
+    timeout: 40000
