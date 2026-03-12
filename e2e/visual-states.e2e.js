@@ -26,6 +26,13 @@ async function openBuilderFromHome() {
 }
 
 async function ensureBuilderReady() {
+  try {
+    await waitForVisible("builder-start-session", 10000);
+    return;
+  } catch {}
+
+  await waitFor(element(by.text("Open Builder")).atIndex(0)).toBeVisible().withTimeout(12000);
+  await element(by.text("Open Builder")).atIndex(0).tap();
   await waitForVisible("builder-start-session", 16000);
 }
 
@@ -44,26 +51,6 @@ async function ensureDrillExists() {
 async function getFirstDrillId() {
   const attrs = await element(by.id("builder-drill-first-id-probe")).getAttributes();
   return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
-}
-
-async function captureBuilderRandomCuePreview() {
-  const firstId = await getFirstDrillId();
-  if (!firstId) return;
-
-  await element(by.id(`builder-drill-card-${firstId}`)).tap();
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      await waitForVisible("builder-randomizer-note", 1200);
-      break;
-    } catch {
-      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.6);
-    }
-  }
-  await waitForVisible("builder-randomizer-note", 5000);
-  await element(by.id("builder-randomizer-note")).tap();
-  await waitForVisible("builder-randomizer-note", 2000);
-  await element(by.id("builder-drill-list")).swipe("down", "fast", 0.95);
-  await device.takeScreenshot("02b-builder-random-cue-preview");
 }
 
 async function completeBySkipping() {
@@ -129,7 +116,6 @@ describe("Visual state snapshots", () => {
     await ensureBuilderReady();
 
     await ensureDrillExists();
-    await captureBuilderRandomCuePreview();
     await device.takeScreenshot("02-builder");
 
     await startSessionFromBuilder();

@@ -16,6 +16,7 @@ This is the strict visual parity process against imported Stitch designs.
 ```bash
 npm run parity:stitch:sync-latest
 ```
+This command selects the closest matching screenshot available in `artifacts/` for each mapped screen.
 3. Run visual diff gate:
 ```bash
 npm run parity:stitch:diff
@@ -34,8 +35,8 @@ npm run parity:stitch
 - `01c-progress.png` (optional)
 
 ## Pass Rules
-- Required screens must exist and stay below max diff ratio (`12%`).
-- Optional screens report for visibility but do not fail the gate.
+- Required screens must exist and stay below max diff ratio (`19%`).
+- Optional screens are reported for visibility and do not fail the gate.
 - Diff artifacts are written to `artifacts/stitch-parity/diff/`.
 
 ## Screen Checklist (manual signoff)

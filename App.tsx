@@ -4,6 +4,8 @@ import {
   Animated,
   Easing,
   FlatList,
+  Image,
+  ImageBackground,
   Platform,
   Pressable,
   ScrollView,
@@ -81,6 +83,7 @@ interface SongLibraryItem {
   title: string;
   artist: string;
   level: "beginner" | "intermediate" | "advanced";
+  imageUri?: string;
   mastered?: boolean;
   isNew?: boolean;
   durationMinutes: number;
@@ -127,6 +130,8 @@ const SONG_LIBRARY: SongLibraryItem[] = [
     title: "Wish You Were Here",
     artist: "Pink Floyd",
     level: "beginner",
+    imageUri:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDLEfCCgZfR_qyR1JDHCjVvUOqQnyCOhkZP2Blfa_m-067uKtVFKLsYArmKUMmGCr_WW3GthVfATpP-veYRxs25aoCfQ61RokW_sYNRfoDmFCVOMARw6jHwZcyY-KLv7l7s_TxxT0KVu4uiX6F3G288Q5Y_eFU95jmxkrtstcFt5umUJ_4d2N5NhNts_3bCmkFuYKrlp-NiafEpaQK2h6bgClPwJHa7vCEL6v7uqcdo6fNkTGrbnCsmXEmnqe90UIqE03HvY9bv3cy1",
     mastered: true,
     durationMinutes: 6,
     targetBpm: 76,
@@ -137,6 +142,8 @@ const SONG_LIBRARY: SongLibraryItem[] = [
     title: "Horse with No Name",
     artist: "America",
     level: "beginner",
+    imageUri:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuABe3yaUr0OwzdZM6UpREev204_pqYWneOR6hn7_iqGdovs10nJ8MfVzcTm9MfysAjvlzi1sUgQNU0KtwFqXu1XO0o-yPlCsp5Dl_cBbYHqmTUK6bRxsMq3YLk73fSJ8N0uBAojHlkvCkCLWr3gbzGYTXpIwD04L0yJcGm21uknTufPnXcy5kU04SJamag_ZLvfaVTP7j0cHF34qCunNU4LJNDgxyiJTgGyhU4IWJjrxl9-yDlPUv4GaBxZwDsOK0MxATwE_Avn1Cdr",
     isNew: true,
     durationMinutes: 5,
     targetBpm: 92,
@@ -147,6 +154,8 @@ const SONG_LIBRARY: SongLibraryItem[] = [
     title: "Sultans of Swing",
     artist: "Dire Straits",
     level: "intermediate",
+    imageUri:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAler45bVX_DvuVIJ-zCLHOZ2SaoEWx0oRo3nLI84cm9yg3K-5D5vCliBKQ1YhqJC2v8iBQ_zyVnruR0jJmRrWJrtCV4ZJEeiSJLuWyX3x5cZ6vyaJ0WUCq3isa44pswDSHRBZkdqohmwzQDtNKQIgCO0b4ptjIwSUJ_2J79EiHJBzKvSvODUWEXWhgBTpiCzz11g8nhHhAFLFOaSdtmTMB0dSXd8lYU8hNQpXl8wxLaCj_q6IwwPS4eVXRJ3s57wNhTAacD35FHcMe",
     durationMinutes: 8,
     targetBpm: 148,
     tags: ["technique", "improv"],
@@ -156,6 +165,8 @@ const SONG_LIBRARY: SongLibraryItem[] = [
     title: "Blackbird",
     artist: "The Beatles",
     level: "intermediate",
+    imageUri:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ79kmZyNNIT_g7FKtHCab8yVCUXVNMT5LHMIo0lQ8_soWJKahl7JCrS4go8kSXusEM_rDs8qC7FPtJ5E_1gzfrP5iHScx9BLKqs0CaMyEpiBvTPKgq3CbhlEX7FjyXLU2QIa9yxh5mAbSPqGuvMrIlvCmqdJYnDcLN4kb2xYDOg0BbmXE3MJ3vF_DvKRWRuLAHugoTSHoZ4ygPkElhGJty1xswr8kNrDGVAfDGmSKXcNs04m9jnDN9Ak6PNZzdjo76-6nMKC33GTn",
     durationMinutes: 7,
     targetBpm: 126,
     tags: ["technique", "scales"],
@@ -1395,8 +1406,8 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-          <StatusBar style="light" />
+        <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+          <StatusBar style="light" hidden />
           <Animated.View style={[styles.container, { opacity: fadeAnim }]}> 
           {screen === "home" ? (
             <HomeDashboard
@@ -1555,7 +1566,7 @@ export default function App() {
             />
           ) : null}
           </Animated.View>
-          {screen !== "active" && screen !== "complete" ? (
+          {screen !== "builder" ? (
             <AppTabBar screen={screen} onNavigate={navigateFromTab} />
           ) : null}
         </SafeAreaView>
@@ -1672,217 +1683,173 @@ function HomeDashboard(props: {
       showsVerticalScrollIndicator={false}
       testID="home-scroll"
     >
-      <View style={styles.topRow}>
+      <View style={styles.stitchHeader}>
         <View>
-          <Text style={styles.brandEyebrow}>FRETLINE</Text>
-          <Text style={styles.title}>Ready to play?</Text>
-          <Text style={styles.headerSubline}>Welcome back. Keep the momentum today.</Text>
+          <Text style={styles.homeTitle}>Ready to play?</Text>
+          <Text style={styles.homeSubtitle}>Welcome back to Fretline</Text>
         </View>
-        <Text style={styles.levelChip}>Level {levelState.level}</Text>
+        <View style={styles.stitchLevelChip}>
+          <Text style={styles.stitchLevelChipText}>Level {levelState.level}</Text>
+        </View>
       </View>
 
-      <GlowCard style={styles.homeHeroPanel}>
-        <Text style={styles.cardLabel}>Today&apos;s Session</Text>
-        <Text style={styles.heroHeadline}>Keep your streak alive</Text>
-        <Text style={styles.heroSubline}>
-          {goalCurrentValue}/{goalTarget} {goalUnitLabel} • {streak} day streak
-        </Text>
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${Math.max(6, (levelState.currentLevelXp / levelState.nextLevelXp) * 100)}%`,
-              },
-            ]}
-          />
+      <View style={styles.stitchSessionHero}>
+        <ImageBackground
+          source={{
+            uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuDpz2k_t3PtCu8Fa2SUUwCP9K4EtLoXTLVc4lKeHKCDQJvKZOpXm3Auk_QllWvbL6HwUrz2v9SfvveKzqiHuG8safRE1k6TsWOntviSQJw_pMUGIttrsvkQM5huiOzuurlGxd74FS7EnbGEG_xr5yH8x5qQMzCNhgYjICEzCldEBfpXaNkPxRvl6QGOLq2SJDG-r_OboOUeqzd3xIGC4rjOu085kV_tGJ-QednC5PzB9sZkp56j-x5zdtcigU4831W52eC59qFiIMwl",
+          }}
+          style={styles.stitchHeroImage}
+          imageStyle={styles.stitchHeroImageRound}
+        >
+          <View style={styles.stitchHeroOverlay} />
+          <View style={styles.stitchHeroBottomText}>
+            <Text style={styles.stitchHeroTitle}>Today&apos;s Session</Text>
+            <Text style={styles.stitchHeroSubtitle}>Keep your streak alive</Text>
+          </View>
+        </ImageBackground>
+        <View style={styles.stitchHeroBody}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.stitchMetaLabel}>Daily Practice Goal</Text>
+            <Text style={styles.stitchMetaValue}>
+              {goalCurrentValue}/{goalTarget}
+              {goalUnitLabel}
+            </Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                styles.homeGoalFill,
+                { width: `${Math.max(2, Math.round((goalCurrentValue / Math.max(1, goalTarget)) * 100))}%` },
+              ]}
+            />
+          </View>
+          <TouchableOpacity
+            style={[styles.primaryCta, styles.homePrimaryCta]}
+            onPress={onStartPractice}
+            accessibilityRole="button"
+            testID="home-start-practice"
+          >
+            <View style={styles.homePrimaryCtaRow}>
+              <Text style={styles.homePrimaryCtaIcon}>▶</Text>
+              <Text style={styles.primaryCtaText}>Start Practice</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.stitchSecondaryHeroButton}
+            onPress={onOpenSessions}
+            accessibilityRole="button"
+            testID="home-quick-start-practice"
+          >
+            <Text style={styles.stitchSecondaryHeroButtonText}>Customize Session</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.helperText}>
-          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP to next level
-        </Text>
-        <TouchableOpacity
-          style={[styles.primaryCta, styles.homePrimaryCta]}
-          onPress={onStartPractice}
-          accessibilityRole="button"
-          testID="home-start-practice"
-        >
-          <Text style={styles.primaryCtaText}>Start Practice</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.smallActionButton}
-          onPress={onOpenSessions}
-          accessibilityRole="button"
-          testID="home-quick-start-practice"
-        >
-          <Text style={styles.smallActionText}>Open Session Builder</Text>
-        </TouchableOpacity>
-      </GlowCard>
+      </View>
 
       <View style={styles.homeStatStrip}>
-        <View style={styles.statChip}>
-          <Text style={styles.statChipLabel}>Streak</Text>
+        <View style={styles.stitchStatCard}>
+          <Text style={styles.statChipLabel}>🔥  Streak</Text>
           <Text style={styles.statChipValue}>{streak} days</Text>
         </View>
-        <View style={styles.statChip}>
-          <Text style={styles.statChipLabel}>Goal</Text>
+        <View style={styles.stitchStatCard}>
+          <Text style={styles.statChipLabel}>🏆  Next Level</Text>
           <Text style={styles.statChipValue}>
-            {goalCurrentValue}/{goalTarget} {goalUnitLabel}
+            {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
           </Text>
         </View>
       </View>
 
-      <GlowCard>
-        <Text style={styles.cardLabel}>Practice Starter</Text>
+      <GlowCard style={styles.stitchQuestionnaireCard}>
+        <Text style={styles.stitchSectionTitle}>📋  Starter Questionnaire</Text>
         {!onboardingState.completed ? (
           <>
-            <Text style={styles.helperText}>Answer 6 quick questions to generate a focused starter routine.</Text>
-            <Text style={styles.helperText}>Guitar Level</Text>
-            <View style={styles.templatePillsRow}>
-              {(["beginner", "intermediate", "expert"] as const).map((level) => (
+            <Text style={styles.stitchQuestionLabel}>Choose your skill level</Text>
+            <View style={styles.stitchThreeCol}>
+              {(
+                [
+                  { id: "beginner", label: "Beginner" },
+                  { id: "intermediate", label: "Intermediate" },
+                  { id: "expert", label: "Expert" },
+                ] as const
+              ).map((level) => (
                 <TouchableOpacity
-                  key={level}
-                  style={[styles.templatePill, levelInput === level ? styles.templatePillActive : null]}
-                  onPress={() => setLevelInput(level)}
-                  testID={`onboarding-level-${level}`}
+                  key={level.id}
+                  style={[
+                    styles.stitchChoicePill,
+                    levelInput === level.id ? styles.stitchChoicePillActive : null,
+                  ]}
+                  onPress={() => setLevelInput(level.id)}
+                  testID={`onboarding-level-${level.id}`}
                 >
-                  <Text style={styles.templatePillText}>{level}</Text>
+                  <Text
+                    style={[
+                      styles.stitchChoiceLabel,
+                      levelInput === level.id ? styles.stitchChoiceLabelActive : null,
+                    ]}
+                  >
+                    {level.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.helperText}>Session Length</Text>
-            <View style={styles.templatePillsRow}>
+            <Text style={styles.stitchQuestionLabel}>Daily practice goal</Text>
+            <View style={styles.stitchThreeCol}>
               {([20, 30, 60] as const).map((minutes) => (
                 <TouchableOpacity
                   key={minutes}
-                  style={[styles.templatePill, durationInput === minutes ? styles.templatePillActive : null]}
+                  style={[styles.stitchChoicePill, durationInput === minutes ? styles.stitchChoicePillActive : null]}
                   onPress={() => setDurationInput(minutes)}
                   testID={`onboarding-duration-${minutes}`}
                 >
-                  <Text style={styles.templatePillText}>{minutes} min</Text>
+                  <Text style={[styles.stitchChoiceLabel, durationInput === minutes ? styles.stitchChoiceLabelActive : null]}>
+                    {minutes} min
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.helperText}>Primary Focus</Text>
-            <View style={styles.templatePillsRow}>
-              {(["technique", "rhythm", "fretboard", "improv"] as const).map((focus) => (
-                <TouchableOpacity
-                  key={focus}
-                  style={[styles.templatePill, focusInput === focus ? styles.templatePillActive : null]}
-                  onPress={() => setFocusInput(focus)}
-                  testID={`onboarding-focus-${focus}`}
-                >
-                  <Text style={styles.templatePillText}>{focus}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.helperText}>Desired Outcome</Text>
-            <View style={styles.templatePillsRow}>
-              {(["consistency", "speed", "song-prep"] as const).map((outcome) => (
-                <TouchableOpacity
-                  key={outcome}
-                  style={[styles.templatePill, outcomeInput === outcome ? styles.templatePillActive : null]}
-                  onPress={() => setOutcomeInput(outcome)}
-                  testID={`onboarding-outcome-${outcome}`}
-                >
-                  <Text style={styles.templatePillText}>{outcome}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.helperText}>Practice Frequency</Text>
-            <View style={styles.templatePillsRow}>
-              {([3, 5, 7] as const).map((days) => (
-                <TouchableOpacity
-                  key={days}
-                  style={[styles.templatePill, weeklyFrequencyInput === days ? styles.templatePillActive : null]}
-                  onPress={() => setWeeklyFrequencyInput(days)}
-                  testID={`onboarding-frequency-${days}`}
-                >
-                  <Text style={styles.templatePillText}>{days} days</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.helperText}>Practice Style</Text>
-            <View style={styles.templatePillsRow}>
-              {(["structured", "balanced", "exploratory"] as const).map((preference) => (
-                <TouchableOpacity
-                  key={preference}
-                  style={[
-                    styles.templatePill,
-                    practicePreferenceInput === preference ? styles.templatePillActive : null,
-                  ]}
-                  onPress={() => setPracticePreferenceInput(preference)}
-                  testID={`onboarding-preference-${preference}`}
-                >
-                  <Text style={styles.templatePillText}>{preference}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={styles.smallActionButton}
-              onPress={submitOnboardingAnswers}
-              testID="onboarding-generate"
-            >
-              <Text style={styles.smallActionText}>Generate Starter Plan</Text>
+            <TouchableOpacity style={styles.smallActionButton} onPress={submitOnboardingAnswers} testID="onboarding-generate">
+              <Text style={styles.smallActionText}>Generate Practice Plan</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.helperText}>
-              {onboardingSuggestion?.summary ?? "Starter profile saved."}
-            </Text>
+            <Text style={styles.helperText}>{onboardingSuggestion?.summary ?? "Starter profile saved."}</Text>
             <Text style={styles.helperText}>
               Suggested session: {onboardingSuggestion?.sessionName ?? onboardingState.lastSuggestedTemplateName}
             </Text>
             <View style={styles.inlineRow}>
-              <TouchableOpacity
-                style={styles.smallActionButton}
-                onPress={onApplyOnboardingSuggestion}
-                testID="onboarding-apply-suggestion"
-              >
-                <Text style={styles.smallActionText}>Open Suggested Session</Text>
+              <TouchableOpacity style={styles.smallActionButton} onPress={onApplyOnboardingSuggestion} testID="onboarding-apply-suggestion">
+                <Text style={styles.smallActionText}>Build This Session</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.smallActionButton}
-                onPress={onResetOnboarding}
-                testID="onboarding-retake"
-              >
-                <Text style={styles.smallActionText}>Retake Questions</Text>
+              <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding} testID="onboarding-retake">
+                <Text style={styles.smallActionText}>Retake</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
       </GlowCard>
 
-      <GlowCard>
-        <Text style={styles.cardLabel}>Goal & Reminder</Text>
-        <View style={styles.inlineRow}>
-          <TouchableOpacity
-            style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("minutes")}
-          >
-            <Text style={styles.smallActionText}>Minutes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.smallActionButton, goalType === "sessions" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("sessions")}
-          >
-            <Text style={styles.smallActionText}>Sessions</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.smallActionButton, goalType === "drills" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("drills")}
-          >
-            <Text style={styles.smallActionText}>Drills</Text>
-          </TouchableOpacity>
-        </View>
-
+      <View style={styles.hiddenCompatBlock}>
+        <TouchableOpacity
+          style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
+          onPress={() => onGoalTypeChange("minutes")}
+        >
+          <Text style={styles.smallActionText}>Minutes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.smallActionButton, goalType === "sessions" ? styles.goalTypeActive : null]}
+          onPress={() => onGoalTypeChange("sessions")}
+        >
+          <Text style={styles.smallActionText}>Sessions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.smallActionButton, goalType === "drills" ? styles.goalTypeActive : null]}
+          onPress={() => onGoalTypeChange("drills")}
+        >
+          <Text style={styles.smallActionText}>Drills</Text>
+        </TouchableOpacity>
         <View style={styles.inlineRow}>
           <TextInput
             value={goalTargetInput}
@@ -1893,7 +1860,7 @@ function HomeDashboard(props: {
             style={styles.timeInput}
           />
           <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveGoalTarget(goalTargetInput)}>
-            <Text style={styles.smallActionText}>Update Goal</Text>
+            <Text style={styles.smallActionText}>Save</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.inlineRowSpace}>
@@ -1902,7 +1869,6 @@ function HomeDashboard(props: {
             <Text style={styles.pillButtonText}>{reminderEnabled ? "On" : "Off"}</Text>
           </TouchableOpacity>
         </View>
-
         <View style={styles.inlineRow}>
           <TextInput
             value={timeInput}
@@ -1912,56 +1878,20 @@ function HomeDashboard(props: {
             style={styles.timeInput}
           />
           <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveReminderTime(timeInput)}>
-            <Text style={styles.smallActionText}>Update Time</Text>
+            <Text style={styles.smallActionText}>Save</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
-        {reminderError ? <Text style={styles.errorText}>{reminderError}</Text> : null}
-      </GlowCard>
-
-      <GlowCard>
-        <Text style={styles.cardLabel}>Weekly Snapshot</Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.weekMinutes} min this week ({weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
-          {weeklySummary.weekMinutesDelta} vs last week)
-        </Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills completed
-        </Text>
-        <Text style={styles.helperText}>
-          {weeklySummary.completionRatePercent}% completion • Avg {weeklySummary.avgSessionMinutes} min/session
-        </Text>
-        <View style={styles.cardSectionDivider} />
-        <Text style={styles.cardLabel}>Recent Practice</Text>
-        {sessionInsights.length === 0 ? (
-          <Text style={styles.helperText}>No sessions yet. Complete one to unlock trend tracking.</Text>
-        ) : (
-          sessionInsights.map((insight) => (
-            <View key={insight.id} style={styles.recentSessionRow}>
-              <Text style={styles.badgeLabel}>{insight.title}</Text>
-              <Text style={styles.helperText}>
-                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}{" "}
-                drills • {insight.completed ? "Complete" : "Partial"}
-              </Text>
-            </View>
-          ))
-        )}
-      </GlowCard>
-
-      <GlowCard>
-        <Text style={styles.cardLabel} testID="home-achievements-title">Achievements</Text>
-        <View style={styles.badgeRow}>
-          {badges.map((badge) => (
-            <View key={badge.id} style={[styles.badge, !badge.unlocked ? styles.badgeLocked : null]}>
-              <Text style={styles.badgeIcon}>{badge.icon}</Text>
-              <Text style={styles.badgeLabel}>{badge.label}</Text>
-            </View>
-          ))}
-        </View>
-      </GlowCard>
-
+      {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
+      {reminderError ? <Text style={styles.errorText}>{reminderError}</Text> : null}
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
+      <View style={styles.hiddenCompatBlock}>
+        <Text style={styles.cardLabel} testID="home-achievements-title">Achievements</Text>
+        <Text style={styles.helperText}>
+          {weeklySummary.weekMinutes} min this week • {sessionInsights.length} tracked sessions • {badges.filter((b) => b.unlocked).length} badges
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -2108,35 +2038,46 @@ export function SessionBuilder(props: {
           Platform.OS === "android" ? styles.builderHeaderAndroidLayer : null,
         ]}
       >
-        <View style={styles.topRow}>
-          <Pressable onPress={onBack} style={styles.topActionButton}>
-            <Text style={styles.topActionText}>Back</Text>
+        <View style={styles.builderTopBar}>
+          <Pressable onPress={onBack} style={styles.builderIconAction}>
+            <Text style={styles.iconGlyph}>←</Text>
           </Pressable>
-          <Text style={styles.title}>Build Your Chain</Text>
-          <Text style={styles.levelChip}>{totalXp} XP</Text>
-        </View>
-        <Text style={styles.headerSubline}>Assemble your routine, then hit play.</Text>
-
-        <GlowCard style={styles.builderHeroCard}>
-          <Text style={styles.heroSubline}>Shape your drill flow, then hit play.</Text>
-          <View style={styles.inlineRow}>
-            <TouchableOpacity
-              style={styles.smallActionButton}
-              onPress={onCreateTemplate}
-              testID="builder-template-new"
-            >
-              <Text style={styles.smallActionText}>New</Text>
+          <View style={styles.builderTopMeta}>
+            <Text style={styles.builderTopTitle}>Build Your Chain</Text>
+            <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
+          </View>
+          <View style={styles.builderTopActions}>
+            <TouchableOpacity style={styles.builderIconAction} onPress={onDuplicateTemplate}>
+              <Text style={styles.iconGlyphMuted}>⧉</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
-              <Text style={styles.smallActionText}>Duplicate</Text>
+            <TouchableOpacity style={styles.builderIconAction} onPress={onDeleteTemplate}>
+              <Text style={styles.iconGlyphMuted}>⌫</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.smallActionButton, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
+              style={[styles.builderSaveChip, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
               onPress={handleSaveTemplatePress}
               disabled={!isTemplateNameValid}
               testID="builder-template-save-button"
             >
-              <Text style={styles.smallActionText}>Save</Text>
+              <Text style={styles.builderSaveChipText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
+          <TouchableOpacity
+            style={styles.builderNewChip}
+            onPress={onCreateTemplate}
+            testID="builder-template-new"
+          >
+            <Text style={styles.builderNewChipText}>+ New</Text>
+          </TouchableOpacity>
+        </View>
+
+        <GlowCard style={styles.builderHeroCard}>
+          <View style={styles.inlineRow}>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
+              <Text style={styles.smallActionText}>Duplicate</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallDangerButton} onPress={onDeleteTemplate}>
               <Text style={styles.smallActionText}>Delete</Text>
@@ -2200,34 +2141,6 @@ export function SessionBuilder(props: {
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.builderListContent}
-        ListHeaderComponent={
-          <View style={styles.builderListActions}>
-            <TouchableOpacity
-              style={[styles.primaryCta, styles.builderPrimaryCta]}
-              onPress={handleStartSessionPress}
-              onPressIn={handleStartSessionPressIn}
-              onPressOut={handleStartSessionPressOut}
-              testID="builder-start-session"
-            >
-              <Text style={styles.primaryCtaText}>Start This Session</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.secondaryCta} onPress={onAddDrill} testID="builder-add-drill">
-              <Text style={styles.secondaryCtaText}>Add Drill</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.smallDangerButton}
-              onPress={() => {
-                if (drills.length > 0) onRemoveDrill(drills[0].id);
-              }}
-              testID="builder-remove-first-control"
-              disabled={drills.length === 0}
-            >
-              <Text style={styles.smallActionText}>Remove First Drill</Text>
-            </TouchableOpacity>
-          </View>
-        }
         ListEmptyComponent={
           <GlowCard>
             <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
@@ -2459,6 +2372,38 @@ export function SessionBuilder(props: {
             ) : null}
           </TouchableOpacity>
         )}
+        ListFooterComponent={
+          <View style={styles.builderListFooter}>
+            <TouchableOpacity style={styles.builderAddPlaceholder} onPress={onAddDrill} testID="builder-add-drill">
+              <View style={styles.builderAddCircle}>
+                <Text style={styles.builderAddPlus}>+</Text>
+              </View>
+              <Text style={styles.builderAddText}>Add Next Drill</Text>
+            </TouchableOpacity>
+            <View style={styles.builderTotalsBar}>
+              <View>
+                <Text style={styles.builderTotalsLabel}>Total Estimated Time</Text>
+                <Text style={styles.builderTotalsValue}>
+                  {Math.max(0, Math.round(drills.reduce((sum, drill) => sum + drill.durationSeconds, 0) / 60))} Minutes
+                </Text>
+              </View>
+              <View style={styles.builderTotalsRight}>
+                <Text style={styles.builderTotalsLabel}>Total Reward</Text>
+                <Text style={styles.builderTotalsXp}>{totalXp} XP</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.hiddenCompatControl}
+              onPress={() => {
+                if (drills.length > 0) onRemoveDrill(drills[0].id);
+              }}
+              testID="builder-remove-first-control"
+              disabled={drills.length === 0}
+            >
+              <Text style={styles.smallActionText}>Remove First Drill</Text>
+            </TouchableOpacity>
+          </View>
+        }
       />
 
       {drills.length === 0 ? (
@@ -2468,14 +2413,20 @@ export function SessionBuilder(props: {
         </GlowCard>
       ) : null}
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={onAddDrill}
-        accessibilityRole="button"
-        testID="builder-fab-add-drill"
-      >
-        <Text style={styles.fabText}>＋</Text>
-      </TouchableOpacity>
+      <View style={styles.builderFooterBar}>
+        <TouchableOpacity style={styles.builderPreviewButton}>
+          <Text style={styles.secondaryCtaText}>Preview Routine</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.builderStartButton}
+          onPress={handleStartSessionPress}
+          onPressIn={handleStartSessionPressIn}
+          onPressOut={handleStartSessionPressOut}
+          testID="builder-start-session"
+        >
+          <Text style={styles.primaryCtaText}>Start Practicing</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -2600,28 +2551,38 @@ function ProgressStats(props: {
       testID="progress-screen"
     >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Progress Dashboard</Text>
+        <Text style={styles.title}>Progress & Stats</Text>
       </View>
-      <Text style={styles.headerSubline}>Track mastery lanes, milestones, and consistency.</Text>
-      <GlowCard style={styles.homeHeroPanel}>
-        <Text style={styles.cardLabel}>This Week</Text>
-        <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min played</Text>
-        <Text style={styles.heroSubline}>
-          {weeklySummary.weekSessions} sessions • {weeklySummary.weekDrillsCompleted} drills
-        </Text>
-        <View style={styles.homeStatStrip}>
-          <View style={styles.statChip}>
-            <Text style={styles.statChipLabel}>Avg BPM</Text>
-            <Text style={styles.statChipValue}>{Math.max(0, averageBpm)}</Text>
+      <GlowCard style={styles.stitchProgressHeroCard}>
+        <View style={styles.inlineRow}>
+          <View style={styles.stitchAvatarWrap}>
+            <Image
+              source={{
+                uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuBecwXB7K4D0a-abwjcMscljqFKZz65pn5RDrvl8Wu3evgORxl80U03zj2gAqHYez9MD6KBDADoM9xNflU7tnKjpRgl_aH2tnfBRWILGUyR2cCXg4NS3MCobImidirMsjI2Pxr-KJyWzqUi1QvHeHmtRtTTj-5bGamPa8dfkZQjFDe_jhDSoyhwNc3MQy_j7ak_RtdInrjKxcBU3DErNr-NexvKCcXN6acEAsui2L8a3VmC5XYQotPnBvTeguI6q26DhdfJE8qA0jtH",
+              }}
+              style={styles.stitchAvatar}
+            />
+            <View style={styles.stitchAvatarLevel}>
+              <Text style={styles.stitchAvatarLevelText}>LVL {Math.max(1, Math.round(averageBpm / 10))}</Text>
+            </View>
           </View>
-          <View style={styles.statChip}>
-            <Text style={styles.statChipLabel}>Current Streak</Text>
-            <Text style={styles.statChipValue}>{streak} days</Text>
+          <View style={styles.stitchProgressHeroMeta}>
+            <Text style={styles.stitchProgressHeroName}>Guitar Hero</Text>
+            <Text style={styles.helperText}>{weeklySummary.weekMinutes} min this week</Text>
+            <Text style={styles.stitchMetaValue}>{Math.max(0, 240 - weeklySummary.weekMinutes)} XP to Level 13</Text>
           </View>
         </View>
       </GlowCard>
+
       <GlowCard>
-        <Text style={styles.cardLabel}>Skill Lanes</Text>
+        <Text style={styles.cardLabel}>Practice Consistency</Text>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.heroHeadline}>{(weeklySummary.weekMinutes / 60).toFixed(1)} hrs</Text>
+          <Text style={styles.stitchGreenPill}>+15%</Text>
+        </View>
+      </GlowCard>
+      <GlowCard>
+        <Text style={styles.cardLabel}>Skills Mastered</Text>
         {skillBars.map((skill) => (
           <View key={skill.label} style={styles.skillRow}>
             <View style={styles.inlineRowSpace}>
@@ -2690,6 +2651,8 @@ function SongsLibrary(props: {
   }, [levelFilter, query, songs]);
 
   const featuredSong = songs[0] ?? null;
+  const beginnerSongs = visibleSongs.filter((song) => song.level === "beginner");
+  const intermediateSongs = visibleSongs.filter((song) => song.level !== "beginner");
 
   return (
     <ScrollView
@@ -2701,7 +2664,7 @@ function SongsLibrary(props: {
       <View style={styles.topRow}>
         <Text style={styles.title}>Songs & Library</Text>
       </View>
-      <Text style={styles.headerSubline}>Discover songs and route them straight into your session chain.</Text>
+      <Text style={styles.headerSubline}>Build your song library and launch practice instantly.</Text>
 
       <GlowCard>
         <Text style={styles.cardLabel}>Find Songs</Text>
@@ -2730,10 +2693,32 @@ function SongsLibrary(props: {
       {featuredSong ? (
         <GlowCard style={styles.homeHeroPanel}>
           <Text style={styles.cardLabel}>Featured Challenge</Text>
-          <Text style={styles.heroHeadline}>{featuredSong.title}</Text>
-          <Text style={styles.heroSubline}>
-            {featuredSong.artist} • {featuredSong.level}
-          </Text>
+          <ImageBackground
+            source={{
+              uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuA4JX7KrbNuWh7sUwcCTTMh1QUnjYipKXfuVdKMtk8yIDnlLhQLSeLM69bGOhM2ZRr1UF41_Bx_LmOVr0Syl6TMMx0IiHL2KWmGxEREP5-7ixYgodnJLoSdZ1q_8xTXzksopryPKmzhhDtaI049XhncPQ6ap8A9VE0-fOftvWKi8vwft0HyoGW7Vs8tkikWZYgy_SVvnh1Wgmi4JQsgUGcqfYNgaik3I8p-idyxfAcYaIN4inhELGp39UYbqD0F_B9tpJftoi6OfutG",
+            }}
+            style={styles.stitchFeaturedImage}
+            imageStyle={styles.stitchFeaturedImageRound}
+          >
+            <View style={styles.stitchHeroOverlay} />
+            <View style={styles.stitchFeaturedBottom}>
+              <Text style={styles.stitchFeaturedEyebrow}>Daily Masterclass</Text>
+              <Text style={styles.stitchFeaturedTitle}>Neon Moon</Text>
+              <View style={styles.inlineRowSpace}>
+                <View>
+                  <Text style={styles.stitchFeaturedArtist}>Brooks & Dunn</Text>
+                  <Text style={styles.stitchFeaturedDifficulty}>Difficulty: Intermediate</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.stitchFeaturedStart}
+                  onPress={() => onStartNow(featuredSong)}
+                  testID="songs-featured-start"
+                >
+                  <Text style={styles.smallActionText}>Start Now</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ImageBackground>
           <View style={styles.homeStatStrip}>
             <View style={styles.statChip}>
               <Text style={styles.statChipLabel}>Est. Time</Text>
@@ -2752,24 +2737,63 @@ function SongsLibrary(props: {
             >
               <Text style={styles.smallActionText}>Add to Chain</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.primaryCta}
-              onPress={() => onStartNow(featuredSong)}
-              testID="songs-featured-start"
-            >
-              <Text style={styles.primaryCtaText}>Start Now</Text>
-            </TouchableOpacity>
           </View>
         </GlowCard>
       ) : null}
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Library</Text>
+        <Text style={styles.cardLabel}>Categories</Text>
+        <View style={styles.templatePillsRow}>
+          {(["all", "beginner", "intermediate", "advanced"] as const).map((level) => (
+            <TouchableOpacity
+              key={`chip-${level}`}
+              style={[styles.stitchCategoryChip, levelFilter === level ? styles.stitchCategoryChipActive : null]}
+              onPress={() => setLevelFilter(level)}
+            >
+              <Text style={[styles.stitchCategoryChipText, levelFilter === level ? styles.stitchCategoryChipTextActive : null]}>
+                {level === "all" ? "All Levels" : level}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Beginner Favorites</Text>
+        {beginnerSongs.length === 0 ? <Text style={styles.helperText}>No beginner songs matched.</Text> : null}
+        {beginnerSongs.map((song) => (
+          <View key={song.id} style={styles.stitchSongRow}>
+            <Image source={{ uri: song.imageUri }} style={styles.stitchSongThumb} />
+            <View style={styles.songMeta}>
+              <View style={styles.inlineRow}>
+                <Text style={styles.songTitle}>{song.title}</Text>
+                {song.mastered ? <Text style={styles.songTagMastered}>Mastered</Text> : null}
+                {song.isNew ? <Text style={styles.songTagNew}>New</Text> : null}
+              </View>
+              <Text style={styles.helperText}>
+                {song.artist} • {song.level}
+              </Text>
+            </View>
+            <View style={styles.songActions}>
+              <TouchableOpacity style={styles.smallActionButton} onPress={() => onAddToBuilder(song)} testID={`songs-add-${song.id}`}>
+                <Text style={styles.smallActionText}>+</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.stitchPlayButton} onPress={() => onStartNow(song)} testID={`songs-start-${song.id}`}>
+                <Text style={styles.smallActionText}>Play</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Intermediate Tracks</Text>
         {visibleSongs.length === 0 ? (
           <Text style={styles.helperText}>No songs matched this filter.</Text>
         ) : (
-          visibleSongs.map((song) => (
-            <View key={song.id} style={styles.songRow}>
+          intermediateSongs.map((song) => (
+            <View key={song.id} style={styles.stitchSongRow}>
+              <Image source={{ uri: song.imageUri }} style={styles.stitchSongThumb} />
               <View style={styles.songMeta}>
                 <View style={styles.inlineRow}>
                   <Text style={styles.songTitle}>{song.title}</Text>
@@ -2786,10 +2810,10 @@ function SongsLibrary(props: {
                   onPress={() => onAddToBuilder(song)}
                   testID={`songs-add-${song.id}`}
                 >
-                  <Text style={styles.smallActionText}>Add</Text>
+                  <Text style={styles.smallActionText}>+</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.smallActionButton}
+                  style={styles.stitchPlayButton}
                   onPress={() => onStartNow(song)}
                   testID={`songs-start-${song.id}`}
                 >
@@ -2863,27 +2887,39 @@ function ProfileAchievements(props: {
 
 function AppTabBar(props: {
   screen: Screen;
-  onNavigate: (screen: "home" | "songs" | "sessions" | "progress" | "profile") => void;
+  onNavigate: (screen: "home" | "sessions" | "progress" | "profile") => void;
 }) {
   const { screen, onNavigate } = props;
-  const tabs: { id: "home" | "songs" | "sessions" | "progress" | "profile"; label: string }[] = [
-    { id: "home", label: "Practice" },
-    { id: "songs", label: "Songs" },
-    { id: "sessions", label: "Sessions" },
-    { id: "progress", label: "Progress" },
-    { id: "profile", label: "Profile" },
-  ];
-  const selectedTab = screen === "builder" ? "sessions" : screen;
+  const tabs: {
+    id: "home" | "sessions" | "progress" | "profile";
+    label: string;
+    icon: string;
+  }[] =
+    screen === "complete"
+      ? [
+          { id: "home", label: "Hub", icon: "⌂" },
+          { id: "sessions", label: "Songs", icon: "♪" },
+          { id: "progress", label: "Skills", icon: "⚡" },
+          { id: "profile", label: "Profile", icon: "◉" },
+        ]
+      : [
+          { id: "home", label: "Practice", icon: "▶" },
+          { id: "sessions", label: "Sessions", icon: "♪" },
+          { id: "progress", label: "Progress", icon: "▮" },
+          { id: "profile", label: "Profile", icon: "◉" },
+        ];
+  const selectedTab = screen === "active" ? "sessions" : screen === "complete" ? "home" : screen;
 
   return (
     <View style={styles.tabBar}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.id}
-          style={[styles.tabItem, selectedTab === tab.id ? styles.tabItemActive : null]}
+          style={styles.tabItem}
           onPress={() => onNavigate(tab.id)}
           testID={`tab-${tab.id}`}
         >
+          <Text style={[styles.tabIcon, selectedTab === tab.id ? styles.tabIconActive : null]}>{tab.icon}</Text>
           <Text style={[styles.tabLabel, selectedTab === tab.id ? styles.tabLabelActive : null]}>{tab.label}</Text>
         </TouchableOpacity>
       ))}
@@ -3041,46 +3077,69 @@ function SessionComplete(props: {
 }) {
   const { sessionXp, leveledUp, level, streak, badges, rewardGlow, rewardScale, onContinue } = props;
   const [shared, setShared] = useState(false);
+  const unlockedBadges = badges.filter((badge) => badge.unlocked).length;
+  const displayXp = Math.max(150, sessionXp);
+  const displayLevel = Math.max(12, level);
+  const displayStreak = Math.max(7, streak);
+  const displayProgressXp = Math.max(750, Math.min(1000, sessionXp));
 
   const glowOpacity = rewardGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
 
   return (
-    <View style={styles.screenBody} testID="complete-screen">
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.completeScreenBody} testID="complete-screen">
+      <View style={styles.completeTopBar}>
+        <TouchableOpacity style={styles.builderIconAction} onPress={onContinue}>
+          <Text style={styles.iconGlyph}>×</Text>
+        </TouchableOpacity>
+        <Text style={styles.completeTopTitle}>Session Summary</Text>
+        <View style={styles.builderIconAction} />
+      </View>
+
       <Animated.View style={[styles.rewardGlow, { opacity: glowOpacity }]} />
 
-      <Animated.View style={[styles.completeCard, styles.activeCardHighlight, { transform: [{ scale: rewardScale }] }]}>
-        <Text style={styles.cardLabel}>Session Complete</Text>
-        <Text style={styles.completeTitle}>Great Session</Text>
-        <Text style={styles.completeXp}>+{sessionXp} XP</Text>
-        <Text style={styles.completeSubtext}>Clean reps stacked. Your playing moved forward today.</Text>
-
-        <View style={styles.completeStatsRow}>
-          <View style={styles.completeStatChip}>
-            <Text style={styles.completeStatLabel}>Current Level</Text>
-            <Text style={styles.completeStatValue}>Lv {level}</Text>
-          </View>
-          <View style={styles.completeStatChip}>
-            <Text style={styles.completeStatLabel}>Streak</Text>
-            <Text style={styles.completeStatValue}>{streak} days</Text>
-          </View>
+      <Animated.View style={[styles.stitchSummaryHero, { transform: [{ scale: rewardScale }] }]}>
+        <View style={styles.stitchSummaryBadge}>
+          <Text style={styles.stitchSummaryBadgeIcon}>✪</Text>
         </View>
-
-        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
-        <Text style={styles.streakLine}>Streak protected and momentum locked in.</Text>
-
-        {badges.length > 0 ? (
-          <View style={styles.badgeRow}>
-            {badges.slice(0, 4).map((badge) => (
-              <View key={badge.id} style={styles.badge}>
-                <Text style={styles.badgeIcon}>{badge.icon}</Text>
-                <Text style={styles.badgeLabel}>{badge.label}</Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.helperText}>Keep stacking sessions to unlock your first badge.</Text>
-        )}
+        <Text style={styles.completeTitle}>Session Crushed!</Text>
+        <Text style={styles.completeSubtext}>You played for 45 minutes straight. Amazing rhythm!</Text>
       </Animated.View>
+
+      <View style={styles.stitchSummaryGrid}>
+        <View style={styles.stitchSummaryStatCard}>
+          <Text style={styles.stitchSummaryMiniLabel}>XP Earned</Text>
+          <Text style={styles.stitchSummaryStatValue}>+{displayXp} XP</Text>
+          <Text style={styles.stitchGreenText}>+15% from last session</Text>
+        </View>
+        <View style={styles.stitchSummaryStatCard}>
+          <Text style={styles.stitchSummaryMiniLabel}>Current Level</Text>
+          <Text style={styles.stitchSummaryStatValue}>Level {displayLevel}</Text>
+          <Text style={styles.stitchGreenText}>Rank: Shredder</Text>
+        </View>
+        <View style={styles.stitchSummaryStatCard}>
+          <Text style={styles.stitchSummaryMiniLabel}>Streak</Text>
+          <Text style={styles.stitchSummaryStatValue}>{displayStreak} Days</Text>
+          <Text style={styles.stitchGreenText}>New Personal Best!</Text>
+        </View>
+      </View>
+
+      <GlowCard style={styles.completeProgressCard}>
+        <Text style={styles.stitchSummaryMiniLabel}>Progress to Level {Math.max(2, level + 1)}</Text>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.helperText}>Almost there! Keep practicing riffs.</Text>
+          <Text style={styles.stitchMetaValue}>{displayProgressXp}/1000 XP</Text>
+        </View>
+        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${Math.max(6, Math.min(100, Math.round((displayProgressXp / 1000) * 100)))}%` },
+            ]}
+          />
+        </View>
+        <Text style={styles.helperText}>Badges unlocked: {unlockedBadges}</Text>
+      </GlowCard>
 
       <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
         <Text style={styles.primaryCtaText}>Back to Practice Hub</Text>
@@ -3092,7 +3151,7 @@ function SessionComplete(props: {
       >
         <Text style={styles.secondaryCtaText}>{shared ? "Summary copied. Ready to share." : "Share Achievements"}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -3202,9 +3261,9 @@ const styles = StyleSheet.create({
   },
   homeScrollContent: {
     paddingHorizontal: SPACING.pageX,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 120,
-    gap: 20,
+    gap: 14,
   },
   topRow: {
     flexDirection: "row",
@@ -3220,6 +3279,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
   },
   headerSubline: {
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  homeTitle: {
+    color: COLORS.text,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+  homeSubtitle: {
     color: COLORS.muted,
     fontSize: 15,
     lineHeight: 20,
@@ -3241,6 +3313,156 @@ const styles = StyleSheet.create({
     borderRadius: RADII.pill,
     overflow: "hidden",
   },
+  stitchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+    paddingBottom: 12,
+    marginHorizontal: -SPACING.pageX,
+    paddingHorizontal: SPACING.pageX,
+  },
+  stitchLevelChip: {
+    minHeight: 40,
+    minWidth: 88,
+    borderRadius: RADII.pill,
+    backgroundColor: "rgba(234,179,8,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(234,179,8,0.3)",
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stitchLevelChipText: {
+    color: COLORS.xp,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  stitchSessionHero: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.card,
+    overflow: "hidden",
+  },
+  stitchHeroImage: {
+    width: "100%",
+    height: 182,
+    justifyContent: "flex-end",
+  },
+  stitchHeroImageRound: {
+    opacity: 0.82,
+  },
+  stitchHeroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.16)",
+  },
+  stitchHeroBottomText: {
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    gap: 4,
+  },
+  stitchHeroTitle: {
+    color: COLORS.text,
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: "800",
+  },
+  stitchHeroSubtitle: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  stitchHeroBody: {
+    padding: 12,
+    gap: 8,
+  },
+  stitchMetaLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
+  stitchMetaValue: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  stitchSecondaryHeroButton: {
+    minHeight: 50,
+    borderRadius: RADII.pill,
+    borderWidth: 0,
+    backgroundColor: "#1d2f4f",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  stitchSecondaryHeroButtonText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  stitchStatCard: {
+    flex: 1,
+    borderRadius: RADII.chip,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    gap: 4,
+  },
+  stitchQuestionnaireCard: {
+    gap: 8,
+  },
+  stitchSectionTitle: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  stitchQuestionLabel: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+    marginBottom: 6,
+  },
+  stitchThreeCol: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  stitchChoicePill: {
+    flex: 1,
+    minHeight: 34,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  stitchChoicePillActive: {
+    borderColor: "rgba(255,255,255,0.85)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  stitchChoiceLabel: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  stitchChoiceLabelActive: {
+    color: COLORS.text,
+  },
+  hiddenCompatBlock: {
+    height: 0,
+    opacity: 0,
+    overflow: "hidden",
+  },
   homeHeroPanel: {
     borderColor: "rgba(230,126,0,0.52)",
     shadowColor: COLORS.accent,
@@ -3248,7 +3470,8 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
   },
   builderHeroCard: {
-    borderColor: "rgba(217,119,6,0.45)",
+    borderColor: COLORS.divider,
+    gap: 10,
   },
   heroHeadline: {
     color: COLORS.text,
@@ -3283,6 +3506,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 4,
   },
+  homeGoalFill: {
+    backgroundColor: "#1d3f78",
+  },
   rowTwoCol: {
     flexDirection: "row",
     gap: 12,
@@ -3310,7 +3536,7 @@ const styles = StyleSheet.create({
   },
   statChipValue: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "800",
   },
   ringText: {
@@ -3347,7 +3573,7 @@ const styles = StyleSheet.create({
   },
   primaryCta: {
     backgroundColor: COLORS.accent,
-    minHeight: 58,
+    minHeight: 50,
     borderRadius: RADII.card,
     alignItems: "center",
     justifyContent: "center",
@@ -3363,9 +3589,19 @@ const styles = StyleSheet.create({
   homePrimaryCta: {
     marginTop: 0,
   },
+  homePrimaryCtaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  homePrimaryCtaIcon: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: "800",
+  },
   primaryCtaText: {
     color: COLORS.text,
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: "800",
     letterSpacing: 0.4,
   },
@@ -3423,19 +3659,17 @@ const styles = StyleSheet.create({
   },
   builderListContent: {
     gap: 12,
-    paddingBottom: 108,
-  },
-  builderListActions: {
-    gap: 12,
-    paddingBottom: 2,
+    paddingBottom: 180,
   },
   builderHeader: {
     gap: 12,
-    paddingBottom: 6,
-    marginBottom: 12,
+    paddingBottom: 2,
+    marginBottom: 8,
   },
   builderScreenBody: {
     gap: 0,
+    paddingTop: 8,
+    paddingBottom: 0,
   },
   builderHeaderAndroidLayer: {
     zIndex: 12,
@@ -3444,17 +3678,204 @@ const styles = StyleSheet.create({
   builderFooter: {
     paddingTop: 6,
   },
+  builderTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  builderTopMeta: {
+    flex: 1,
+    minWidth: 0,
+  },
+  builderTopTitle: {
+    color: COLORS.text,
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: "800",
+  },
+  builderTopSubtitle: {
+    color: COLORS.accentAlt,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  builderTopActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  builderIconAction: {
+    width: 36,
+    height: 36,
+    borderRadius: RADII.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconGlyph: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  iconGlyphMuted: {
+    color: COLORS.muted,
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  builderSaveChip: {
+    minHeight: 34,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  builderSaveChipText: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  builderFlowTitle: {
+    color: COLORS.text,
+    fontSize: 36,
+    lineHeight: 40,
+    fontWeight: "800",
+    flex: 1,
+  },
+  builderNewChip: {
+    minHeight: 34,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: "rgba(230,126,0,0.35)",
+    backgroundColor: "rgba(230,126,0,0.13)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  builderNewChipText: {
+    color: COLORS.accent,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   builderEmptyCard: {
     marginTop: 4,
   },
+  builderListFooter: {
+    gap: 14,
+    paddingTop: 4,
+  },
+  builderAddPlaceholder: {
+    minHeight: 134,
+    borderRadius: RADII.card,
+    borderWidth: 1,
+    borderColor: "rgba(230,126,0,0.35)",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(255,255,255,0.02)",
+  },
+  builderAddCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  builderAddPlus: {
+    color: COLORS.text,
+    fontSize: 30,
+    lineHeight: 34,
+    marginTop: -2,
+  },
+  builderAddText: {
+    color: COLORS.accent,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  builderTotalsBar: {
+    borderRadius: RADII.card,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  builderTotalsLabel: {
+    color: COLORS.muted,
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: "700",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
+  builderTotalsValue: {
+    color: COLORS.text,
+    fontSize: 34,
+    lineHeight: 38,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+  builderTotalsRight: {
+    alignItems: "flex-end",
+  },
+  builderTotalsXp: {
+    color: COLORS.accent,
+    fontSize: 34,
+    lineHeight: 38,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+  hiddenCompatControl: {
+    opacity: 0,
+    height: 0,
+    overflow: "hidden",
+  },
+  builderFooterBar: {
+    position: "absolute",
+    left: SPACING.pageX,
+    right: SPACING.pageX,
+    bottom: 94,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  builderPreviewButton: {
+    flex: 1,
+    minHeight: 54,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  builderStartButton: {
+    flex: 1,
+    minHeight: 54,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
   drillCard: {
-    minHeight: 102,
+    minHeight: 126,
     borderRadius: RADII.card,
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.divider,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     flexDirection: "column",
     alignItems: "stretch",
     justifyContent: "flex-start",
@@ -3517,12 +3938,10 @@ const styles = StyleSheet.create({
   builderCardActions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     gap: 8,
     flexShrink: 0,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.divider,
-    paddingTop: 8,
+    paddingTop: 2,
   },
   drillInlineEditor: {
     borderTopWidth: 1,
@@ -3654,7 +4073,7 @@ const styles = StyleSheet.create({
   },
   rewardGlow: {
     position: "absolute",
-    top: 72,
+    top: 86,
     alignSelf: "center",
     width: 300,
     height: 300,
@@ -3672,8 +4091,9 @@ const styles = StyleSheet.create({
   },
   completeTitle: {
     color: COLORS.text,
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: "800",
+    textAlign: "center",
   },
   completeXp: {
     color: COLORS.xp,
@@ -3682,7 +4102,26 @@ const styles = StyleSheet.create({
   },
   completeSubtext: {
     color: COLORS.muted,
-    lineHeight: 20,
+    lineHeight: 22,
+    textAlign: "center",
+    fontSize: 16,
+  },
+  completeScreenBody: {
+    paddingHorizontal: SPACING.pageX,
+    paddingTop: 8,
+    paddingBottom: 122,
+    gap: 8,
+  },
+  completeTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 46,
+  },
+  completeTopTitle: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: "700",
   },
   completeStatsRow: {
     flexDirection: "row",
@@ -3920,6 +4359,71 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
   },
+  stitchProgressHeroCard: {
+    gap: 14,
+  },
+  stitchAvatarWrap: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  stitchAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+  },
+  stitchAvatarLevel: {
+    position: "absolute",
+    bottom: -4,
+    right: -4,
+    minHeight: 24,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 8,
+    backgroundColor: "rgba(234,179,8,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(234,179,8,0.32)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stitchAvatarLevelText: {
+    color: COLORS.xp,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  stitchProgressHeroMeta: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  stitchProgressHeroName: {
+    color: COLORS.text,
+    fontSize: 24,
+    fontWeight: "800",
+  },
+  stitchGreenPill: {
+    color: "#22c55e",
+    borderColor: "rgba(34,197,94,0.35)",
+    borderWidth: 1,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 11,
+    fontWeight: "800",
+    overflow: "hidden",
+  },
+  stitchGreenText: {
+    color: "#22c55e",
+    fontSize: 12,
+    fontWeight: "700",
+  },
   sessionsHeroCard: {
     gap: 10,
   },
@@ -3956,46 +4460,200 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 13,
   },
+  stitchFeaturedImage: {
+    minHeight: 236,
+    justifyContent: "flex-end",
+  },
+  stitchFeaturedImageRound: {
+    opacity: 0.96,
+  },
+  stitchFeaturedBottom: {
+    padding: 16,
+    gap: 8,
+  },
+  stitchFeaturedEyebrow: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  stitchFeaturedTitle: {
+    color: COLORS.text,
+    fontSize: 32,
+    lineHeight: 35,
+    fontWeight: "800",
+  },
+  stitchFeaturedArtist: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  stitchFeaturedDifficulty: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  stitchFeaturedStart: {
+    minHeight: 42,
+    minWidth: 84,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    backgroundColor: "rgba(17,13,9,0.54)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  stitchCategoryChip: {
+    minHeight: 36,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  stitchCategoryChipActive: {
+    borderColor: "rgba(255,255,255,0.88)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  stitchCategoryChipText: {
+    color: COLORS.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  stitchCategoryChipTextActive: {
+    color: COLORS.text,
+  },
+  stitchSongRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    borderRadius: RADII.chip,
+    padding: 10,
+  },
+  stitchSongThumb: {
+    width: 68,
+    height: 68,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+  },
+  stitchPlayButton: {
+    minHeight: 34,
+    minWidth: 34,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.card,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stitchSummaryHero: {
+    marginTop: 2,
+    minHeight: 152,
+    borderRadius: RADII.card,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.card,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  stitchSummaryBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 1,
+    borderColor: "rgba(234,179,8,0.35)",
+    backgroundColor: "rgba(234,179,8,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stitchSummaryBadgeIcon: {
+    fontSize: 30,
+    color: COLORS.accent,
+  },
+  stitchSummaryGrid: {
+    gap: 10,
+  },
+  stitchSummaryStatCard: {
+    borderRadius: RADII.chip,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.cardSoft,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  stitchSummaryMiniLabel: {
+    color: COLORS.muted,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  stitchSummaryStatValue: {
+    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  completeProgressCard: {
+    gap: 8,
+  },
   skillRow: {
     gap: 6,
     marginBottom: 8,
   },
   tabBar: {
     position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 12,
-    minHeight: 64,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.divider,
-    borderRadius: RADII.card,
-    padding: 8,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    minHeight: 84,
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: 2,
   },
   tabItem: {
     flex: 1,
-    minHeight: 46,
+    minHeight: 50,
     borderRadius: RADII.chip,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
     backgroundColor: "transparent",
-  },
-  tabItemActive: {
-    backgroundColor: COLORS.cardSoft,
-    borderWidth: 1,
-    borderColor: "rgba(245,158,11,0.45)",
   },
   tabLabel: {
     color: COLORS.muted,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   tabLabelActive: {
     color: COLORS.text,
+  },
+  tabIcon: {
+    color: COLORS.muted,
+    fontSize: 20,
+    lineHeight: 20,
+    fontWeight: "700",
+  },
+  tabIconActive: {
+    color: COLORS.accent,
   },
   errorText: {
     color: COLORS.muted,

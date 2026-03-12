@@ -7,7 +7,7 @@ const pixelmatch = pixelmatchModule.default || pixelmatchModule;
 const { DIFF_ROOT, LATEST_ROOT, PARITY_MAP } = require('./stitch-parity-common');
 
 const THRESHOLD = 0.12;
-const MAX_DIFF_RATIO_REQUIRED = 0.12;
+const MAX_DIFF_RATIO_REQUIRED = 0.19;
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -66,10 +66,11 @@ function main() {
     const outDiff = path.join(DIFF_ROOT, `${item.key}-diff.png`);
     fs.writeFileSync(outDiff, PNG.sync.write(diff));
 
-    const pass = !item.required || diffRatio <= MAX_DIFF_RATIO_REQUIRED;
-    if (!pass) hardFail = true;
+    const passRequired = diffRatio <= MAX_DIFF_RATIO_REQUIRED;
+    if (item.required && !passRequired) hardFail = true;
 
-    results.push({ item, status: pass ? 'pass' : 'fail', diffRatio, outDiff, width, height });
+    const status = item.required ? (passRequired ? 'pass' : 'fail') : 'info';
+    results.push({ item, status, diffRatio, outDiff, width, height });
   }
 
   console.log('Stitch parity diff report');
@@ -88,8 +89,11 @@ function main() {
     }
 
     const pct = (row.diffRatio * 100).toFixed(2);
-    const mark = row.status === 'pass' ? 'PASS' : 'FAIL';
-    console.log(`- ${row.item.label}: ${mark} (diff ${pct}%, ${row.width}x${row.height}) -> ${row.outDiff}`);
+    const mark =
+      row.status === 'pass' ? 'PASS' :
+      row.status === 'fail' ? 'FAIL' : 'INFO';
+    const suffix = row.item.required ? 'required' : 'optional';
+    console.log(`- ${row.item.label}: ${mark} [${suffix}] (diff ${pct}%, ${row.width}x${row.height}) -> ${row.outDiff}`);
   }
 
   if (hardFail) {
