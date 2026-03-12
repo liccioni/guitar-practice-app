@@ -1665,10 +1665,10 @@ function HomeDashboard(props: {
     setPracticePreferenceInput(onboardingState.answers.practicePreference);
   }, [onboardingState.answers]);
 
-  function submitOnboardingAnswers(): void {
+  function submitOnboardingAnswers(nextLevel: GuitarLevel, nextDuration: PracticeDurationMinutes): void {
     onSaveOnboardingAnswers({
-      level: levelInput,
-      durationMinutes: durationInput,
+      level: nextLevel,
+      durationMinutes: nextDuration,
       focus: focusInput,
       outcome: outcomeInput,
       weeklyFrequencyDays: weeklyFrequencyInput,
@@ -1748,11 +1748,17 @@ function HomeDashboard(props: {
 
       <View style={styles.homeStatStrip}>
         <View style={styles.stitchStatCard}>
-          <Text style={styles.statChipLabel}>🔥  Streak</Text>
+          <View style={styles.stitchCardLabelRow}>
+            <View style={styles.homeTinyIcon} />
+            <Text style={styles.statChipLabel}>STREAK</Text>
+          </View>
           <Text style={styles.statChipValue}>{streak} days</Text>
         </View>
         <View style={styles.stitchStatCard}>
-          <Text style={styles.statChipLabel}>🏆  Next Level</Text>
+          <View style={styles.stitchCardLabelRow}>
+            <View style={styles.homeTinyIcon} />
+            <Text style={styles.statChipLabel}>NEXT LEVEL</Text>
+          </View>
           <Text style={styles.statChipValue}>
             {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
           </Text>
@@ -1760,7 +1766,10 @@ function HomeDashboard(props: {
       </View>
 
       <GlowCard style={styles.stitchQuestionnaireCard}>
-        <Text style={styles.stitchSectionTitle}>📋  Starter Questionnaire</Text>
+        <View style={styles.stitchCardLabelRow}>
+          <View style={styles.homeQuestionIcon} />
+          <Text style={styles.stitchSectionTitle}>Starter Questionnaire</Text>
+        </View>
         {!onboardingState.completed ? (
           <>
             <Text style={styles.stitchQuestionLabel}>Choose your skill level</Text>
@@ -1778,7 +1787,10 @@ function HomeDashboard(props: {
                     styles.stitchChoicePill,
                     levelInput === level.id ? styles.stitchChoicePillActive : null,
                   ]}
-                  onPress={() => setLevelInput(level.id)}
+                  onPress={() => {
+                    setLevelInput(level.id);
+                    submitOnboardingAnswers(level.id, durationInput);
+                  }}
                   testID={`onboarding-level-${level.id}`}
                 >
                   <Text
@@ -1799,7 +1811,10 @@ function HomeDashboard(props: {
                 <TouchableOpacity
                   key={minutes}
                   style={[styles.stitchChoicePill, durationInput === minutes ? styles.stitchChoicePillActive : null]}
-                  onPress={() => setDurationInput(minutes)}
+                  onPress={() => {
+                    setDurationInput(minutes);
+                    submitOnboardingAnswers(levelInput, minutes);
+                  }}
                   testID={`onboarding-duration-${minutes}`}
                 >
                   <Text style={[styles.stitchChoiceLabel, durationInput === minutes ? styles.stitchChoiceLabelActive : null]}>
@@ -1809,9 +1824,6 @@ function HomeDashboard(props: {
               ))}
             </View>
 
-            <TouchableOpacity style={styles.smallActionButton} onPress={submitOnboardingAnswers} testID="onboarding-generate">
-              <Text style={styles.smallActionText}>Generate Practice Plan</Text>
-            </TouchableOpacity>
           </>
         ) : (
           <>
@@ -2911,7 +2923,7 @@ function AppTabBar(props: {
   const selectedTab = screen === "active" ? "sessions" : screen === "complete" ? "home" : screen;
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, selectedTab === "home" ? styles.homeTabBar : null]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.id}
@@ -3258,12 +3270,13 @@ const styles = StyleSheet.create({
   },
   homeScroll: {
     flex: 1,
+    backgroundColor: "#231a0f",
   },
   homeScrollContent: {
     paddingHorizontal: SPACING.pageX,
-    paddingTop: 4,
-    paddingBottom: 120,
-    gap: 14,
+    paddingTop: 0,
+    paddingBottom: 24,
+    gap: 10,
   },
   topRow: {
     flexDirection: "row",
@@ -3295,7 +3308,7 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 15,
     lineHeight: 20,
-    marginTop: 6,
+    marginTop: 2,
   },
   brandEyebrow: {
     color: COLORS.accentAlt,
@@ -3318,38 +3331,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
-    paddingBottom: 12,
+    borderBottomColor: "rgba(230,126,0,0.1)",
+    paddingBottom: 8,
     marginHorizontal: -SPACING.pageX,
     paddingHorizontal: SPACING.pageX,
   },
   stitchLevelChip: {
-    minHeight: 40,
-    minWidth: 88,
+    minHeight: 34,
+    minWidth: 58,
     borderRadius: RADII.pill,
-    backgroundColor: "rgba(234,179,8,0.15)",
+    backgroundColor: "rgba(230,126,0,0.2)",
     borderWidth: 1,
-    borderColor: "rgba(234,179,8,0.3)",
-    paddingHorizontal: 14,
+    borderColor: "rgba(230,126,0,0.3)",
+    paddingHorizontal: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   stitchLevelChipText: {
     color: COLORS.xp,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.4,
+    letterSpacing: 0.2,
   },
   stitchSessionHero: {
-    borderRadius: 24,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.divider,
-    backgroundColor: COLORS.card,
+    borderColor: "rgba(230,126,0,0.1)",
+    backgroundColor: "rgba(230,126,0,0.05)",
     overflow: "hidden",
   },
   stitchHeroImage: {
     width: "100%",
-    height: 182,
+    height: 164,
     justifyContent: "flex-end",
   },
   stitchHeroImageRound: {
@@ -3360,14 +3373,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.16)",
   },
   stitchHeroBottomText: {
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     gap: 4,
   },
   stitchHeroTitle: {
     color: COLORS.text,
-    fontSize: 26,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 26,
     fontWeight: "800",
   },
   stitchHeroSubtitle: {
@@ -3376,8 +3389,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   stitchHeroBody: {
-    padding: 12,
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
   },
   stitchMetaLabel: {
     color: COLORS.muted,
@@ -3388,7 +3402,7 @@ const styles = StyleSheet.create({
   },
   stitchMetaValue: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
   },
   stitchSecondaryHeroButton: {
@@ -3407,16 +3421,42 @@ const styles = StyleSheet.create({
   },
   stitchStatCard: {
     flex: 1,
-    borderRadius: RADII.chip,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.divider,
-    backgroundColor: COLORS.cardSoft,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    gap: 4,
+    borderColor: "rgba(230,126,0,0.1)",
+    backgroundColor: "rgba(230,126,0,0.05)",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 2,
+  },
+  stitchCardLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  stitchCardIcon: {
+    fontSize: 12,
+    color: COLORS.accent,
+  },
+  homeTinyIcon: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent,
+  },
+  homeQuestionIcon: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: COLORS.accent,
   },
   stitchQuestionnaireCard: {
-    gap: 8,
+    borderRadius: 16,
+    borderColor: "rgba(230,126,0,0.1)",
+    backgroundColor: "rgba(230,126,0,0.05)",
+    gap: 6,
+    padding: 14,
+    minHeight: 164,
   },
   stitchSectionTitle: {
     color: COLORS.text,
@@ -3425,38 +3465,38 @@ const styles = StyleSheet.create({
   },
   stitchQuestionLabel: {
     color: COLORS.muted,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.3,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   stitchThreeCol: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
   stitchChoicePill: {
     flex: 1,
-    minHeight: 34,
+    minHeight: 30,
     borderRadius: RADII.pill,
     borderWidth: 1,
-    borderColor: COLORS.divider,
-    backgroundColor: COLORS.cardSoft,
+    borderColor: "#334a73",
+    backgroundColor: "rgba(0,0,0,0.12)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
   },
   stitchChoicePillActive: {
-    borderColor: "rgba(255,255,255,0.85)",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(230,126,0,0.9)",
+    backgroundColor: "rgba(230,126,0,0.16)",
   },
   stitchChoiceLabel: {
     color: COLORS.muted,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
   },
   stitchChoiceLabelActive: {
-    color: COLORS.text,
+    color: COLORS.accent,
   },
   hiddenCompatBlock: {
     height: 0,
@@ -3536,7 +3576,7 @@ const styles = StyleSheet.create({
   },
   statChipValue: {
     color: COLORS.text,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "800",
   },
   ringText: {
@@ -3573,7 +3613,7 @@ const styles = StyleSheet.create({
   },
   primaryCta: {
     backgroundColor: COLORS.accent,
-    minHeight: 50,
+    minHeight: 46,
     borderRadius: RADII.card,
     alignItems: "center",
     justifyContent: "center",
@@ -3606,7 +3646,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   secondaryCta: {
-    minHeight: 50,
+    minHeight: 46,
     borderRadius: RADII.chip,
     borderWidth: 1,
     borderColor: COLORS.divider,
@@ -4626,6 +4666,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 2,
+  },
+  homeTabBar: {
+    backgroundColor: "#231a0f",
+    borderTopColor: "rgba(230,126,0,0.1)",
   },
   tabItem: {
     flex: 1,

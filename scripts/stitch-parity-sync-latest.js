@@ -42,23 +42,46 @@ function readPng(filePath) {
   return PNG.sync.read(fs.readFileSync(filePath));
 }
 
-function fitToSameSize(a, b) {
-  const width = Math.min(a.width, b.width);
-  const height = Math.min(a.height, b.height);
-  const crop = (img) => {
-    const out = new PNG({ width, height });
-    PNG.bitblt(img, out, 0, 0, width, height, 0, 0);
-    return out;
-  };
-  return [crop(a), crop(b), width, height];
+function resizeToSize(img, width, height) {
+  if (img.width === width && img.height === height) return img;
+
+  const out = new PNG({ width, height });
+  const xRatio = (img.width - 1) / Math.max(1, width - 1);
+  const yRatio = (img.height - 1) / Math.max(1, height - 1);
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const srcX = x * xRatio;
+      const srcY = y * yRatio;
+      const x0 = Math.floor(srcX);
+      const y0 = Math.floor(srcY);
+      const x1 = Math.min(img.width - 1, x0 + 1);
+      const y1 = Math.min(img.height - 1, y0 + 1);
+      const tx = srcX - x0;
+      const ty = srcY - y0;
+      const dstIdx = (y * width + x) * 4;
+
+      for (let channel = 0; channel < 4; channel += 1) {
+        const p00 = img.data[(y0 * img.width + x0) * 4 + channel];
+        const p10 = img.data[(y0 * img.width + x1) * 4 + channel];
+        const p01 = img.data[(y1 * img.width + x0) * 4 + channel];
+        const p11 = img.data[(y1 * img.width + x1) * 4 + channel];
+        const top = p00 * (1 - tx) + p10 * tx;
+        const bottom = p01 * (1 - tx) + p11 * tx;
+        out.data[dstIdx + channel] = Math.round(top * (1 - ty) + bottom * ty);
+      }
+    }
+  }
+
+  return out;
 }
 
 function diffRatio(referencePath, candidatePath) {
   const ref = readPng(referencePath);
-  const cur = readPng(candidatePath);
-  const [a, b, width, height] = fitToSameSize(ref, cur);
+  const cur = resizeToSize(readPng(candidatePath), ref.width, ref.height);
+  const { width, height } = ref;
   const diff = new PNG({ width, height });
-  const diffPixels = pixelmatch(a.data, b.data, diff.data, width, height, {
+  const diffPixels = pixelmatch(ref.data, cur.data, diff.data, width, height, {
     threshold: 0.12,
     includeAA: true,
   });
