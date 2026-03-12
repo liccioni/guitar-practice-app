@@ -1987,7 +1987,7 @@ export function SessionBuilder(props: {
     drillRandomizerKindInput === "none" ||
     (Number.isFinite(parsedRandomEveryBars) && parsedRandomEveryBars >= 1 && parsedRandomEveryBars <= 16);
   const useCompactDrillCard = width <= DRILL_CARD_COMPACT_MAX_WIDTH;
-  const drillTitleLineLimit = useCompactDrillCard ? 3 : 2;
+  const drillTitleLineLimit = useCompactDrillCard ? 4 : 2;
 
   function handleSaveTemplatePress(): void {
     if (!isTemplateNameValid) return;
@@ -2174,11 +2174,11 @@ export function SessionBuilder(props: {
               </>
             ) : null}
             <View style={styles.drillCardTopRow}>
-              <View style={styles.drillLeft}>
-                <Text style={styles.drillOrder}>#{index + 1}</Text>
+              <View style={[styles.drillLeft, useCompactDrillCard ? styles.drillLeftCompact : null]}>
+                <Text style={[styles.drillOrder, useCompactDrillCard ? styles.drillOrderCompact : null]}>#{index + 1}</Text>
                 <View style={styles.drillTextBlock}>
                   <Text
-                    style={styles.drillName}
+                    style={[styles.drillName, useCompactDrillCard ? styles.drillNameCompact : null]}
                     numberOfLines={drillTitleLineLimit}
                     ellipsizeMode="tail"
                     testID={`builder-drill-title-${item.id}`}
@@ -2215,9 +2215,9 @@ export function SessionBuilder(props: {
               ) : null}
             </View>
 
-            <View style={styles.builderCardActions}>
+            <View style={[styles.builderCardActions, useCompactDrillCard ? styles.builderCardActionsCompact : null]}>
               <TouchableOpacity
-                style={[styles.moveChip, index === 0 ? styles.actionButtonDisabled : null]}
+                style={[styles.moveChip, useCompactDrillCard ? styles.moveChipCompact : null, index === 0 ? styles.actionButtonDisabled : null]}
                 onPress={() => moveDrill(item.id, -1)}
                 disabled={index === 0}
                 testID={`builder-move-up-${item.id}`}
@@ -2225,7 +2225,7 @@ export function SessionBuilder(props: {
                 <Text style={styles.smallActionText}>↑</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.moveChip, index === drills.length - 1 ? styles.actionButtonDisabled : null]}
+                style={[styles.moveChip, useCompactDrillCard ? styles.moveChipCompact : null, index === drills.length - 1 ? styles.actionButtonDisabled : null]}
                 onPress={() => moveDrill(item.id, 1)}
                 disabled={index === drills.length - 1}
                 testID={index === 0 ? "builder-move-first-down" : `builder-move-down-${item.id}`}
@@ -2233,7 +2233,7 @@ export function SessionBuilder(props: {
                 <Text style={styles.smallActionText}>↓</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.removeChip}
+                style={[styles.removeChip, useCompactDrillCard ? styles.removeChipCompact : null]}
                 onPress={() => onRemoveDrill(item.id)}
                 testID={`builder-remove-${item.id}`}
               >
@@ -3930,6 +3930,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  drillLeftCompact: {
+    alignItems: "flex-start",
+    gap: 10,
+  },
   drillTextBlock: {
     flex: 1,
     minWidth: 0,
@@ -3939,12 +3943,21 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     width: 28,
   },
+  drillOrderCompact: {
+    width: 22,
+    fontSize: 15,
+    marginTop: 2,
+  },
   drillName: {
     color: COLORS.text,
     fontSize: 18,
     lineHeight: 23,
     fontWeight: "700",
     flexShrink: 1,
+  },
+  drillNameCompact: {
+    fontSize: 17,
+    lineHeight: 21,
   },
   drillMeta: {
     color: COLORS.muted,
@@ -3971,6 +3984,9 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
     paddingTop: 2,
+  },
+  builderCardActionsCompact: {
+    gap: 6,
   },
   drillInlineEditor: {
     borderTopWidth: 1,
@@ -4298,6 +4314,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: COLORS.cardSoft,
   },
+  removeChipCompact: {
+    paddingHorizontal: 8,
+  },
   moveChip: {
     minHeight: 30,
     minWidth: 30,
@@ -4307,6 +4326,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.cardSoft,
+  },
+  moveChipCompact: {
+    minWidth: 28,
+    minHeight: 28,
   },
   removeChipText: {
     color: COLORS.muted,
