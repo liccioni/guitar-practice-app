@@ -2743,23 +2743,6 @@ function SongsLibrary(props: {
       ) : null}
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Categories</Text>
-        <View style={styles.templatePillsRow}>
-          {(["all", "beginner", "intermediate", "advanced"] as const).map((level) => (
-            <TouchableOpacity
-              key={`chip-${level}`}
-              style={[styles.stitchCategoryChip, levelFilter === level ? styles.stitchCategoryChipActive : null]}
-              onPress={() => setLevelFilter(level)}
-            >
-              <Text style={[styles.stitchCategoryChipText, levelFilter === level ? styles.stitchCategoryChipTextActive : null]}>
-                {level === "all" ? "All Levels" : level}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </GlowCard>
-
-      <GlowCard>
         <Text style={styles.cardLabel}>Beginner Favorites</Text>
         {beginnerSongs.length === 0 ? <Text style={styles.helperText}>No beginner songs matched.</Text> : null}
         {beginnerSongs.map((song) => (
