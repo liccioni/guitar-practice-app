@@ -2059,6 +2059,13 @@ export function SessionBuilder(props: {
             <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
           </View>
           <View style={styles.builderTopActions}>
+            <TouchableOpacity
+              style={styles.builderNewChip}
+              onPress={onCreateTemplate}
+              testID="builder-template-new"
+            >
+              <Text style={styles.builderNewChipText}>New</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.builderIconAction} onPress={onDuplicateTemplate}>
               <Text style={styles.iconGlyphMuted}>⧉</Text>
             </TouchableOpacity>
@@ -2075,27 +2082,9 @@ export function SessionBuilder(props: {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.inlineRowSpace}>
-          <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
-          <TouchableOpacity
-            style={styles.builderNewChip}
-            onPress={onCreateTemplate}
-            testID="builder-template-new"
-          >
-            <Text style={styles.builderNewChipText}>+ New</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
 
         <GlowCard style={styles.builderHeroCard}>
-          <View style={styles.inlineRow}>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onDuplicateTemplate}>
-              <Text style={styles.smallActionText}>Duplicate</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.smallDangerButton} onPress={onDeleteTemplate}>
-              <Text style={styles.smallActionText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-
           <View style={styles.templatePillsRow}>
             {templates.map((template) => (
               <TouchableOpacity
