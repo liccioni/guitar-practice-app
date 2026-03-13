@@ -1732,7 +1732,7 @@ function HomeDashboard(props: {
           >
             <View style={styles.homePrimaryCtaRow}>
               <Text style={styles.homePrimaryCtaIcon}>▶</Text>
-              <Text style={styles.primaryCtaText}>Start Practice</Text>
+              <Text style={[styles.primaryCtaText, styles.homePrimaryCtaText]}>Start Practice</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -3362,8 +3362,8 @@ const styles = StyleSheet.create({
   },
   stitchHeroBody: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 6,
+    paddingVertical: 12,
+    gap: 10,
   },
   stitchMetaLabel: {
     color: COLORS.muted,
@@ -3378,17 +3378,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   stitchSecondaryHeroButton: {
-    minHeight: 50,
+    minHeight: 38,
     borderRadius: RADII.pill,
-    borderWidth: 0,
-    backgroundColor: "#1d2f4f",
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    alignItems: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
   },
   stitchSecondaryHeroButtonText: {
-    color: COLORS.text,
-    fontSize: 14,
+    color: COLORS.muted,
+    fontSize: 13,
     fontWeight: "700",
   },
   stitchStatCard: {
@@ -3599,17 +3601,28 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   homePrimaryCta: {
-    marginTop: 0,
+    minHeight: 58,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    marginTop: 2,
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
   },
   homePrimaryCtaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   homePrimaryCtaIcon: {
     color: COLORS.text,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "800",
+  },
+  homePrimaryCtaText: {
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
   primaryCtaText: {
     color: COLORS.text,
