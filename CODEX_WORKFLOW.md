@@ -35,6 +35,7 @@ Rules during implementation:
 - keep the UI mobile-first
 - avoid unnecessary refactoring
 - avoid introducing unrelated changes
+- when a refactor changes architectural boundaries, update the contributor-facing docs that describe those boundaries
 
 ------------------------------------------------
 
@@ -103,6 +104,7 @@ Before opening the PR:
 - verify the implemented feature works
 - check for obvious UI regressions
 - confirm no unrelated functionality was broken
+- if the issue extracts or moves critical orchestration logic, add or update focused regression tests around that behavior
 
 ------------------------------------------------
 

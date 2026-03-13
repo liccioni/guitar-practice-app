@@ -22,71 +22,22 @@ import {
   savePersistedState,
   type PersistedPracticeState,
 } from "../persistence/LocalStorageGateway";
+import {
+  buildBadgeState,
+  createSeedState,
+  DEFAULT_PROFILE,
+  DRILL_POOL,
+  getDefaultGoalTarget,
+  makeId,
+  normalizeGoalTarget,
+  type Badge,
+} from "./practiceAppStateHelpers";
+export { buildBadgeState, makeId, type Badge } from "./practiceAppStateHelpers";
 
 export type Screen = "home" | "songs" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
 
-export interface Badge {
-  id: string;
-  label: string;
-  icon: string;
-  unlocked: boolean;
-}
-
-interface BadgeDefinition {
-  id: string;
-  label: string;
-  icon: string;
-}
-
-const DRILL_POOL: CreateDrillInput[] = [
-  { name: "Chromatic Warmup", durationMinutes: 4, targetBpm: 90, tags: ["warmup"] },
-  { name: "Major Scale Ladder", durationMinutes: 6, targetBpm: 100, tags: ["scales"] },
-  { name: "Chord Change Sprint", durationMinutes: 5, targetBpm: 80, tags: ["chords"] },
-  { name: "Alternate Picking Burst", durationMinutes: 5, targetBpm: 120, tags: ["technique"] },
-  { name: "Pentatonic Run", durationMinutes: 5, targetBpm: 110, tags: ["scales"] },
-  { name: "Rhythm Pocket", durationMinutes: 4, targetBpm: 95, tags: ["rhythm"] },
-  { name: "Arpeggio Climb", durationMinutes: 6, targetBpm: 105, tags: ["technique"] },
-  { name: "Legato Builder", durationMinutes: 5, targetBpm: 100, tags: ["technique"] },
-];
-
-const BADGE_DEFINITIONS: BadgeDefinition[] = [
-  { id: "b1", label: "7-Day Streak", icon: "🔥" },
-  { id: "b2", label: "Rhythm Keeper", icon: "🎵" },
-  { id: "b3", label: "XP Hunter", icon: "⚡" },
-  { id: "b4", label: "Session Beast", icon: "🏆" },
-];
-
-const DEFAULT_PROFILE = {
-  totalXp: 0,
-  unlockedBadgeIds: [] as string[],
-  onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
-};
-
-const GOAL_TARGET_BOUNDS: Record<GoalType, [number, number]> = {
-  minutes: [5, 300],
-  sessions: [1, 20],
-  drills: [1, 60],
-};
-
-function getDefaultGoalTarget(goalType: GoalType, dailyMinutesTarget: number): number {
-  if (goalType === "minutes") return dailyMinutesTarget;
-  if (goalType === "sessions") return 1;
-  return 4;
-}
-
-function normalizeGoalTarget(goalType: GoalType, target: number, dailyMinutesTarget: number): number {
-  const [min, max] = GOAL_TARGET_BOUNDS[goalType];
-  const fallback = getDefaultGoalTarget(goalType, dailyMinutesTarget);
-  if (!Number.isFinite(target)) return fallback;
-  return Math.min(max, Math.max(min, Math.round(target)));
-}
-
 function getUnlockedBadgeIds(badges: Badge[]): string[] {
   return badges.filter((badge) => badge.unlocked).map((badge) => badge.id);
-}
-
-export function makeId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function pickRandomPoolDrill(): CreateDrillInput {
@@ -99,36 +50,6 @@ function buildDefaultDrillInput(index: number): CreateDrillInput {
     durationMinutes: 5,
     targetBpm: 100,
     tags: ["warmup"],
-  };
-}
-
-export function buildBadgeState(unlockedBadgeIds: string[]): Badge[] {
-  const unlocked = new Set(unlockedBadgeIds);
-  return BADGE_DEFINITIONS.map((badge) => ({
-    ...badge,
-    unlocked: unlocked.has(badge.id),
-  }));
-}
-
-function createSeedState(nowIso: string): PersistedPracticeState {
-  const drills = DRILL_POOL.slice(0, 4).map((input, idx) =>
-    createDrillFromInput(`seed_drill_${idx + 1}`, input, nowIso),
-  );
-
-  const starterTemplate = createSessionTemplate({
-    id: "template_starter",
-    name: "Daily Core Session",
-    drillIds: drills.map((drill) => drill.id),
-    totalDurationSeconds: calculateTotalDurationSeconds(drills),
-    nowIso,
-  });
-
-  return {
-    drills,
-    templates: [starterTemplate],
-    history: [],
-    goalSettings: DEFAULT_GOAL_SETTINGS,
-    profile: DEFAULT_PROFILE,
   };
 }
 
@@ -681,7 +602,8 @@ export function usePracticeAppState() {
       return;
     }
 
-    const [min, max] = GOAL_TARGET_BOUNDS[goalType];
+    const [min, max] =
+      goalType === "minutes" ? [5, 300] : goalType === "sessions" ? [1, 20] : [1, 60];
     if (numeric < min || numeric > max) {
       setGoalError(`Goal target must be between ${min} and ${max}.`);
       return;

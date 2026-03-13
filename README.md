@@ -45,6 +45,7 @@ Migration notes and Detox overlap:
 - Spec: `docs/SPEC.md`
 - Runbook: `docs/PROJECT_RUNBOOK.md`
 - Release notes: `docs/RELEASE_NOTES.md`
+- Architecture boundaries: `docs/ARCHITECTURE_BOUNDARIES.md`
 - Stitch design alignment: `docs/STITCH_FLOW_FEATURE_PLAN.md`
 - Stitch parity gate: `docs/STITCH_PARITY.md`
 - Visual snapshot names: `docs/VISUAL_SNAPSHOT_MANIFEST.md`
