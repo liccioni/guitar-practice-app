@@ -14,26 +14,19 @@ import {
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
-  Vibration,
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
+import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
 import { buildBadgeState, type Badge, makeId, type Screen, usePracticeAppState } from "./src/app/usePracticeAppState";
-import {
-  playMetronomeTick,
-  primeMetronomeAudio,
-  releaseMetronomeAudio,
-} from "./src/application/metronomeAudio";
-import { prepareSessionStart } from "./src/application/startSessionPreparation";
 import type { Drill, DrillRandomizerKind, DrillTag } from "./src/domain/exercises/types";
 import type { GoalType } from "./src/domain/goals/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
 import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/metrics";
 import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
-import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
 import {
   buildPracticeOnboardingSuggestion,
   type PracticeFocus,
@@ -61,13 +54,6 @@ interface SongLibraryItem {
   targetBpm: number;
   tags: DrillTag[];
 }
-
-const MOTIVATION = [
-  "Lock in. Every rep makes you cleaner.",
-  "Stay relaxed, stay precise.",
-  "Small gains compound fast.",
-  "You are one drill away from momentum.",
-];
 
 const RANDOMIZER_KIND_OPTIONS: { value: "none" | DrillRandomizerKind; label: string }[] = [
   { value: "none", label: "No Random Cue" },
@@ -225,23 +211,6 @@ function toSnapshot(drill: Drill): DrillSnapshot {
   };
 }
 
-function randomCueValues(kind: DrillRandomizerKind): string[] {
-  if (kind === "note") return ["A", "B", "C", "D", "E", "F", "G"];
-  if (kind === "triad") return ["A Maj", "A Min", "C Maj", "C Min", "D Maj", "E Min", "G Maj"];
-  return ["1-2-3-4", "1-3-2-4", "4-3-2-1", "1-4-2-3", "2-4-1-3", "3-1-4-2"];
-}
-
-function pickRandomCueValue(kind: DrillRandomizerKind): string {
-  const pool = randomCueValues(kind);
-  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
-}
-
-function clampUnit(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(1, value));
-}
-
-
 export default function App() {
   const {
     addDrillToTemplate,
@@ -300,63 +269,11 @@ export default function App() {
     totalXp,
   } = usePracticeAppState();
 
-  const [activeDrillIds, setActiveDrillIds] = useState<string[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [remainingSec, setRemainingSec] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [completedDrillIds, setCompletedDrillIds] = useState<string[]>([]);
-  const [completedDurationSec, setCompletedDurationSec] = useState(0);
-
-  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
-  const [metronomeBpm, setMetronomeBpm] = useState(100);
-  const [beatFlash, setBeatFlash] = useState(false);
-  const [focusModeEnabled, setFocusModeEnabled] = useState(true);
-  const [beatPulseLocked, setBeatPulseLocked] = useState(true);
-  const [randomCueLabel, setRandomCueLabel] = useState<string | null>(null);
-  const [randomCueNextLabel, setRandomCueNextLabel] = useState<string | null>(null);
-  const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
-  const [randomCuePulseWindowActive, setRandomCuePulseWindowActive] = useState(false);
-
-  const [sessionXp, setSessionXp] = useState(0);
-  const [leveledUp, setLeveledUp] = useState(false);
-  const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
-
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const rewardScale = useRef(new Animated.Value(0.92)).current;
   const rewardGlow = useRef(new Animated.Value(0)).current;
-  const completionPulse = useRef(new Animated.Value(0)).current;
-  const randomCuePulse = useRef(new Animated.Value(0)).current;
-  const handleDrillFinishedRef = useRef<() => void>(() => undefined);
-  const randomCueRemainingRef = useRef(0);
 
   const nowIso = new Date().toISOString();
-  const activeDrill = useMemo(() => {
-    const id = activeDrillIds[activeIndex];
-    return allDrills.find((drill) => drill.id === id);
-  }, [activeDrillIds, activeIndex, allDrills]);
-
-  const sessionDurationSec = useMemo(() => {
-    return activeDrillIds.reduce((sum, id) => {
-      const drill = allDrills.find((item) => item.id === id);
-      return sum + (drill?.durationSeconds ?? 0);
-    }, 0);
-  }, [activeDrillIds, allDrills]);
-
-  const elapsedSec = useMemo(() => {
-    const doneBefore = activeDrillIds.slice(0, activeIndex).reduce((sum, id) => {
-      const drill = allDrills.find((item) => item.id === id);
-      return sum + (drill?.durationSeconds ?? 0);
-    }, 0);
-
-    if (!activeDrill) return doneBefore;
-    return doneBefore + (activeDrill.durationSeconds - remainingSec);
-  }, [activeDrill, activeDrillIds, activeIndex, allDrills, remainingSec]);
-
-  const sessionProgress = sessionDurationSec === 0 ? 0 : clampUnit(elapsedSec / sessionDurationSec);
-  const drillProgress =
-    !activeDrill || activeDrill.durationSeconds === 0
-      ? 0
-      : clampUnit((activeDrill.durationSeconds - remainingSec) / activeDrill.durationSeconds);
 
   const metrics = useMemo(
     () =>
@@ -396,6 +313,18 @@ export default function App() {
   );
 
   const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
+  const activeRuntime = useActivePracticeRuntime({
+    allDrills,
+    screen,
+    selectedTemplate,
+    totalXp,
+    onBuilderError: setBuilderError,
+    onScreenChange: setScreen,
+    onSessionFinished: ({ activeDrillIds, completedDrillIds, completedDurationSec, elapsedSec, sessionXp }) => {
+      finishSession(activeDrillIds, completedDrillIds, completedDurationSec, elapsedSec, sessionXp);
+    },
+    onTotalXpChange: setTotalXp,
+  });
 
   useEffect(() => {
     fadeAnim.stopAnimation();
@@ -407,106 +336,6 @@ export default function App() {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim, screen]);
-
-  useEffect(() => {
-    if (screen !== "active" || isPaused || !activeDrill) return;
-
-    const timer = setInterval(() => {
-      setRemainingSec((current) => {
-        if (current <= 1) {
-          clearInterval(timer);
-          handleDrillFinishedRef.current();
-          return 0;
-        }
-        return current - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [activeDrill, isPaused, screen]);
-
-  useEffect(() => {
-    if (screen !== "active" || isPaused || !metronomeEnabled) {
-      setBeatFlash(false);
-      return;
-    }
-
-    const intervalMs = getBeatIntervalMs(metronomeBpm);
-    const beatTimer = setInterval(() => {
-      setBeatFlash((current) => !current);
-      void playMetronomeTick();
-
-      const randomizer = activeDrill?.randomizer;
-      if (randomizer) {
-        const nextRemaining = randomCueRemainingRef.current - 1;
-        if (nextRemaining <= 0) {
-          const resetBeats = randomizer.everyBars * 4;
-          const nextCue = pickRandomCueValue(randomizer.kind);
-          setRandomCueLabel(randomCueNextLabel ?? nextCue);
-          setRandomCueNextLabel(nextCue);
-          randomCueRemainingRef.current = resetBeats;
-          setRandomCueBeatsRemaining(resetBeats);
-          setRandomCuePulseWindowActive(false);
-          randomCuePulse.setValue(0);
-          Animated.sequence([
-            Animated.timing(randomCuePulse, {
-              toValue: 1,
-              duration: 200,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(randomCuePulse, {
-              toValue: 0,
-              duration: 300,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-          ]).start();
-        } else {
-          randomCueRemainingRef.current = nextRemaining;
-          setRandomCueBeatsRemaining(nextRemaining);
-          const enteringPulseWindow = nextRemaining === 1;
-          setRandomCuePulseWindowActive(enteringPulseWindow);
-          if (enteringPulseWindow) {
-            randomCuePulse.setValue(0);
-            Animated.sequence([
-              Animated.timing(randomCuePulse, {
-                toValue: 1,
-                duration: 220,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
-              }),
-              Animated.timing(randomCuePulse, {
-                toValue: 0,
-                duration: 260,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
-              }),
-            ]).start();
-          }
-        }
-      }
-
-      try {
-        Vibration.vibrate(10);
-      } catch {
-        // Ignore vibration capability failures (e.g. simulator), keep visual beat running.
-      }
-    }, intervalMs);
-
-    return () => clearInterval(beatTimer);
-  }, [activeDrill, isPaused, metronomeBpm, metronomeEnabled, randomCueNextLabel, randomCuePulse, screen]);
-
-  useEffect(() => {
-    if (screen !== "active" || !metronomeEnabled) return;
-    void primeMetronomeAudio();
-  }, [metronomeEnabled, screen]);
-
-  useEffect(() => {
-    return () => {
-      void releaseMetronomeAudio();
-    };
-  }, []);
 
   useEffect(() => {
     if (screen !== "complete") return;
@@ -529,50 +358,11 @@ export default function App() {
     ]).start();
   }, [rewardGlow, rewardScale, screen]);
 
-  function triggerCompletionPulse(): void {
-    completionPulse.setValue(0);
-    Animated.sequence([
-      Animated.timing(completionPulse, {
-        toValue: 1,
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(completionPulse, {
-        toValue: 0,
-        duration: 200,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }
-
-  useEffect(() => {
-    const randomizer = screen === "active" ? activeDrill?.randomizer : undefined;
-    if (!randomizer) {
-      randomCueRemainingRef.current = 0;
-      setRandomCueLabel(null);
-      setRandomCueNextLabel(null);
-      setRandomCueBeatsRemaining(0);
-      setRandomCuePulseWindowActive(false);
-      randomCuePulse.setValue(0);
-      return;
-    }
-
-    const initialBeats = randomizer.everyBars * 4;
-    const currentCue = pickRandomCueValue(randomizer.kind);
-    const nextCue = pickRandomCueValue(randomizer.kind);
-    randomCueRemainingRef.current = initialBeats;
-    setRandomCueLabel(currentCue);
-    setRandomCueNextLabel(nextCue);
-    setRandomCueBeatsRemaining(initialBeats);
-    setRandomCuePulseWindowActive(false);
-    randomCuePulse.setValue(0);
-  }, [activeDrill, randomCuePulse, screen]);
-
   function finishSession(
+    finalActiveDrillIds: string[],
     finalCompletedDrillIds: string[],
     finalCompletedDurationSec: number,
+    finalElapsedSec: number,
     finalSessionXp: number,
   ): void {
     if (!selectedTemplate) {
@@ -580,7 +370,7 @@ export default function App() {
       return;
     }
 
-    const drillsSnapshot = activeDrillIds
+    const drillsSnapshot = finalActiveDrillIds
       .map((id) => allDrills.find((drill) => drill.id === id))
       .filter((drill): drill is Drill => Boolean(drill))
       .map(toSnapshot);
@@ -591,10 +381,10 @@ export default function App() {
       sessionNameSnapshot: selectedTemplate.name,
       drillsSnapshot,
       completedDrillIds: finalCompletedDrillIds,
-      startedAt: new Date(Date.now() - elapsedSec * 1000).toISOString(),
+      startedAt: new Date(Date.now() - finalElapsedSec * 1000).toISOString(),
       endedAt: new Date().toISOString(),
       durationCompletedSeconds: finalCompletedDurationSec,
-      completed: finalCompletedDrillIds.length === activeDrillIds.length,
+      completed: finalCompletedDrillIds.length === finalActiveDrillIds.length,
     };
 
     const nextHistory = [entry, ...history];
@@ -625,93 +415,14 @@ export default function App() {
     setScreen("complete");
   }
 
-  function handleDrillFinished(): void {
-    if (!activeDrill) return;
-
-    triggerCompletionPulse();
-
-    const gainedXp = toXp(activeDrill);
-    const nextSessionXp = sessionXp + gainedXp;
-    const nextTotalXp = totalXp + gainedXp;
-    const oldLevel = getLevelState(totalXp).level;
-    const newLevel = getLevelState(nextTotalXp).level;
-
-    const isAlreadyCompleted = completedDrillIds.includes(activeDrill.id);
-    const nextCompletedDrillIds = isAlreadyCompleted
-      ? completedDrillIds
-      : [...completedDrillIds, activeDrill.id];
-    const nextCompletedDurationSec =
-      completedDurationSec + (isAlreadyCompleted ? 0 : activeDrill.durationSeconds);
-
-    setCompletedDrillIds(nextCompletedDrillIds);
-    setCompletedDurationSec(nextCompletedDurationSec);
-    setSessionXp(nextSessionXp);
-    setTotalXp(nextTotalXp);
-    setLeveledUp(newLevel > oldLevel);
-
-    if (activeIndex < activeDrillIds.length - 1) {
-      const nextIndex = activeIndex + 1;
-      const nextDrill = allDrills.find((item) => item.id === activeDrillIds[nextIndex]);
-
-      setActiveIndex(nextIndex);
-      setRemainingSec(nextDrill?.durationSeconds ?? 0);
-      setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
-      return;
-    }
-
-    finishSession(nextCompletedDrillIds, nextCompletedDurationSec, nextSessionXp);
-  }
-
-  handleDrillFinishedRef.current = handleDrillFinished;
-
-  function startSession(): void {
-    const prepared = prepareSessionStart({
-      selectedTemplate: selectedTemplate ?? null,
-      allDrills,
-      currentMetronomeBpm: metronomeBpm,
-    });
-
-    if (!prepared.ok) {
-      setBuilderError(prepared.error);
-      return;
-    }
-
-    setBuilderError(null);
-    const { resolvedDrills } = prepared;
-    setActiveDrillIds(resolvedDrills.map((drill) => drill.id));
-    setActiveIndex(0);
-    setRemainingSec(Math.max(1, resolvedDrills[0].durationSeconds));
-    setIsPaused(false);
-    setCompletedDrillIds([]);
-    setCompletedDurationSec(0);
-    setSessionXp(0);
-    setLeveledUp(false);
-    setCurrentMicrocopy(MOTIVATION[0]);
-    setMetronomeBpm(prepared.nextMetronomeBpm);
-    setMetronomeEnabled(true);
-    setScreen("active");
-  }
-
-  function skipDrill(): void {
-    if (activeIndex >= activeDrillIds.length - 1) {
-      finishSession(completedDrillIds, completedDurationSec, sessionXp);
-      return;
-    }
-
-    const nextIndex = activeIndex + 1;
-    const nextDrill = allDrills.find((item) => item.id === activeDrillIds[nextIndex]);
-    setActiveIndex(nextIndex);
-    setRemainingSec(nextDrill?.durationSeconds ?? 0);
-    setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
-  }
-
   function startSongNow(song: SongLibraryItem): void {
     addSongToBuilder(song);
   }
 
   function resetToHome(): void {
+    activeRuntime.resetSession();
+    activeRuntime.disableMetronome();
     setScreen("home");
-    setMetronomeEnabled(false);
   }
 
   return (
@@ -818,39 +529,39 @@ export default function App() {
               onRemoveDrill={removeDrillFromTemplate}
               onReorderDrills={reorderDrillsInTemplate}
               onAddDrill={addDrillToTemplate}
-              onStartSession={startSession}
+              onStartSession={activeRuntime.startSession}
             />
           ) : null}
 
-          {screen === "active" && activeDrill ? (
+          {screen === "active" && activeRuntime.activeDrill ? (
             <ActivePractice
-              drill={activeDrill}
-              drillProgress={drillProgress}
-              sessionProgress={sessionProgress}
-              remainingSec={remainingSec}
-              isPaused={isPaused}
-              microcopy={currentMicrocopy}
-              completionPulse={completionPulse}
-              metronomeEnabled={metronomeEnabled}
-              metronomeBpm={metronomeBpm}
-              beatFlash={beatFlash}
-              randomCueLabel={randomCueLabel}
-              randomCueNextLabel={randomCueNextLabel}
-              randomCueBeatsRemaining={randomCueBeatsRemaining}
-              randomCuePulseWindowActive={randomCuePulseWindowActive}
-              randomCuePulse={randomCuePulse}
-              focusModeEnabled={focusModeEnabled}
-              beatPulseLocked={beatPulseLocked}
-              onMetronomeToggle={() => setMetronomeEnabled((current) => !current)}
-              onMetronomeStep={(delta) => setMetronomeBpm((current) => stepBpm(current, delta))}
-              onToggleFocusMode={() => setFocusModeEnabled((current) => !current)}
-              onToggleBeatPulseLocked={() => setBeatPulseLocked((current) => !current)}
-              onPauseToggle={() => setIsPaused((current) => !current)}
-              onSkip={skipDrill}
+              drill={activeRuntime.activeDrill}
+              drillProgress={activeRuntime.drillProgress}
+              sessionProgress={activeRuntime.sessionProgress}
+              remainingSec={activeRuntime.remainingSec}
+              isPaused={activeRuntime.isPaused}
+              microcopy={activeRuntime.currentMicrocopy}
+              completionPulse={activeRuntime.completionPulse}
+              metronomeEnabled={activeRuntime.metronomeEnabled}
+              metronomeBpm={activeRuntime.metronomeBpm}
+              beatFlash={activeRuntime.beatFlash}
+              randomCueLabel={activeRuntime.randomCueLabel}
+              randomCueNextLabel={activeRuntime.randomCueNextLabel}
+              randomCueBeatsRemaining={activeRuntime.randomCueBeatsRemaining}
+              randomCuePulseWindowActive={activeRuntime.randomCuePulseWindowActive}
+              randomCuePulse={activeRuntime.randomCuePulse}
+              focusModeEnabled={activeRuntime.focusModeEnabled}
+              beatPulseLocked={activeRuntime.beatPulseLocked}
+              onMetronomeToggle={activeRuntime.toggleMetronome}
+              onMetronomeStep={activeRuntime.stepMetronome}
+              onToggleFocusMode={activeRuntime.toggleFocusMode}
+              onToggleBeatPulseLocked={activeRuntime.toggleBeatPulseLocked}
+              onPauseToggle={activeRuntime.togglePause}
+              onSkip={activeRuntime.skipDrill}
             />
           ) : null}
 
-          {screen === "active" && !activeDrill ? (
+          {screen === "active" && !activeRuntime.activeDrill ? (
             <View style={styles.screenBody}>
               <GlowCard>
                 <Text style={styles.cardLabel}>Session Error</Text>
@@ -866,8 +577,8 @@ export default function App() {
 
           {screen === "complete" ? (
             <SessionComplete
-              sessionXp={sessionXp}
-              leveledUp={leveledUp}
+              sessionXp={activeRuntime.sessionXp}
+              leveledUp={activeRuntime.leveledUp}
               level={levelState.level}
               streak={streak}
               badges={badges.filter((badge) => badge.unlocked)}
