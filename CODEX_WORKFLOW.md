@@ -123,3 +123,26 @@ At the end of each implementation run, report:
 - commits made
 - PR created
 - any follow-up issues suggested
+
+---------------------------------------------------
+
+## Backlog Rule (Scope Discipline)
+
+While implementing an issue, if you encounter any bug, improvement, UX problem, tech debt, or follow-up work that is **outside the scope of the current issue**, do not implement it as part of the current branch or PR.
+
+Instead:
+
+1. Create a new GitHub issue describing the discovered work.
+2. Add the issue to the **Backlog** in the project board.
+3. Write the issue clearly and concisely, including:
+   - a short title
+   - why the change is needed
+   - the expected scope of the fix or improvement
+   - any relevant files, components, or screens
+
+Rules:
+- Keep the current PR focused strictly on the assigned issue.
+- Do not expand scope silently.
+- Only break this rule if the discovered problem **blocks completion of the current issue**, and explicitly report it in the PR.
+
+At the end of each task, list any backlog issues created.

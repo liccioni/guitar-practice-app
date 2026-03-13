@@ -20,17 +20,15 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
+import { buildBadgeState, type Badge, makeId, type Screen, usePracticeAppState } from "./src/app/usePracticeAppState";
 import {
   playMetronomeTick,
   primeMetronomeAudio,
   releaseMetronomeAudio,
 } from "./src/application/metronomeAudio";
-import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "./src/application/reminders";
-import { appendDrillToTemplate } from "./src/application/sessionBuilder";
 import { prepareSessionStart } from "./src/application/startSessionPreparation";
-import { createDrillFromInput, updateDrillFromInput } from "./src/domain/exercises/drill";
-import type { CreateDrillInput, Drill, DrillRandomizerKind, DrillTag } from "./src/domain/exercises/types";
-import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "./src/domain/goals/types";
+import type { Drill, DrillRandomizerKind, DrillTag } from "./src/domain/exercises/types";
+import type { GoalType } from "./src/domain/goals/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
 import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/metrics";
@@ -38,9 +36,6 @@ import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/t
 import { getBeatIntervalMs, stepBpm } from "./src/domain/metronome/metronome";
 import {
   buildPracticeOnboardingSuggestion,
-  DEFAULT_PRACTICE_ONBOARDING_STATE,
-  ONBOARDING_RECOMMENDATION_VERSION,
-  selectSuggestedDrills,
   type PracticeFocus,
   type PracticeOnboardingAnswers,
   type PracticeOnboardingState,
@@ -50,33 +45,9 @@ import {
   type WeeklyFrequencyDays,
   type GuitarLevel,
 } from "./src/domain/profile/onboarding";
-import {
-  calculateTotalDurationSeconds,
-  createSessionTemplate,
-  type SessionTemplate,
-} from "./src/domain/sessions/sessionTemplate";
-import {
-  loadPersistedState,
-  savePersistedState,
-  type PersistedPracticeState,
-} from "./src/persistence/LocalStorageGateway";
+import type { SessionTemplate } from "./src/domain/sessions/sessionTemplate";
 import { GlowCard } from "./src/ui/primitives/GlowCard";
 import { COLORS, RADII, SPACING } from "./src/ui/theme";
-
-type Screen = "home" | "songs" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
-
-interface Badge {
-  id: string;
-  label: string;
-  icon: string;
-  unlocked: boolean;
-}
-
-interface BadgeDefinition {
-  id: string;
-  label: string;
-  icon: string;
-}
 
 interface SongLibraryItem {
   id: string;
@@ -90,17 +61,6 @@ interface SongLibraryItem {
   targetBpm: number;
   tags: DrillTag[];
 }
-
-const DRILL_POOL: CreateDrillInput[] = [
-  { name: "Chromatic Warmup", durationMinutes: 4, targetBpm: 90, tags: ["warmup"] },
-  { name: "Major Scale Ladder", durationMinutes: 6, targetBpm: 100, tags: ["scales"] },
-  { name: "Chord Change Sprint", durationMinutes: 5, targetBpm: 80, tags: ["chords"] },
-  { name: "Alternate Picking Burst", durationMinutes: 5, targetBpm: 120, tags: ["technique"] },
-  { name: "Pentatonic Run", durationMinutes: 5, targetBpm: 110, tags: ["scales"] },
-  { name: "Rhythm Pocket", durationMinutes: 4, targetBpm: 95, tags: ["rhythm"] },
-  { name: "Arpeggio Climb", durationMinutes: 6, targetBpm: 105, tags: ["technique"] },
-  { name: "Legato Builder", durationMinutes: 5, targetBpm: 100, tags: ["technique"] },
-];
 
 const MOTIVATION = [
   "Lock in. Every rep makes you cleaner.",
@@ -116,13 +76,6 @@ const RANDOMIZER_KIND_OPTIONS: { value: "none" | DrillRandomizerKind; label: str
   { value: "fingers4", label: "Random 4 Fingers" },
 ];
 const DRILL_CARD_COMPACT_MAX_WIDTH = 430;
-
-const BADGE_DEFINITIONS: BadgeDefinition[] = [
-  { id: "b1", label: "7-Day Streak", icon: "🔥" },
-  { id: "b2", label: "Rhythm Keeper", icon: "🎵" },
-  { id: "b3", label: "XP Hunter", icon: "⚡" },
-  { id: "b4", label: "Session Beast", icon: "🏆" },
-];
 
 const SONG_LIBRARY: SongLibraryItem[] = [
   {
@@ -173,12 +126,6 @@ const SONG_LIBRARY: SongLibraryItem[] = [
   },
 ];
 
-const DEFAULT_PROFILE = {
-  totalXp: 0,
-  unlockedBadgeIds: [] as string[],
-  onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
-};
-
 interface WeeklySummary {
   weekMinutes: number;
   weekSessions: number;
@@ -196,25 +143,6 @@ interface SessionInsight {
   completed: boolean;
   completedDrills: number;
   totalDrills: number;
-}
-
-const GOAL_TARGET_BOUNDS: Record<GoalType, [number, number]> = {
-  minutes: [5, 300],
-  sessions: [1, 20],
-  drills: [1, 60],
-};
-
-function getDefaultGoalTarget(goalType: GoalType, dailyMinutesTarget: number): number {
-  if (goalType === "minutes") return dailyMinutesTarget;
-  if (goalType === "sessions") return 1;
-  return 4;
-}
-
-function normalizeGoalTarget(goalType: GoalType, target: number, dailyMinutesTarget: number): number {
-  const [min, max] = GOAL_TARGET_BOUNDS[goalType];
-  const fallback = getDefaultGoalTarget(goalType, dailyMinutesTarget);
-  if (!Number.isFinite(target)) return fallback;
-  return Math.min(max, Math.max(min, Math.round(target)));
 }
 
 function goalUnit(goalType: GoalType): string {
@@ -282,23 +210,6 @@ function buildRecentSessionInsights(entries: PracticeHistoryEntry[], limit = 4):
   }));
 }
 
-function makeId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function pickRandomPoolDrill(): CreateDrillInput {
-  return DRILL_POOL[Math.floor(Math.random() * DRILL_POOL.length)];
-}
-
-function buildDefaultDrillInput(index: number): CreateDrillInput {
-  return {
-    name: `New Drill ${index}`,
-    durationMinutes: 5,
-    targetBpm: 100,
-    tags: ["warmup"],
-  };
-}
-
 function toXp(drill: Drill): number {
   const durationMinutes = Math.max(1, Math.round(drill.durationSeconds / 60));
   const bpmBonus = drill.targetBpm ? Math.round((drill.targetBpm - 40) / 10) : 0;
@@ -330,62 +241,65 @@ function clampUnit(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function buildBadgeState(unlockedBadgeIds: string[]): Badge[] {
-  const unlocked = new Set(unlockedBadgeIds);
-  return BADGE_DEFINITIONS.map((badge) => ({
-    ...badge,
-    unlocked: unlocked.has(badge.id),
-  }));
-}
-
-function getUnlockedBadgeIds(badges: Badge[]): string[] {
-  return badges.filter((badge) => badge.unlocked).map((badge) => badge.id);
-}
-
-function createSeedState(nowIso: string): PersistedPracticeState {
-  const drills = DRILL_POOL.slice(0, 4).map((input, idx) =>
-    createDrillFromInput(`seed_drill_${idx + 1}`, input, nowIso),
-  );
-
-  const starterTemplate = createSessionTemplate({
-    id: "template_starter",
-    name: "Daily Core Session",
-    drillIds: drills.map((drill) => drill.id),
-    totalDurationSeconds: calculateTotalDurationSeconds(drills),
-    nowIso,
-  });
-
-  return {
-    drills,
-    templates: [starterTemplate],
-    history: [],
-    goalSettings: DEFAULT_GOAL_SETTINGS,
-    profile: DEFAULT_PROFILE,
-  };
-}
 
 export default function App() {
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [storageError, setStorageError] = useState<string | null>(null);
+  const {
+    addDrillToTemplate,
+    addSongToBuilder,
+    allDrills,
+    applyOnboardingSuggestionToBuilder,
+    badges,
+    builderDrills,
+    builderError,
+    createTemplate,
+    deleteTemplate,
+    drillBpmInput,
+    drillDurationInput,
+    drillNameInput,
+    drillRandomEveryBarsInput,
+    drillRandomizerKindInput,
+    duplicateTemplate,
+    goalError,
+    goalSettings,
+    goalTarget,
+    goalType,
+    handleDrillBpmInput,
+    handleDrillDurationInput,
+    handleDrillNameInput,
+    handleDrillRandomEveryBarsInput,
+    handleDrillRandomizerKindInput,
+    history,
+    navigateFromTab,
+    onboardingState,
+    onboardingSuggestion,
+    reminderError,
+    removeDrillFromTemplate,
+    reorderDrillsInTemplate,
+    resetOnboardingQuestionnaire,
+    saveGoalTarget,
+    saveOnboardingAnswers,
+    saveReminderTime,
+    saveTemplate,
+    screen,
+    selectedBuilderDrill,
+    selectedTemplate,
+    setActiveTemplateId,
+    setBadges,
+    setBuilderError,
+    setGoalType,
+    setHistory,
+    setScreen,
+    setSelectedDrillId,
+    setTemplateNameInput,
+    setTotalXp,
+    startPracticeFlow,
+    storageError,
+    templates,
+    templateNameInput,
+    toggleReminder,
+    totalXp,
+  } = usePracticeAppState();
 
-  const [screen, setScreen] = useState<Screen>("home");
-  const [allDrills, setAllDrills] = useState<Drill[]>([]);
-  const [templates, setTemplates] = useState<SessionTemplate[]>([]);
-  const [history, setHistory] = useState<PracticeHistoryEntry[]>([]);
-  const [goalSettings, setGoalSettings] = useState<GoalSettings>(DEFAULT_GOAL_SETTINGS);
-
-  const [templateNameInput, setTemplateNameInput] = useState("");
-  const [builderError, setBuilderError] = useState<string | null>(null);
-  const [reminderError, setReminderError] = useState<string | null>(null);
-  const [goalError, setGoalError] = useState<string | null>(null);
-  const [selectedDrillId, setSelectedDrillId] = useState<string | null>(null);
-  const [drillNameInput, setDrillNameInput] = useState("");
-  const [drillDurationInput, setDrillDurationInput] = useState("");
-  const [drillBpmInput, setDrillBpmInput] = useState("");
-  const [drillRandomizerKindInput, setDrillRandomizerKindInput] = useState<"none" | DrillRandomizerKind>("none");
-  const [drillRandomEveryBarsInput, setDrillRandomEveryBarsInput] = useState("2");
-
-  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [activeDrillIds, setActiveDrillIds] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [remainingSec, setRemainingSec] = useState(0);
@@ -403,15 +317,9 @@ export default function App() {
   const [randomCueBeatsRemaining, setRandomCueBeatsRemaining] = useState(0);
   const [randomCuePulseWindowActive, setRandomCuePulseWindowActive] = useState(false);
 
-  const [totalXp, setTotalXp] = useState(DEFAULT_PROFILE.totalXp);
-  const [onboardingState, setOnboardingState] = useState<PracticeOnboardingState>(
-    DEFAULT_PROFILE.onboarding,
-  );
   const [sessionXp, setSessionXp] = useState(0);
   const [leveledUp, setLeveledUp] = useState(false);
   const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
-
-  const [badges, setBadges] = useState<Badge[]>(() => buildBadgeState(DEFAULT_PROFILE.unlockedBadgeIds));
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const rewardScale = useRef(new Animated.Value(0.92)).current;
@@ -422,23 +330,6 @@ export default function App() {
   const randomCueRemainingRef = useRef(0);
 
   const nowIso = new Date().toISOString();
-  const selectedTemplate = useMemo(
-    () => templates.find((template) => template.id === activeTemplateId) ?? templates[0],
-    [activeTemplateId, templates],
-  );
-
-  const builderDrills = useMemo(() => {
-    if (!selectedTemplate) return [];
-    return selectedTemplate.drillIds
-      .map((id) => allDrills.find((drill) => drill.id === id))
-      .filter((drill): drill is Drill => Boolean(drill));
-  }, [allDrills, selectedTemplate]);
-
-  const selectedBuilderDrill = useMemo(
-    () => builderDrills.find((drill) => drill.id === selectedDrillId) ?? builderDrills[0],
-    [builderDrills, selectedDrillId],
-  );
-
   const activeDrill = useMemo(() => {
     const id = activeDrillIds[activeIndex];
     return allDrills.find((drill) => drill.id === id);
@@ -476,12 +367,6 @@ export default function App() {
       }),
     [goalSettings.dailyMinutesTarget, history, nowIso],
   );
-  const goalType: GoalType = goalSettings.goalType ?? "minutes";
-  const goalTarget = normalizeGoalTarget(
-    goalType,
-    goalSettings.goalTarget ?? getDefaultGoalTarget(goalType, goalSettings.dailyMinutesTarget),
-    goalSettings.dailyMinutesTarget,
-  );
   const todayKey = useMemo(() => toLocalDayKey(nowIso), [nowIso]);
   const todayCompletedSessions = useMemo(
     () =>
@@ -511,70 +396,6 @@ export default function App() {
   );
 
   const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const persisted = await loadPersistedState();
-        const hasData =
-          persisted.drills.length > 0 || persisted.templates.length > 0 || persisted.history.length > 0;
-        let seed = hasData ? persisted : createSeedState(new Date().toISOString());
-
-        const needsRecovery =
-          seed.drills.length === 0 ||
-          seed.templates.length === 0 ||
-          seed.templates.every((template) => template.drillIds.length === 0);
-        if (needsRecovery) {
-          seed = createSeedState(new Date().toISOString());
-          setStorageError("Local data was invalid and has been reset to a safe starter session.");
-        }
-
-        setAllDrills(seed.drills);
-        setTemplates(seed.templates);
-        setHistory(seed.history);
-        setGoalSettings(seed.goalSettings);
-        setTotalXp(seed.profile.totalXp);
-        setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
-        setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
-        setActiveTemplateId(seed.templates[0]?.id ?? null);
-        setTemplateNameInput(seed.templates[0]?.name ?? "");
-        setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
-      } catch {
-        setStorageError("Failed to load local data. Using a fresh local session.");
-        const seed = createSeedState(new Date().toISOString());
-        setAllDrills(seed.drills);
-        setTemplates(seed.templates);
-        setHistory(seed.history);
-        setGoalSettings(seed.goalSettings);
-        setTotalXp(seed.profile.totalXp);
-        setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
-        setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
-        setActiveTemplateId(seed.templates[0]?.id ?? null);
-        setTemplateNameInput(seed.templates[0]?.name ?? "");
-        setSelectedDrillId(seed.templates[0]?.drillIds[0] ?? null);
-      } finally {
-        setIsHydrated(true);
-      }
-    };
-
-    run();
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-
-    savePersistedState({
-      drills: allDrills,
-      templates,
-      history,
-      goalSettings,
-      profile: {
-        totalXp,
-        unlockedBadgeIds: getUnlockedBadgeIds(badges),
-        onboarding: onboardingState,
-      },
-    });
-  }, [allDrills, badges, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
 
   useEffect(() => {
     fadeAnim.stopAnimation();
@@ -707,35 +528,6 @@ export default function App() {
       }),
     ]).start();
   }, [rewardGlow, rewardScale, screen]);
-
-  useEffect(() => {
-    if (!selectedTemplate) return;
-    setTemplateNameInput(selectedTemplate.name);
-  }, [selectedTemplate]);
-
-  useEffect(() => {
-    if (!selectedTemplate) return;
-    const exists = selectedTemplate.drillIds.includes(selectedDrillId ?? "");
-    if (!exists) {
-      setSelectedDrillId(selectedTemplate.drillIds[0] ?? null);
-    }
-  }, [selectedDrillId, selectedTemplate]);
-
-  useEffect(() => {
-    if (!selectedBuilderDrill) {
-      setDrillNameInput("");
-      setDrillDurationInput("");
-      setDrillBpmInput("");
-      setDrillRandomizerKindInput("none");
-      setDrillRandomEveryBarsInput("2");
-      return;
-    }
-    setDrillNameInput(selectedBuilderDrill.name);
-    setDrillDurationInput(String(Math.max(1, Math.round(selectedBuilderDrill.durationSeconds / 60))));
-    setDrillBpmInput(selectedBuilderDrill.targetBpm ? String(selectedBuilderDrill.targetBpm) : "");
-    setDrillRandomizerKindInput(selectedBuilderDrill.randomizer?.kind ?? "none");
-    setDrillRandomEveryBarsInput(String(selectedBuilderDrill.randomizer?.everyBars ?? 2));
-  }, [selectedBuilderDrill]);
 
   function triggerCompletionPulse(): void {
     completionPulse.setValue(0);
@@ -872,10 +664,6 @@ export default function App() {
 
   handleDrillFinishedRef.current = handleDrillFinished;
 
-  function startPracticeFlow(): void {
-    setScreen("builder");
-  }
-
   function startSession(): void {
     const prepared = prepareSessionStart({
       selectedTemplate: selectedTemplate ?? null,
@@ -917,490 +705,13 @@ export default function App() {
     setCurrentMicrocopy(MOTIVATION[nextIndex % MOTIVATION.length]);
   }
 
-  function addSongToBuilder(song: SongLibraryItem): void {
-    try {
-      const nowIso = new Date().toISOString();
-      const created = createDrillFromInput(
-        makeId("drill"),
-        {
-          name: `${song.title} (${song.artist})`,
-          durationMinutes: song.durationMinutes,
-          targetBpm: song.targetBpm,
-          tags: song.tags,
-        },
-        nowIso,
-      );
-      const result = appendDrillToTemplate({
-        templates,
-        activeTemplateId: activeTemplateId ?? null,
-        drill: created,
-        nowIso,
-      });
-
-      setAllDrills((current) => [...current, created]);
-      setTemplates(result.templates);
-      setActiveTemplateId(result.targetTemplateId);
-      setSelectedDrillId(created.id);
-      setBuilderError(null);
-      setScreen("builder");
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not add song drill");
-      setScreen("builder");
-    }
-  }
-
   function startSongNow(song: SongLibraryItem): void {
     addSongToBuilder(song);
-  }
-
-  function addDrillToTemplate(): void {
-    try {
-      const nowIso = new Date().toISOString();
-      const nextIndex = builderDrills.length + 1;
-      const created = createDrillFromInput(makeId("drill"), buildDefaultDrillInput(nextIndex), nowIso);
-      const result = appendDrillToTemplate({
-        templates,
-        activeTemplateId: activeTemplateId ?? null,
-        drill: created,
-        nowIso,
-      });
-
-      setAllDrills((current) => [...current, created]);
-      setTemplates(result.templates);
-      setActiveTemplateId(result.targetTemplateId);
-      setSelectedDrillId(created.id);
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not add drill");
-    }
-  }
-
-  function reorderDrillsInTemplate(nextDrillIds: string[]): void {
-    if (!selectedTemplate) return;
-
-    const normalizedIds = nextDrillIds.filter((id) => selectedTemplate.drillIds.includes(id));
-    const reorderedDrills = normalizedIds
-      .map((id) => allDrills.find((drill) => drill.id === id))
-      .filter((drill): drill is Drill => Boolean(drill));
-
-    setTemplates((current) =>
-      current.map((template) =>
-        template.id === selectedTemplate.id
-          ? {
-              ...template,
-              drillIds: normalizedIds,
-              totalDurationSeconds: calculateTotalDurationSeconds(reorderedDrills),
-              updatedAt: new Date().toISOString(),
-            }
-          : template,
-      ),
-    );
-    setBuilderError(null);
-  }
-
-  function removeDrillFromTemplate(drillId: string): void {
-    if (!selectedTemplate) return;
-
-    setTemplates((current) =>
-      current.map((template) => {
-        if (template.id !== selectedTemplate.id) return template;
-        const nextDrillIds = template.drillIds.filter((id) => id !== drillId);
-        const nextDrills = nextDrillIds
-          .map((id) => allDrills.find((drill) => drill.id === id))
-          .filter((drill): drill is Drill => Boolean(drill));
-
-        return {
-          ...template,
-          drillIds: nextDrillIds,
-          totalDurationSeconds: calculateTotalDurationSeconds(nextDrills),
-          updatedAt: new Date().toISOString(),
-        };
-      }),
-    );
-    if (selectedDrillId === drillId) {
-      const nextId = selectedTemplate.drillIds.find((id) => id !== drillId) ?? null;
-      setSelectedDrillId(nextId);
-    }
-  }
-
-  function createTemplate(): void {
-    try {
-      const now = new Date().toISOString();
-      const createdDrills: Drill[] = [
-        createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now),
-      ];
-
-      // Ensure new template satisfies 5-minute minimum and never hard-crashes the app.
-      while (calculateTotalDurationSeconds(createdDrills) < 5 * 60) {
-        createdDrills.push(createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now));
-      }
-
-      const template = createSessionTemplate({
-        id: makeId("template"),
-        name: `Session ${templates.length + 1}`,
-        drillIds: createdDrills.map((drill) => drill.id),
-        totalDurationSeconds: calculateTotalDurationSeconds(createdDrills),
-        nowIso: now,
-      });
-
-      setAllDrills((current) => [...current, ...createdDrills]);
-      setTemplates((current) => [...current, template]);
-      setActiveTemplateId(template.id);
-      setTemplateNameInput(template.name);
-      setSelectedDrillId(createdDrills[0]?.id ?? null);
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not create template");
-    }
-  }
-
-  function duplicateTemplate(): void {
-    if (!selectedTemplate) return;
-    try {
-      const now = new Date().toISOString();
-      const copyName = `${selectedTemplate.name} Copy`;
-
-      const duplicated = createSessionTemplate({
-        id: makeId("template"),
-        name: copyName,
-        drillIds: [...selectedTemplate.drillIds],
-        totalDurationSeconds: selectedTemplate.totalDurationSeconds,
-        isPreset: false,
-        nowIso: now,
-      });
-
-      setTemplates((current) => [...current, duplicated]);
-      setActiveTemplateId(duplicated.id);
-      setTemplateNameInput(duplicated.name);
-      setSelectedDrillId(duplicated.drillIds[0] ?? null);
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not duplicate template");
-    }
-  }
-
-  function saveTemplate(): void {
-    if (!selectedTemplate) return;
-
-    try {
-      const now = new Date().toISOString();
-      const drillIds = selectedTemplate.drillIds;
-      const selectedDrills = drillIds
-        .map((id) => allDrills.find((drill) => drill.id === id))
-        .filter((drill): drill is Drill => Boolean(drill));
-
-      const validated = createSessionTemplate({
-        id: selectedTemplate.id,
-        name: templateNameInput,
-        drillIds,
-        totalDurationSeconds: calculateTotalDurationSeconds(selectedDrills),
-        isPreset: selectedTemplate.isPreset,
-        nowIso: now,
-      });
-
-      setTemplates((current) =>
-        current.map((template) =>
-          template.id === selectedTemplate.id
-            ? {
-                ...validated,
-                createdAt: template.createdAt,
-                updatedAt: now,
-              }
-            : template,
-        ),
-      );
-
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not save template");
-    }
-  }
-
-  function deleteTemplate(): void {
-    if (!selectedTemplate) return;
-
-    const remaining = templates.filter((template) => template.id !== selectedTemplate.id);
-    setTemplates(remaining);
-    setActiveTemplateId(remaining[0]?.id ?? null);
-    setTemplateNameInput(remaining[0]?.name ?? "");
-    setSelectedDrillId(remaining[0]?.drillIds[0] ?? null);
-    setBuilderError(null);
-  }
-
-  function maybeAutoSaveDrillEdits(input: {
-    name: string;
-    duration: string;
-    bpm: string;
-    randomKind: "none" | DrillRandomizerKind;
-    randomBars: string;
-  }): void {
-    if (!selectedBuilderDrill || !selectedTemplate) return;
-
-    const name = input.name;
-    const durationRaw = input.duration.trim();
-    const bpmRaw = input.bpm.trim();
-    const randomBarsRaw = input.randomBars.trim();
-    const durationMinutes = Number(durationRaw);
-    const parsedBpm = bpmRaw.length === 0 ? null : Number(bpmRaw);
-    const parsedEveryBars = Number(randomBarsRaw);
-
-    const hasValidName = name.trim().length > 0;
-    const hasValidDuration = Number.isFinite(durationMinutes) && durationMinutes >= 1 && durationMinutes <= 30;
-    const hasValidBpm = parsedBpm === null || (Number.isFinite(parsedBpm) && parsedBpm >= 40 && parsedBpm <= 240);
-    const hasValidRandomBars =
-      input.randomKind === "none" ||
-      (Number.isFinite(parsedEveryBars) && parsedEveryBars >= 1 && parsedEveryBars <= 16);
-    if (!hasValidName || !hasValidDuration || !hasValidBpm || !hasValidRandomBars) return;
-
-    const randomizer =
-      input.randomKind === "none"
-        ? undefined
-        : {
-            kind: input.randomKind,
-            everyBars: parsedEveryBars,
-          };
-    const nextBpm = parsedBpm === null ? undefined : parsedBpm;
-
-    if (
-      selectedBuilderDrill.name === name &&
-      Math.round(selectedBuilderDrill.durationSeconds / 60) === durationMinutes &&
-      selectedBuilderDrill.targetBpm === nextBpm &&
-      selectedBuilderDrill.randomizer?.kind === randomizer?.kind &&
-      selectedBuilderDrill.randomizer?.everyBars === randomizer?.everyBars
-    ) {
-      return;
-    }
-
-    try {
-      const nowIso = new Date().toISOString();
-      const updated = updateDrillFromInput(
-        selectedBuilderDrill,
-        {
-          name,
-          durationMinutes,
-          targetBpm: nextBpm,
-          randomizer,
-        },
-        nowIso,
-      );
-
-      setAllDrills((current) => current.map((drill) => (drill.id === selectedBuilderDrill.id ? updated : drill)));
-
-      setTemplates((current) =>
-        current.map((template) => {
-          if (template.id !== selectedTemplate.id) return template;
-          const nextDrills = template.drillIds
-            .map((id) => (id === updated.id ? updated : allDrills.find((drill) => drill.id === id)))
-            .filter((drill): drill is Drill => Boolean(drill));
-
-          return {
-            ...template,
-            totalDurationSeconds: calculateTotalDurationSeconds(nextDrills),
-            updatedAt: nowIso,
-          };
-        }),
-      );
-      setBuilderError(null);
-    } catch (error) {
-      setBuilderError(error instanceof Error ? error.message : "Could not update drill");
-    }
-  }
-
-  function handleDrillNameInput(value: string): void {
-    setDrillNameInput(value);
-    maybeAutoSaveDrillEdits({
-      name: value,
-      duration: drillDurationInput,
-      bpm: drillBpmInput,
-      randomKind: drillRandomizerKindInput,
-      randomBars: drillRandomEveryBarsInput,
-    });
-  }
-
-  function handleDrillDurationInput(value: string): void {
-    setDrillDurationInput(value);
-    maybeAutoSaveDrillEdits({
-      name: drillNameInput,
-      duration: value,
-      bpm: drillBpmInput,
-      randomKind: drillRandomizerKindInput,
-      randomBars: drillRandomEveryBarsInput,
-    });
-  }
-
-  function handleDrillBpmInput(value: string): void {
-    setDrillBpmInput(value);
-    maybeAutoSaveDrillEdits({
-      name: drillNameInput,
-      duration: drillDurationInput,
-      bpm: value,
-      randomKind: drillRandomizerKindInput,
-      randomBars: drillRandomEveryBarsInput,
-    });
-  }
-
-  function handleDrillRandomizerKindInput(value: "none" | DrillRandomizerKind): void {
-    setDrillRandomizerKindInput(value);
-    maybeAutoSaveDrillEdits({
-      name: drillNameInput,
-      duration: drillDurationInput,
-      bpm: drillBpmInput,
-      randomKind: value,
-      randomBars: drillRandomEveryBarsInput,
-    });
-  }
-
-  function handleDrillRandomEveryBarsInput(value: string): void {
-    setDrillRandomEveryBarsInput(value);
-    maybeAutoSaveDrillEdits({
-      name: drillNameInput,
-      duration: drillDurationInput,
-      bpm: drillBpmInput,
-      randomKind: drillRandomizerKindInput,
-      randomBars: value,
-    });
-  }
-
-  async function toggleReminder(): Promise<void> {
-    setReminderError(null);
-    const nextEnabled = !goalSettings.reminderEnabled;
-
-    try {
-      if (nextEnabled) {
-        await scheduleDailyReminder(goalSettings.reminderTime);
-      } else {
-        await disableDailyReminder();
-      }
-
-      setGoalSettings((current) => ({
-        ...current,
-        reminderEnabled: nextEnabled,
-      }));
-    } catch (error) {
-      setReminderError(error instanceof Error ? error.message : "Could not update reminders");
-    }
-  }
-
-  async function saveReminderTime(reminderTime: string): Promise<void> {
-    setReminderError(null);
-
-    try {
-      parseReminderTime(reminderTime);
-      if (goalSettings.reminderEnabled) {
-        await scheduleDailyReminder(reminderTime);
-      }
-
-      setGoalSettings((current) => ({
-        ...current,
-        reminderTime,
-      }));
-    } catch (error) {
-      setReminderError(error instanceof Error ? error.message : "Could not save reminder time");
-    }
-  }
-
-  function setGoalType(nextGoalType: GoalType): void {
-    setGoalError(null);
-    setGoalSettings((current) => {
-      const nextTarget = normalizeGoalTarget(
-        nextGoalType,
-        current.goalTarget ?? getDefaultGoalTarget(nextGoalType, current.dailyMinutesTarget),
-        current.dailyMinutesTarget,
-      );
-      return {
-        ...current,
-        goalType: nextGoalType,
-        goalTarget: nextTarget,
-        dailyMinutesTarget: nextGoalType === "minutes" ? nextTarget : current.dailyMinutesTarget,
-      };
-    });
-  }
-
-  function saveGoalTarget(rawTarget: string): void {
-    const numeric = Number(rawTarget.trim());
-    if (!Number.isFinite(numeric)) {
-      setGoalError("Goal target must be a number.");
-      return;
-    }
-
-    const [min, max] = GOAL_TARGET_BOUNDS[goalType];
-    if (numeric < min || numeric > max) {
-      setGoalError(`Goal target must be between ${min} and ${max}.`);
-      return;
-    }
-
-    const normalized = normalizeGoalTarget(goalType, numeric, goalSettings.dailyMinutesTarget);
-    setGoalSettings((current) => ({
-      ...current,
-      goalType,
-      goalTarget: normalized,
-      dailyMinutesTarget: goalType === "minutes" ? normalized : current.dailyMinutesTarget,
-    }));
-    setGoalError(null);
   }
 
   function resetToHome(): void {
     setScreen("home");
     setMetronomeEnabled(false);
-  }
-
-  function navigateFromTab(next: "home" | "songs" | "sessions" | "progress" | "profile"): void {
-    setScreen(next);
-  }
-
-  const onboardingSuggestion = useMemo(() => {
-    if (!onboardingState.answers) return null;
-    return buildPracticeOnboardingSuggestion(onboardingState.answers);
-  }, [onboardingState.answers]);
-
-  function saveOnboardingAnswers(answers: PracticeOnboardingAnswers): void {
-    const suggestion = buildPracticeOnboardingSuggestion(answers);
-    setOnboardingState({
-      completed: true,
-      answers,
-      lastSuggestedTemplateName: suggestion.sessionName,
-      onboardingCompletedAt: new Date().toISOString(),
-      recommendationVersion: ONBOARDING_RECOMMENDATION_VERSION,
-    });
-    setGoalSettings((current) => ({
-      ...current,
-      goalType: "minutes",
-      goalTarget: suggestion.recommendedMinutes,
-      dailyMinutesTarget: suggestion.recommendedMinutes,
-    }));
-  }
-
-  function applyOnboardingSuggestionToBuilder(): void {
-    if (!onboardingSuggestion) return;
-    const now = new Date().toISOString();
-    const suggestedInputs = selectSuggestedDrills(DRILL_POOL, onboardingSuggestion);
-    const createdDrills = suggestedInputs.map((input) =>
-      createDrillFromInput(makeId("drill"), input, now),
-    );
-
-    while (calculateTotalDurationSeconds(createdDrills) < 5 * 60) {
-      createdDrills.push(createDrillFromInput(makeId("drill"), pickRandomPoolDrill(), now));
-    }
-
-    const template = createSessionTemplate({
-      id: makeId("template"),
-      name: onboardingSuggestion.sessionName,
-      drillIds: createdDrills.map((drill) => drill.id),
-      totalDurationSeconds: calculateTotalDurationSeconds(createdDrills),
-      nowIso: now,
-    });
-
-    setAllDrills((current) => [...current, ...createdDrills]);
-    setTemplates((current) => [...current, template]);
-    setActiveTemplateId(template.id);
-    setTemplateNameInput(template.name);
-    setSelectedDrillId(createdDrills[0]?.id ?? null);
-    setBuilderError(null);
-    setScreen("builder");
-  }
-
-  function resetOnboardingQuestionnaire(): void {
-    setOnboardingState(DEFAULT_PRACTICE_ONBOARDING_STATE);
   }
 
   return (
