@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
@@ -262,6 +263,16 @@ export function HomeDashboard(props: {
   const [practicePreferenceInput, setPracticePreferenceInput] = useState<PracticePreference>(
     onboardingState.answers?.practicePreference ?? "balanced",
   );
+  const dashboardFeedback = useMemo(
+    () =>
+      buildDashboardFeedback({
+        goalType,
+        goalCurrentValue,
+        goalTarget,
+        streak,
+      }),
+    [goalCurrentValue, goalTarget, goalType, streak],
+  );
 
   useEffect(() => {
     setTimeInput(reminderTime);
@@ -320,7 +331,7 @@ export function HomeDashboard(props: {
           <View style={styles.stitchHeroOverlay} />
           <View style={styles.stitchHeroBottomText}>
             <Text style={styles.stitchHeroTitle}>Today&apos;s Session</Text>
-            <Text style={styles.stitchHeroSubtitle}>Keep your streak alive</Text>
+            <Text style={styles.stitchHeroSubtitle}>{dashboardFeedback.heroSubtitle}</Text>
           </View>
         </ImageBackground>
         <View style={styles.stitchHeroBody}>
@@ -380,6 +391,20 @@ export function HomeDashboard(props: {
           </Text>
         </View>
       </View>
+
+      <GlowCard style={styles.dashboardActionCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.cardLabel}>{dashboardFeedback.goalStatusLabel}</Text>
+            <Text style={styles.helperText}>{dashboardFeedback.goalStatusBody}</Text>
+          </View>
+          <View style={styles.dashboardActionDivider} />
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.cardLabel}>{dashboardFeedback.streakStatusLabel}</Text>
+            <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
+          </View>
+        </View>
+      </GlowCard>
 
       <GlowCard style={styles.stitchQuestionnaireCard}>
         <View style={styles.stitchCardLabelRow}>
@@ -1996,6 +2021,9 @@ export const styles = StyleSheet.create({
   statChipLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.4, textTransform: "uppercase" },
   statChipValue: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   stitchQuestionnaireCard: { borderRadius: 16, borderColor: "rgba(230,126,0,0.1)", backgroundColor: "rgba(230,126,0,0.05)", gap: 6, padding: 14, minHeight: 164 },
+  dashboardActionCard: { gap: 12 },
+  dashboardActionBlock: { flex: 1, gap: 4 },
+  dashboardActionDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.08)" },
   stitchSectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: "800" },
   stitchQuestionLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.3, marginBottom: 4 },
   stitchThreeCol: { flexDirection: "row", gap: 6 },
