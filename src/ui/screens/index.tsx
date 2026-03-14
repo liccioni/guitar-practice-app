@@ -483,57 +483,98 @@ export function HomeDashboard(props: {
         )}
       </GlowCard>
 
-      <View style={styles.hiddenCompatBlock}>
-        <TouchableOpacity
-          style={[styles.smallActionButton, goalType === "minutes" ? styles.goalTypeActive : null]}
-          onPress={() => onGoalTypeChange("minutes")}
-        >
-          <Text style={styles.smallActionText}>Minutes</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.smallActionButton, goalType === "sessions" ? styles.goalTypeActive : null]}
-          onPress={() => onGoalTypeChange("sessions")}
-        >
-          <Text style={styles.smallActionText}>Sessions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.smallActionButton, goalType === "drills" ? styles.goalTypeActive : null]}
-          onPress={() => onGoalTypeChange("drills")}
-        >
-          <Text style={styles.smallActionText}>Drills</Text>
-        </TouchableOpacity>
+      <GlowCard style={styles.dashboardSettingsCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.stitchSectionTitle}>Practice Loop Settings</Text>
+            <Text style={styles.helperText}>Tune today&apos;s target and your reminder without leaving the dashboard.</Text>
+          </View>
+        </View>
+
+        <Text style={styles.stitchQuestionLabel}>Goal type</Text>
         <View style={styles.inlineRow}>
-          <TextInput
-            value={goalTargetInput}
-            onChangeText={setGoalTargetInput}
-            keyboardType="number-pad"
-            placeholder="Target"
-            placeholderTextColor={COLORS.muted}
-            style={styles.timeInput}
-          />
-          <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveGoalTarget(goalTargetInput)}>
-            <Text style={styles.smallActionText}>Save</Text>
+          <TouchableOpacity
+            style={[styles.smallActionButton, styles.settingsChip, goalType === "minutes" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("minutes")}
+            testID="dashboard-goal-type-minutes"
+          >
+            <Text style={styles.smallActionText}>Minutes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallActionButton, styles.settingsChip, goalType === "sessions" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("sessions")}
+            testID="dashboard-goal-type-sessions"
+          >
+            <Text style={styles.smallActionText}>Sessions</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallActionButton, styles.settingsChip, goalType === "drills" ? styles.goalTypeActive : null]}
+            onPress={() => onGoalTypeChange("drills")}
+            testID="dashboard-goal-type-drills"
+          >
+            <Text style={styles.smallActionText}>Drills</Text>
           </TouchableOpacity>
         </View>
+
         <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Daily Reminder</Text>
-          <TouchableOpacity style={styles.pillButton} onPress={onToggleReminder}>
+          <View style={styles.dashboardSettingTextBlock}>
+            <Text style={styles.cardLabel}>Daily target</Text>
+            <Text style={styles.helperText}>Choose the amount that defines a good day of practice.</Text>
+          </View>
+          <View style={styles.dashboardSettingControls}>
+            <TextInput
+              value={goalTargetInput}
+              onChangeText={setGoalTargetInput}
+              keyboardType="number-pad"
+              placeholder="Target"
+              placeholderTextColor={COLORS.muted}
+              style={[styles.timeInput, styles.dashboardTargetInput]}
+              testID="dashboard-goal-target-input"
+            />
+            <TouchableOpacity
+              style={[styles.smallActionButton, styles.dashboardSaveButton]}
+              onPress={() => onSaveGoalTarget(goalTargetInput)}
+              testID="dashboard-goal-target-save"
+            >
+              <Text style={styles.smallActionText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardSettingTextBlock}>
+            <Text style={styles.cardLabel}>Daily reminder</Text>
+            <Text style={styles.helperText}>
+              {reminderEnabled ? "Reminder is active for your usual practice window." : "Turn on a reminder for a repeatable practice cue."}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.pillButton, reminderEnabled ? styles.goalTypeActive : null]}
+            onPress={onToggleReminder}
+            testID="dashboard-reminder-toggle"
+          >
             <Text style={styles.pillButtonText}>{reminderEnabled ? "On" : "Off"}</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.inlineRow}>
+
+        <View style={styles.dashboardReminderRow}>
           <TextInput
             value={timeInput}
             onChangeText={setTimeInput}
             placeholder="18:00"
             placeholderTextColor={COLORS.muted}
-            style={styles.timeInput}
+            style={[styles.timeInput, styles.dashboardReminderInput]}
+            testID="dashboard-reminder-time-input"
           />
-          <TouchableOpacity style={styles.smallActionButton} onPress={() => onSaveReminderTime(timeInput)}>
-            <Text style={styles.smallActionText}>Save</Text>
+          <TouchableOpacity
+            style={[styles.smallActionButton, styles.dashboardSaveButton]}
+            onPress={() => onSaveReminderTime(timeInput)}
+            testID="dashboard-reminder-time-save"
+          >
+            <Text style={styles.smallActionText}>Save Time</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </GlowCard>
 
       {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
       {reminderError ? <Text style={styles.errorText}>{reminderError}</Text> : null}
@@ -2024,6 +2065,14 @@ export const styles = StyleSheet.create({
   dashboardActionCard: { gap: 12 },
   dashboardActionBlock: { flex: 1, gap: 4 },
   dashboardActionDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.08)" },
+  dashboardSettingsCard: { gap: 12 },
+  dashboardSettingTextBlock: { flex: 1, gap: 4, paddingRight: 12 },
+  dashboardSettingControls: { flexDirection: "row", alignItems: "center", gap: 8 },
+  dashboardTargetInput: { minWidth: 82 },
+  dashboardSaveButton: { minHeight: 42, paddingHorizontal: 14 },
+  dashboardReminderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  dashboardReminderInput: { flex: 1 },
+  settingsChip: { flex: 1 },
   stitchSectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: "800" },
   stitchQuestionLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.3, marginBottom: 4 },
   stitchThreeCol: { flexDirection: "row", gap: 6 },
