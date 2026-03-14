@@ -1621,6 +1621,14 @@ export function ActivePractice(props: {
   isPaused: boolean;
   microcopy: string;
   completionPulse: Animated.Value;
+  drillCompletionTransition: {
+    completedDrillName: string;
+    gainedXp: number;
+    nextDrillName: string | null;
+    nextDrillDurationSec: number | null;
+    nextDrillTargetBpm: number | null;
+    isSessionFinisher: boolean;
+  } | null;
   metronomeEnabled: boolean;
   metronomeBpm: number;
   beatFlash: boolean;
@@ -1646,6 +1654,7 @@ export function ActivePractice(props: {
     isPaused,
     microcopy,
     completionPulse,
+    drillCompletionTransition,
     metronomeEnabled,
     metronomeBpm,
     beatFlash,
@@ -1694,6 +1703,35 @@ export function ActivePractice(props: {
           <Text style={styles.xpInline}>Reward +{toXp(drill)} XP</Text>
         </View>
       </Animated.View>
+
+      {drillCompletionTransition ? (
+        <View testID="active-drill-complete-transition">
+          <GlowCard style={styles.drillTransitionCard}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.cardLabel}>Drill Complete</Text>
+            <Text style={styles.drillTransitionXp}>+{drillCompletionTransition.gainedXp} XP</Text>
+          </View>
+          <Text style={styles.drillTransitionTitle}>{drillCompletionTransition.completedDrillName}</Text>
+          <Text style={styles.helperText}>
+            {drillCompletionTransition.isSessionFinisher
+              ? "Final drill complete. Session summary is up next."
+              : "Locked in. Here is what comes next."}
+          </Text>
+          {!drillCompletionTransition.isSessionFinisher && drillCompletionTransition.nextDrillName ? (
+            <View style={styles.drillTransitionNextCard}>
+              <Text style={styles.cardLabel}>Next Drill</Text>
+              <Text style={styles.badgeLabel}>{drillCompletionTransition.nextDrillName}</Text>
+              <Text style={styles.helperText}>
+                {Math.max(1, Math.round((drillCompletionTransition.nextDrillDurationSec ?? 0) / 60))} min
+                {drillCompletionTransition.nextDrillTargetBpm
+                  ? ` • ${drillCompletionTransition.nextDrillTargetBpm} BPM`
+                  : ""}
+              </Text>
+            </View>
+          ) : null}
+          </GlowCard>
+        </View>
+      ) : null}
 
       <GlowCard>
         <View style={styles.inlineRowSpace}>
@@ -2053,6 +2091,10 @@ export const styles = StyleSheet.create({
   drillXpCompact: { minWidth: 0, textAlign: "left", marginTop: 4 },
   activeCard: { alignItems: "center", justifyContent: "center", paddingVertical: 12 },
   activeCardHighlight: { shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+  drillTransitionCard: { gap: 10, borderColor: "rgba(230,126,0,0.3)", backgroundColor: "rgba(230,126,0,0.08)" },
+  drillTransitionXp: { color: COLORS.accent, fontSize: 15, fontWeight: "800" },
+  drillTransitionTitle: { color: COLORS.text, fontSize: 24, lineHeight: 28, fontWeight: "800" },
+  drillTransitionNextCard: { borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, padding: 12, gap: 4 },
   timerOverlay: { position: "absolute", alignItems: "center", justifyContent: "center", gap: 4 },
   timerValue: { color: COLORS.text, fontSize: 72, fontWeight: "900", letterSpacing: 1.2 },
   timerNowLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
