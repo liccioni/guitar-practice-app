@@ -387,6 +387,7 @@ export default function App() {
                 isPaused={activeRuntime.isPaused}
                 microcopy={activeRuntime.currentMicrocopy}
                 completionPulse={activeRuntime.completionPulse}
+                drillCompletionTransition={activeRuntime.drillCompletionTransition}
                 metronomeEnabled={activeRuntime.metronomeEnabled}
                 metronomeBpm={activeRuntime.metronomeBpm}
                 beatFlash={activeRuntime.beatFlash}

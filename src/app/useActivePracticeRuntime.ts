@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, Vibration } from "react-native";
 import {
   advanceRandomCueState,
+  buildDrillCompletionTransition,
   createEmptyRandomCueState,
   createRandomCueState,
+  type DrillCompletionTransition,
   getRuntimeProgress,
   type RandomCueRuntimeState,
 } from "./activePracticeRuntime";
@@ -44,6 +46,8 @@ interface SessionFinishedPayload {
   sessionXp: number;
 }
 
+const DRILL_TRANSITION_MS = 1400;
+
 interface UseActivePracticeRuntimeInput {
   allDrills: Drill[];
   screen: Screen;
@@ -63,6 +67,7 @@ export interface ActivePracticeRuntimeValue {
   completedDurationSec: number;
   completionPulse: Animated.Value;
   currentMicrocopy: string;
+  drillCompletionTransition: DrillCompletionTransition | null;
   drillProgress: number;
   elapsedSec: number;
   focusModeEnabled: boolean;
@@ -109,6 +114,7 @@ export function useActivePracticeRuntime({
   const [sessionXp, setSessionXp] = useState(0);
   const [leveledUp, setLeveledUp] = useState(false);
   const [currentMicrocopy, setCurrentMicrocopy] = useState(MOTIVATION[0]);
+  const [drillCompletionTransition, setDrillCompletionTransition] = useState<DrillCompletionTransition | null>(null);
 
   const completionPulse = useRef(new Animated.Value(0)).current;
   const randomCuePulse = useRef(new Animated.Value(0)).current;
@@ -238,15 +244,28 @@ export function useActivePracticeRuntime({
     if (!runtimeState) return;
 
     if (runtimeState.status === "segmentComplete") {
-      const nextState = advanceToNextSegment(runtimeState);
-      if (nextState.currentIndex !== runtimeState.currentIndex) {
-        setCurrentMicrocopy(MOTIVATION[nextState.currentIndex % MOTIVATION.length]);
-      }
-      setRuntimeState(nextState);
-      return;
+      const transition = buildDrillCompletionTransition(runtimeState);
+      setDrillCompletionTransition(transition);
+
+      const timer = setTimeout(() => {
+        const nextState = advanceToNextSegment(runtimeState);
+        if (nextState.currentIndex !== runtimeState.currentIndex) {
+          setCurrentMicrocopy(MOTIVATION[nextState.currentIndex % MOTIVATION.length]);
+        }
+        setDrillCompletionTransition(null);
+        setRuntimeState(nextState);
+      }, DRILL_TRANSITION_MS);
+
+      return () => clearTimeout(timer);
     }
 
-    if (runtimeState.status !== "finished") return;
+    if (drillCompletionTransition) {
+      setDrillCompletionTransition(null);
+    }
+
+    if (runtimeState.status !== "finished") {
+      return;
+    }
 
     const finishedKey = [
       runtimeState.startedAt,
@@ -265,7 +284,7 @@ export function useActivePracticeRuntime({
       elapsedSec: progress.elapsedSec,
       sessionXp: sessionXpRef.current,
     });
-  }, [onSessionFinished, progress.activeDrillIds, progress.elapsedSec, runtimeState]);
+  }, [drillCompletionTransition, onSessionFinished, progress.activeDrillIds, progress.elapsedSec, runtimeState]);
 
   function startSession(): void {
     const prepared = prepareSessionStart({
@@ -295,6 +314,7 @@ export function useActivePracticeRuntime({
     setSessionXp(0);
     setLeveledUp(false);
     setCurrentMicrocopy(MOTIVATION[0]);
+    setDrillCompletionTransition(null);
     setMetronomeBpm(prepared.nextMetronomeBpm);
     setMetronomeEnabled(true);
     onScreenChange("active");
@@ -321,6 +341,7 @@ export function useActivePracticeRuntime({
     setBeatFlash(false);
     setRandomCueState(createEmptyRandomCueState());
     setCurrentMicrocopy(MOTIVATION[0]);
+    setDrillCompletionTransition(null);
     randomCuePulse.setValue(0);
   }
 
@@ -336,6 +357,7 @@ export function useActivePracticeRuntime({
     completedDurationSec: progress.completedDurationSec,
     completionPulse,
     currentMicrocopy,
+    drillCompletionTransition,
     drillProgress: progress.drillProgress,
     elapsedSec: progress.elapsedSec,
     focusModeEnabled,

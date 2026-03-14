@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   advanceRandomCueState,
+  buildDrillCompletionTransition,
   createEmptyRandomCueState,
   createRandomCueState,
   getRuntimeProgress,
@@ -128,6 +129,75 @@ describe("activePracticeRuntime helpers", () => {
       elapsedSec: 0,
       sessionProgress: 0,
       drillProgress: 0,
+    });
+  });
+
+  it("builds a drill-complete transition with the next drill preview", () => {
+    const runtimeState: RuntimeState = {
+      status: "segmentComplete",
+      templateId: "template_1",
+      templateName: "Daily Session",
+      currentIndex: 0,
+      totalRemainingSeconds: 90,
+      completedDrillIds: ["drill_1"],
+      durationCompletedSeconds: 60,
+      startedAt: "2026-03-13T14:00:00.000Z",
+      segments: [
+        {
+          drillId: "drill_1",
+          name: "Warmup",
+          durationSeconds: 60,
+          remainingSeconds: 0,
+          targetBpm: 90,
+        },
+        {
+          drillId: "drill_2",
+          name: "Scales",
+          durationSeconds: 90,
+          remainingSeconds: 90,
+          targetBpm: 120,
+        },
+      ],
+    };
+
+    expect(buildDrillCompletionTransition(runtimeState)).toEqual({
+      completedDrillName: "Warmup",
+      gainedXp: 25,
+      nextDrillName: "Scales",
+      nextDrillDurationSec: 90,
+      nextDrillTargetBpm: 120,
+      isSessionFinisher: false,
+    });
+  });
+
+  it("marks the transition as a session finisher when no next drill exists", () => {
+    const runtimeState: RuntimeState = {
+      status: "segmentComplete",
+      templateId: "template_1",
+      templateName: "Daily Session",
+      currentIndex: 0,
+      totalRemainingSeconds: 0,
+      completedDrillIds: ["drill_1"],
+      durationCompletedSeconds: 60,
+      startedAt: "2026-03-13T14:00:00.000Z",
+      segments: [
+        {
+          drillId: "drill_1",
+          name: "Warmup",
+          durationSeconds: 60,
+          remainingSeconds: 0,
+          targetBpm: 90,
+        },
+      ],
+    };
+
+    expect(buildDrillCompletionTransition(runtimeState)).toEqual({
+      completedDrillName: "Warmup",
+      gainedXp: 25,
+      nextDrillName: null,
+      nextDrillDurationSec: null,
+      nextDrillTargetBpm: null,
+      isSessionFinisher: true,
     });
   });
 });

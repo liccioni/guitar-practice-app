@@ -1,4 +1,4 @@
-import type { DrillRandomizer, DrillRandomizerKind } from "../domain/exercises/types";
+import type { Drill, DrillRandomizer, DrillRandomizerKind } from "../domain/exercises/types";
 import type { RuntimeState } from "../domain/sessions/runtimeState";
 
 export interface RandomCueRuntimeState {
@@ -23,6 +23,15 @@ export interface RuntimeProgress {
   elapsedSec: number;
   sessionProgress: number;
   drillProgress: number;
+}
+
+export interface DrillCompletionTransition {
+  completedDrillName: string;
+  gainedXp: number;
+  nextDrillName: string | null;
+  nextDrillDurationSec: number | null;
+  nextDrillTargetBpm: number | null;
+  isSessionFinisher: boolean;
 }
 
 export function randomCueValues(kind: DrillRandomizerKind): string[] {
@@ -133,7 +142,41 @@ export function getRuntimeProgress(runtimeState: RuntimeState | null): RuntimePr
   };
 }
 
+export function buildDrillCompletionTransition(
+  runtimeState: RuntimeState,
+): DrillCompletionTransition | null {
+  if (runtimeState.status !== "segmentComplete") return null;
+
+  const completedSegment = runtimeState.segments[runtimeState.currentIndex];
+  if (!completedSegment) return null;
+
+  const nextSegment = runtimeState.segments[runtimeState.currentIndex + 1] ?? null;
+
+  return {
+    completedDrillName: completedSegment.name,
+    gainedXp: toXp({
+      id: completedSegment.drillId,
+      name: completedSegment.name,
+      durationSeconds: completedSegment.durationSeconds,
+      targetBpm: completedSegment.targetBpm,
+      tags: [],
+      createdAt: "",
+      updatedAt: "",
+    }),
+    nextDrillName: nextSegment?.name ?? null,
+    nextDrillDurationSec: nextSegment?.durationSeconds ?? null,
+    nextDrillTargetBpm: nextSegment?.targetBpm ?? null,
+    isSessionFinisher: nextSegment === null,
+  };
+}
+
 function clampUnit(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(1, value));
+}
+
+function toXp(drill: Drill): number {
+  const durationMinutes = Math.max(1, Math.round(drill.durationSeconds / 60));
+  const bpmBonus = drill.targetBpm ? Math.round((drill.targetBpm - 40) / 10) : 0;
+  return Math.max(25, durationMinutes * 10 + bpmBonus);
 }
