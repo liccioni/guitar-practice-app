@@ -20,7 +20,16 @@ import { useBuilderState } from "./useBuilderState";
 import { useProfileSettingsState } from "./useProfileSettingsState";
 export { buildBadgeState, makeId, type Badge } from "./practiceAppStateHelpers";
 
-export type Screen = "home" | "songs" | "sessions" | "progress" | "profile" | "builder" | "active" | "complete";
+export type Screen =
+  | "home"
+  | "songs"
+  | "sessions"
+  | "progress"
+  | "profile"
+  | "builder"
+  | "overview"
+  | "active"
+  | "complete";
 
 function getUnlockedBadgeIds(badges: Badge[]): string[] {
   return badges.filter((badge) => badge.unlocked).map((badge) => badge.id);

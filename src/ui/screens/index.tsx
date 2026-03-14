@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
 import type { Drill, DrillRandomizerKind, DrillTag } from "../../domain/exercises/types";
@@ -1029,7 +1030,7 @@ export function SessionBuilder(props: {
       ) : null}
 
       <View style={styles.builderFooterBar}>
-        <TouchableOpacity style={styles.builderPreviewButton}>
+        <TouchableOpacity style={styles.builderPreviewButton} onPress={onStartSession}>
           <Text style={styles.secondaryCtaText}>Preview Routine</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -1043,6 +1044,93 @@ export function SessionBuilder(props: {
         </TouchableOpacity>
       </View>
     </View>
+  );
+}
+
+export function SessionOverview(props: {
+  templateName: string;
+  drills: Drill[];
+  estimatedMinutes: number;
+  totalXp: number;
+  averageBpm: number | null;
+  bpmRangeLabel: string;
+  onBack: () => void;
+  onStartSession: () => void;
+}) {
+  const { templateName, drills, estimatedMinutes, totalXp, averageBpm, bpmRangeLabel, onBack, onStartSession } = props;
+  const summary = buildSessionOverviewSummary(drills);
+
+  return (
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.overviewScreenBody} testID="overview-screen">
+      <View style={styles.completeTopBar}>
+        <TouchableOpacity style={styles.builderIconAction} onPress={onBack} testID="overview-back">
+          <Text style={styles.iconGlyph}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.completeTopTitle}>Session Preview</Text>
+        <View style={styles.builderIconAction} />
+      </View>
+
+      <GlowCard style={[styles.homeHeroPanel, styles.overviewHeroCard]}>
+        <Text style={styles.cardLabel}>Up Next</Text>
+        <Text style={styles.heroHeadline}>{templateName}</Text>
+        <Text style={styles.heroSubline}>
+          {summary.drillCount} drills in sequence. A quick scan before the timer starts.
+        </Text>
+      </GlowCard>
+
+      <View style={styles.homeStatStrip}>
+        <View style={styles.statChip}>
+          <Text style={styles.statChipLabel}>Est. Time</Text>
+          <Text style={styles.statChipValue}>{estimatedMinutes} min</Text>
+        </View>
+        <View style={styles.statChip}>
+          <Text style={styles.statChipLabel}>Reward</Text>
+          <Text style={styles.statChipValue}>+{totalXp} XP</Text>
+        </View>
+      </View>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Tempo Map</Text>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.heroHeadline}>{averageBpm ?? "--"} {averageBpm ? "BPM" : ""}</Text>
+          <Text style={styles.helperText}>{bpmRangeLabel}</Text>
+        </View>
+      </GlowCard>
+
+      <GlowCard>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.cardLabel}>Drill Order</Text>
+          <Text style={styles.helperText}>{summary.drillCount} total</Text>
+        </View>
+        <View style={styles.overviewDrillList}>
+          {drills.map((drill, index) => (
+            <View key={drill.id} style={styles.overviewDrillRow}>
+              <View style={styles.overviewDrillIndex}>
+                <Text style={styles.overviewDrillIndexText}>{index + 1}</Text>
+              </View>
+              <View style={styles.overviewDrillBody}>
+                <Text style={styles.badgeLabel}>{drill.name}</Text>
+                <Text style={styles.helperText}>
+                  {Math.round(drill.durationSeconds / 60)} min
+                  {drill.targetBpm ? ` • ${drill.targetBpm} BPM` : ""}
+                  {drill.randomizer ? ` • cue every ${drill.randomizer.everyBars} bars` : ""}
+                </Text>
+              </View>
+              <Text style={styles.drillXp}>+{toXp(drill)}</Text>
+            </View>
+          ))}
+        </View>
+      </GlowCard>
+
+      <View style={styles.overviewFooter}>
+        <TouchableOpacity style={styles.builderPreviewButton} onPress={onBack}>
+          <Text style={styles.secondaryCtaText}>Back to Builder</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.builderStartButton} onPress={onStartSession} testID="overview-start-session">
+          <Text style={styles.primaryCtaText}>Start Practicing</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -1937,6 +2025,14 @@ export const styles = StyleSheet.create({
   builderFooterBar: { position: "absolute", left: SPACING.pageX, right: SPACING.pageX, bottom: 94, flexDirection: "row", alignItems: "center", gap: 12 },
   builderPreviewButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
   builderStartButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center", shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
+  overviewScreenBody: { paddingHorizontal: SPACING.pageX, paddingTop: 8, paddingBottom: 120, gap: 14 },
+  overviewHeroCard: { gap: 10 },
+  overviewDrillList: { gap: 12, marginTop: 12 },
+  overviewDrillRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4 },
+  overviewDrillIndex: { width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(230,126,0,0.18)", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  overviewDrillIndexText: { color: COLORS.accent, fontSize: 13, fontWeight: "800" },
+  overviewDrillBody: { flex: 1, gap: 2 },
+  overviewFooter: { flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 4 },
   drillCard: { minHeight: 126, borderRadius: RADII.card, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.divider, paddingHorizontal: 16, paddingVertical: 16, flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", gap: 12 },
   drillCardTopRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
   drillCardSelected: { borderColor: COLORS.accent, shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } },

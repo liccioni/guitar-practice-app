@@ -4,6 +4,7 @@ import { Animated, Easing, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
+import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
 import { buildBadgeState, makeId, usePracticeAppState } from "./src/app/usePracticeAppState";
 import type { Drill } from "./src/domain/exercises/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
@@ -21,6 +22,7 @@ import {
   HomeDashboard,
   ProfileAchievements,
   ProgressStats,
+  SessionOverview,
   SessionBuilder,
   SessionComplete,
   SessionsLibrary,
@@ -140,6 +142,10 @@ export default function App() {
   );
 
   const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
+  const sessionOverview = useMemo(
+    () => buildSessionOverviewSummary(builderDrills),
+    [builderDrills],
+  );
   const activeRuntime = useActivePracticeRuntime({
     allDrills,
     screen,
@@ -355,6 +361,19 @@ export default function App() {
                 onRemoveDrill={removeDrillFromTemplate}
                 onReorderDrills={reorderDrillsInTemplate}
                 onAddDrill={addDrillToTemplate}
+                onStartSession={() => setScreen("overview")}
+              />
+            ) : null}
+
+            {screen === "overview" ? (
+              <SessionOverview
+                templateName={selectedTemplate?.name ?? "Today’s Session"}
+                drills={builderDrills}
+                estimatedMinutes={sessionOverview.estimatedMinutes}
+                totalXp={sessionOverview.totalXp}
+                averageBpm={sessionOverview.averageBpm}
+                bpmRangeLabel={sessionOverview.bpmRangeLabel}
+                onBack={() => setScreen("builder")}
                 onStartSession={activeRuntime.startSession}
               />
             ) : null}
@@ -414,7 +433,7 @@ export default function App() {
               />
             ) : null}
           </Animated.View>
-          {screen !== "builder" ? (
+          {screen !== "builder" && screen !== "overview" ? (
             <AppTabBar screen={screen} onNavigate={navigateFromTab} />
           ) : null}
         </SafeAreaView>
