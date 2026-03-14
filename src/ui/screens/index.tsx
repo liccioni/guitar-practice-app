@@ -194,6 +194,7 @@ export function getLevelState(totalXp: number): LevelState {
 
 export function HomeDashboard(props: {
   levelState: LevelState;
+  totalXp: number;
   streak: number;
   goalType: GoalType;
   goalCurrentValue: number;
@@ -221,6 +222,7 @@ export function HomeDashboard(props: {
 }) {
   const {
     levelState,
+    totalXp,
     streak,
     goalType,
     goalCurrentValue,
@@ -391,6 +393,27 @@ export function HomeDashboard(props: {
           </Text>
         </View>
       </View>
+
+      <GlowCard style={styles.dashboardXpCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.cardLabel}>XP Progress</Text>
+            <Text style={styles.helperText}>{totalXp} total XP • Level {levelState.level}</Text>
+          </View>
+          <Text style={styles.levelChip}>Level {levelState.level + 1}</Text>
+        </View>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
+            ]}
+          />
+        </View>
+        <Text style={styles.helperText}>
+          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward your next level.
+        </Text>
+      </GlowCard>
 
       <GlowCard style={styles.dashboardActionCard}>
         <View style={styles.inlineRowSpace}>
@@ -1681,6 +1704,9 @@ export function AppTabBar(props: {
 
 export function ActivePractice(props: {
   drill: Drill;
+  levelState: LevelState;
+  totalXp: number;
+  sessionXp: number;
   drillProgress: number;
   sessionProgress: number;
   remainingSec: number;
@@ -1714,6 +1740,9 @@ export function ActivePractice(props: {
 }) {
   const {
     drill,
+    levelState,
+    totalXp,
+    sessionXp,
     drillProgress,
     sessionProgress,
     remainingSec,
@@ -1751,7 +1780,10 @@ export function ActivePractice(props: {
   return (
     <View style={styles.screenBody} testID="active-screen">
       <View style={styles.activeTopRow}>
-        <Text style={styles.cardLabel}>Practice Mode</Text>
+        <View>
+          <Text style={styles.cardLabel}>Practice Mode</Text>
+          <Text style={styles.helperText}>Level {levelState.level} • {totalXp} total XP</Text>
+        </View>
         <TouchableOpacity style={styles.pillButton} onPress={onToggleFocusMode} testID="active-focus-toggle">
           <Text style={styles.pillButtonText}>{focusModeEnabled ? "Focus On" : "Focus Off"}</Text>
         </TouchableOpacity>
@@ -1759,6 +1791,23 @@ export function ActivePractice(props: {
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
       </View>
+      <GlowCard style={styles.activeXpCard}>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.cardLabel}>Session XP</Text>
+          <Text style={styles.drillTransitionXp}>+{sessionXp} XP</Text>
+        </View>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
+            ]}
+          />
+        </View>
+        <Text style={styles.helperText}>
+          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
+        </Text>
+      </GlowCard>
 
       <Animated.View style={[styles.activeCard, styles.activeCardHighlight, { transform: [{ scale: pulseScale }] }]}>
         <ProgressRing size={272} strokeWidth={16} progress={drillProgress} color={COLORS.accent} />
@@ -1858,20 +1907,21 @@ export function ActivePractice(props: {
 export function SessionComplete(props: {
   sessionXp: number;
   leveledUp: boolean;
-  level: number;
+  levelState: LevelState;
+  totalXp: number;
   streak: number;
   badges: Badge[];
   rewardGlow: Animated.Value;
   rewardScale: Animated.Value;
   onContinue: () => void;
 }) {
-  const { sessionXp, leveledUp, level, streak, badges, rewardGlow, rewardScale, onContinue } = props;
+  const { sessionXp, leveledUp, levelState, totalXp, streak, badges, rewardGlow, rewardScale, onContinue } = props;
   const [shared, setShared] = useState(false);
   const unlockedBadges = badges.filter((badge) => badge.unlocked).length;
-  const displayXp = Math.max(150, sessionXp);
-  const displayLevel = Math.max(12, level);
-  const displayStreak = Math.max(7, streak);
-  const displayProgressXp = Math.max(750, Math.min(1000, sessionXp));
+  const xpProgressPercent = Math.max(
+    6,
+    Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100),
+  );
 
   const glowOpacity = rewardGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] });
 
@@ -1892,39 +1942,43 @@ export function SessionComplete(props: {
           <Text style={styles.stitchSummaryBadgeIcon}>✪</Text>
         </View>
         <Text style={styles.completeTitle}>Session Crushed!</Text>
-        <Text style={styles.completeSubtext}>You played for 45 minutes straight. Amazing rhythm!</Text>
+        <Text style={styles.completeSubtext}>
+          {leveledUp
+            ? `Level up complete. You reached Level ${levelState.level}.`
+            : "Your practice XP moved forward this session."}
+        </Text>
       </Animated.View>
 
       <View style={styles.stitchSummaryGrid}>
         <View style={styles.stitchSummaryStatCard}>
           <Text style={styles.stitchSummaryMiniLabel}>XP Earned</Text>
-          <Text style={styles.stitchSummaryStatValue}>+{displayXp} XP</Text>
-          <Text style={styles.stitchGreenText}>+15% from last session</Text>
+          <Text style={styles.stitchSummaryStatValue}>+{sessionXp} XP</Text>
+          <Text style={styles.stitchGreenText}>{totalXp} total XP</Text>
         </View>
         <View style={styles.stitchSummaryStatCard}>
           <Text style={styles.stitchSummaryMiniLabel}>Current Level</Text>
-          <Text style={styles.stitchSummaryStatValue}>Level {displayLevel}</Text>
-          <Text style={styles.stitchGreenText}>Rank: Shredder</Text>
+          <Text style={styles.stitchSummaryStatValue}>Level {levelState.level}</Text>
+          <Text style={styles.stitchGreenText}>{unlockedBadges} badges unlocked</Text>
         </View>
         <View style={styles.stitchSummaryStatCard}>
           <Text style={styles.stitchSummaryMiniLabel}>Streak</Text>
-          <Text style={styles.stitchSummaryStatValue}>{displayStreak} Days</Text>
-          <Text style={styles.stitchGreenText}>New Personal Best!</Text>
+          <Text style={styles.stitchSummaryStatValue}>{streak} Days</Text>
+          <Text style={styles.stitchGreenText}>Showed up again today</Text>
         </View>
       </View>
 
       <GlowCard style={styles.completeProgressCard}>
-        <Text style={styles.stitchSummaryMiniLabel}>Progress to Level {Math.max(2, level + 1)}</Text>
+        <Text style={styles.stitchSummaryMiniLabel}>Progress to Level {levelState.level + 1}</Text>
         <View style={styles.inlineRowSpace}>
-          <Text style={styles.helperText}>Almost there! Keep practicing riffs.</Text>
-          <Text style={styles.stitchMetaValue}>{displayProgressXp}/1000 XP</Text>
+          <Text style={styles.helperText}>Your XP bar carries across every practice moment now.</Text>
+          <Text style={styles.stitchMetaValue}>{levelState.currentLevelXp}/{levelState.nextLevelXp} XP</Text>
         </View>
-        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {level}.</Text> : null}
+        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {levelState.level}.</Text> : null}
         <View style={styles.progressTrack}>
           <View
             style={[
               styles.progressFill,
-              { width: `${Math.max(6, Math.min(100, Math.round((displayProgressXp / 1000) * 100)))}%` },
+              { width: `${xpProgressPercent}%` },
             ]}
           />
         </View>
@@ -2063,6 +2117,7 @@ export const styles = StyleSheet.create({
   statChipValue: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   stitchQuestionnaireCard: { borderRadius: 16, borderColor: "rgba(230,126,0,0.1)", backgroundColor: "rgba(230,126,0,0.05)", gap: 6, padding: 14, minHeight: 164 },
   dashboardActionCard: { gap: 12 },
+  dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },
   dashboardActionDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.08)" },
   dashboardSettingsCard: { gap: 12 },
@@ -2168,6 +2223,7 @@ export const styles = StyleSheet.create({
   drillXpCompact: { minWidth: 0, textAlign: "left", marginTop: 4 },
   activeCard: { alignItems: "center", justifyContent: "center", paddingVertical: 12 },
   activeCardHighlight: { shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+  activeXpCard: { gap: 8 },
   drillTransitionCard: { gap: 10, borderColor: "rgba(230,126,0,0.3)", backgroundColor: "rgba(230,126,0,0.08)" },
   drillTransitionXp: { color: COLORS.accent, fontSize: 15, fontWeight: "800" },
   drillTransitionTitle: { color: COLORS.text, fontSize: 24, lineHeight: 28, fontWeight: "800" },
