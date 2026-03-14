@@ -41,7 +41,9 @@ They should not:
 The `src/app` layer owns orchestration hooks and controllers.
 
 Current examples:
-- `usePracticeAppState.ts`: persisted app state, builder mutations, onboarding/goals/reminders orchestration
+- `usePracticeAppState.ts`: persisted app state shell that composes narrower app-layer hooks
+- `useBuilderState.ts`: builder editing, template mutations, drill selection, and autosave behavior
+- `useProfileSettingsState.ts`: onboarding, goal settings, and reminder orchestration
 - `useActivePracticeRuntime.ts`: active practice runtime, timers, metronome wiring, completion flow
 - `activePracticeRuntime.ts`: pure runtime helpers used by the active practice controller
 
