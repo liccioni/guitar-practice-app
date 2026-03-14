@@ -266,6 +266,7 @@ export default function App() {
             {screen === "home" ? (
               <HomeDashboard
                 levelState={levelState}
+                totalXp={totalXp}
                 streak={streak}
                 goalType={goalType}
                 goalCurrentValue={goalCurrentValue}
@@ -381,6 +382,9 @@ export default function App() {
             {screen === "active" && activeRuntime.activeDrill ? (
               <ActivePractice
                 drill={activeRuntime.activeDrill}
+                levelState={levelState}
+                totalXp={totalXp}
+                sessionXp={activeRuntime.sessionXp}
                 drillProgress={activeRuntime.drillProgress}
                 sessionProgress={activeRuntime.sessionProgress}
                 remainingSec={activeRuntime.remainingSec}
@@ -425,7 +429,8 @@ export default function App() {
               <SessionComplete
                 sessionXp={activeRuntime.sessionXp}
                 leveledUp={activeRuntime.leveledUp}
-                level={levelState.level}
+                levelState={levelState}
+                totalXp={totalXp}
                 streak={streak}
                 badges={badges.filter((badge) => badge.unlocked)}
                 rewardGlow={rewardGlow}
