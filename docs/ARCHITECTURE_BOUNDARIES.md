@@ -46,6 +46,7 @@ Current examples:
 - `useProfileSettingsState.ts`: onboarding, goal settings, and reminder orchestration
 - `useActivePracticeRuntime.ts`: active practice runtime, timers, metronome wiring, completion flow
 - `activePracticeRuntime.ts`: pure runtime helpers used by the active practice controller
+- `analytics.ts`: provider-agnostic analytics contract and funnel event hooks
 
 This layer should:
 - coordinate multiple domain/application modules

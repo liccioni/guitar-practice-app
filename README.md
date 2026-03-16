@@ -47,6 +47,7 @@ Migration notes and Detox overlap:
 - Device QA checklist: `docs/DEVICE_QA_CHECKLIST.md`
 - Release notes: `docs/RELEASE_NOTES.md`
 - Architecture boundaries: `docs/ARCHITECTURE_BOUNDARIES.md`
+- Analytics hook map: `docs/ANALYTICS_HOOK_MAP.md`
 - Stitch design alignment: `docs/STITCH_FLOW_FEATURE_PLAN.md`
 - Stitch parity gate: `docs/STITCH_PARITY.md`
 - Visual snapshot names: `docs/VISUAL_SNAPSHOT_MANIFEST.md`

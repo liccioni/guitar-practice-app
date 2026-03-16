@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, Vibration } from "react-native";
 import {
+  trackDrillCompleted,
+  trackSessionStarted,
+} from "./analytics";
+import {
   advanceRandomCueState,
   buildDrillCompletionTransition,
   createEmptyRandomCueState,
@@ -227,6 +231,16 @@ export function useActivePracticeRuntime({
         nextTotalXp += gainedXp;
         const nextLevel = getLevel(nextTotalXp);
         didLevelUp = didLevelUp || nextLevel > previousLevel;
+
+        if (selectedTemplate) {
+          trackDrillCompleted({
+            template: selectedTemplate,
+            drill,
+            drillIndex: Math.max(1, selectedTemplate.drillIds.indexOf(drillId) + 1),
+            totalDrills: selectedTemplate.drillIds.length,
+            gainedXp,
+          });
+        }
       }
 
       sessionXpRef.current = nextSessionXp;
@@ -238,7 +252,7 @@ export function useActivePracticeRuntime({
     }
 
     completedIdsRef.current = runtimeState.completedDrillIds;
-  }, [allDrills, completionPulse, onTotalXpChange, runtimeState]);
+  }, [allDrills, completionPulse, onTotalXpChange, runtimeState, selectedTemplate]);
 
   useEffect(() => {
     if (!runtimeState) return;
@@ -317,6 +331,11 @@ export function useActivePracticeRuntime({
     setDrillCompletionTransition(null);
     setMetronomeBpm(prepared.nextMetronomeBpm);
     setMetronomeEnabled(true);
+    trackSessionStarted({
+      source: screen === "overview" ? "overview" : screen === "builder" ? "builder" : "unknown",
+      template: selectedTemplate,
+      drillCount: prepared.resolvedDrills.length,
+    });
     onScreenChange("active");
   }
 
