@@ -1824,30 +1824,53 @@ export function ActivePractice(props: {
 
       <GlowCard>
         <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Metronome Rig</Text>
-          <TouchableOpacity style={styles.pillButton} onPress={onMetronomeToggle}>
-            <Text style={styles.pillButtonText}>{metronomeEnabled ? "On" : "Off"}</Text>
+          <View>
+            <Text style={styles.cardLabel}>Metronome Rig</Text>
+            <Text style={styles.helperText}>
+              {metronomeEnabled ? "Click track is live and ready." : "Click track is muted."}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.pillButton, metronomeEnabled ? styles.metronomeToggleOn : styles.metronomeToggleOff]}
+            onPress={onMetronomeToggle}
+          >
+            <Text style={styles.pillButtonText}>{metronomeEnabled ? "Live" : "Muted"}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.metronomeStrip}>
-          <TouchableOpacity style={[styles.smallActionButton, styles.metronomeStepButton]} onPress={() => onMetronomeStep(-5)}>
-            <Text style={styles.smallActionText}>-5</Text>
+        <View style={styles.metronomeDeck}>
+          <TouchableOpacity
+            style={[styles.metronomeStepButton, styles.metronomeStepButtonAccent]}
+            onPress={() => onMetronomeStep(-5)}
+          >
+            <Text style={styles.metronomeStepSymbol}>−</Text>
+            <Text style={styles.metronomeStepLabel}>5 BPM</Text>
           </TouchableOpacity>
           <View style={styles.bpmPill}>
-            <Text style={styles.metronomeBpmLabel}>{metronomeBpm} BPM</Text>
+            <Text style={styles.metronomeBpmLabel}>{metronomeBpm}</Text>
+            <Text style={styles.metronomeBpmUnit}>BPM</Text>
+            <Text style={styles.helperText}>
+              {drill.targetBpm ? `Drill target ${drill.targetBpm} BPM` : "Use the tempo that keeps the rep clean"}
+            </Text>
           </View>
-          <TouchableOpacity style={[styles.smallActionButton, styles.metronomeStepButton]} onPress={() => onMetronomeStep(5)}>
-            <Text style={styles.smallActionText}>+5</Text>
+          <TouchableOpacity
+            style={[styles.metronomeStepButton, styles.metronomeStepButtonAccent]}
+            onPress={() => onMetronomeStep(5)}
+          >
+            <Text style={styles.metronomeStepSymbol}>+</Text>
+            <Text style={styles.metronomeStepLabel}>5 BPM</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.inlineRow} onPress={onToggleBeatPulseLocked} testID="active-beat-pulse-toggle">
-          <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
-          <Text style={styles.helperText}>
-            Beat pulse: {beatPulseLocked && metronomeEnabled ? "locked" : "free"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.metronomeStatusRow}>
+          <TouchableOpacity style={styles.inlineRow} onPress={onToggleBeatPulseLocked} testID="active-beat-pulse-toggle">
+            <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
+            <Text style={styles.helperText}>
+              Beat pulse {beatPulseLocked && metronomeEnabled ? "locked to the click" : "running free"}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.metronomeStatusText}>{metronomeEnabled ? "Tap tempo feel" : "Silent rehearsal"}</Text>
+        </View>
         {randomCueLabel ? (
           <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
             <Text style={styles.randomCueLabel}>Now: {randomCueLabel}</Text>
@@ -2291,10 +2314,18 @@ export const styles = StyleSheet.create({
   tabIcon: { color: COLORS.muted, fontSize: 20, lineHeight: 20, fontWeight: "700" },
   tabIconActive: { color: COLORS.accent },
   errorText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
-  metronomeBpmLabel: { color: COLORS.text, fontSize: 17, fontWeight: "800" },
-  metronomeStrip: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  metronomeStepButton: { minWidth: 56 },
-  bpmPill: { flex: 1, minHeight: 40, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
+  metronomeBpmLabel: { color: COLORS.text, fontSize: 34, lineHeight: 36, fontWeight: "800" },
+  metronomeBpmUnit: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
+  metronomeDeck: { flexDirection: "row", alignItems: "stretch", justifyContent: "space-between", gap: 10 },
+  metronomeStepButton: { width: 68, borderRadius: RADII.card, borderWidth: 1, borderColor: "rgba(230,126,0,0.25)", backgroundColor: "rgba(230,126,0,0.08)", alignItems: "center", justifyContent: "center", gap: 2, paddingVertical: 12 },
+  metronomeStepButtonAccent: { shadowColor: COLORS.accent, shadowOpacity: 0.14, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  metronomeStepSymbol: { color: COLORS.text, fontSize: 24, lineHeight: 24, fontWeight: "800" },
+  metronomeStepLabel: { color: COLORS.accent, fontSize: 11, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase" },
+  bpmPill: { flex: 1, minHeight: 96, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, gap: 2 },
+  metronomeToggleOn: { borderColor: "rgba(34,197,94,0.28)", backgroundColor: "rgba(34,197,94,0.16)" },
+  metronomeToggleOff: { borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft },
+  metronomeStatusRow: { marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  metronomeStatusText: { color: COLORS.accentAlt, fontSize: 12, fontWeight: "700" },
   beatDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider },
   beatDotActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   randomCueCard: { marginTop: 10, borderRadius: RADII.chip, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, paddingHorizontal: 12, paddingVertical: 10, gap: 4 },
