@@ -46,6 +46,7 @@ Migration notes and Detox overlap:
 - Runbook: `docs/PROJECT_RUNBOOK.md`
 - Device QA checklist: `docs/DEVICE_QA_CHECKLIST.md`
 - Release notes: `docs/RELEASE_NOTES.md`
+- Release configuration: `docs/RELEASE_CONFIGURATION.md`
 - Architecture boundaries: `docs/ARCHITECTURE_BOUNDARIES.md`
 - Analytics hook map: `docs/ANALYTICS_HOOK_MAP.md`
 - Stitch design alignment: `docs/STITCH_FLOW_FEATURE_PLAN.md`

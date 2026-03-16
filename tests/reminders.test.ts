@@ -43,6 +43,10 @@ describe("reminder scheduling", () => {
 
     expect(notificationsMock.scheduleNotificationAsync).toHaveBeenCalledWith(
       expect.objectContaining({
+        content: expect.objectContaining({
+          title: "Fretline",
+          body: "Time for your Fretline practice session.",
+        }),
         trigger: expect.objectContaining({
           hour: 7,
           minute: 45,
