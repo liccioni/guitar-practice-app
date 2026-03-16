@@ -4,6 +4,7 @@ import { Animated, Easing, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
+import { buildComebackPrompt } from "./src/app/comebackPrompts";
 import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
 import { trackSessionCompleted } from "./src/app/analytics";
 import { buildBadgeState, makeId, usePracticeAppState } from "./src/app/usePracticeAppState";
@@ -137,6 +138,7 @@ export default function App() {
         : todayCompletedDrills;
   const weeklySummary = useMemo(() => buildWeeklySummary(history, nowIso), [history, nowIso]);
   const recentSessionInsights = useMemo(() => buildRecentSessionInsights(history), [history]);
+  const comebackPrompt = useMemo(() => buildComebackPrompt(history, nowIso), [history, nowIso]);
   const streak = useMemo(
     () => calculateGoalTypeStreak(history, nowIso, goalType, goalTarget),
     [goalTarget, goalType, history, nowIso],
@@ -284,6 +286,7 @@ export default function App() {
                 goalUnitLabel={goalUnit(goalType)}
                 weeklySummary={weeklySummary}
                 sessionInsights={recentSessionInsights}
+                comebackPrompt={comebackPrompt}
                 badges={badges}
                 storageError={storageError}
                 goalError={goalError}
@@ -330,6 +333,7 @@ export default function App() {
                 sessionInsights={recentSessionInsights}
                 averageBpm={metrics.averageBpm}
                 streak={streak}
+                comebackPrompt={comebackPrompt}
               />
             ) : null}
 
