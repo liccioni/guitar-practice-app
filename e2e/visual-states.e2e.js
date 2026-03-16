@@ -2,6 +2,15 @@ async function waitForVisible(id, timeout = 12000) {
   await waitFor(element(by.id(id))).toBeVisible().withTimeout(timeout);
 }
 
+async function isPresent(id) {
+  try {
+    await element(by.id(id)).getAttributes();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function openBuilderFromHome() {
   let usedQuickAction = false;
   try {
@@ -54,57 +63,89 @@ async function getFirstDrillId() {
 }
 
 async function completeBySkipping() {
-  for (let i = 0; i < 20; i += 1) {
-    try {
-      await waitForVisible("complete-continue-button", 1000);
-      return;
-    } catch {
-      try {
-        await waitForVisible("active-skip-button", 2500);
-        await element(by.id("active-skip-button")).tap();
-      } catch {
-        await waitForVisible("active-screen", 10000);
-      }
-    }
+  if (await isPresent("active-force-complete")) {
+    await element(by.id("active-force-complete")).tap();
   }
-  await waitForVisible("complete-continue-button", 20000);
+
+  for (let i = 0; i < 60; i += 1) {
+    if (await isPresent("complete-continue-button")) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  throw new Error("Timed out waiting for complete screen after skipping drills.");
+}
+
+async function openTab(id, destinationTestId) {
+  await waitForVisible(`tab-${id}`, 12000);
+  await element(by.id(`tab-${id}`)).tap();
+  await waitForVisible(destinationTestId, 12000);
+}
+
+async function focusBuilderStartControl() {
+  try {
+    await waitForVisible("builder-start-session-control", 5000);
+    return "builder";
+  } catch {}
+
+  await waitForVisible("overview-screen", 5000);
+  return "overview";
+}
+
+async function startSessionFromOverview() {
+  await waitForVisible("overview-screen", 8000);
+  await waitForVisible("overview-start-session", 8000);
+  await element(by.id("overview-start-session")).tap();
 }
 
 async function startSessionFromBuilder() {
   await ensureBuilderReady();
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await element(by.id("builder-start-session")).tap();
-
-    try {
-      await waitForVisible("active-screen", 8000);
-      return;
-    } catch {
-      try {
-        await waitForVisible("active-pause-toggle", 1500);
-        return;
-      } catch {}
-
-      try {
-        const attrs = await element(by.id("builder-error-text")).getAttributes();
-        const message = String(attrs.text ?? attrs.label ?? attrs.value ?? "unknown builder error");
-        if (/no drills/i.test(message)) {
-          await element(by.id("builder-add-drill")).tap();
-          await waitForVisible("builder-drill-count");
-          await ensureBuilderReady();
-          continue;
-        }
-        throw new Error(`Could not start session from builder: ${message}`);
-      } catch {
-        // Continue retrying when transition is still in progress.
-      }
-    }
+  const startSurface = await focusBuilderStartControl();
+  if (startSurface === "builder") {
+    await element(by.id("builder-start-session-control")).tap();
+  } else {
+    await startSessionFromOverview();
   }
 
-  throw new Error("Could not start session from builder after retries.");
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    if (await isPresent("active-screen")) {
+      return;
+    }
+
+    if (await isPresent("active-pause-toggle")) {
+      return;
+    }
+
+    if (await isPresent("overview-screen")) {
+      await startSessionFromOverview();
+      continue;
+    }
+
+    try {
+      const attrs = await element(by.id("builder-error-text")).getAttributes();
+      const message = String(attrs.text ?? attrs.label ?? attrs.value ?? "unknown builder error");
+      if (/no drills/i.test(message)) {
+        await element(by.id("builder-add-drill")).tap();
+        await waitForVisible("builder-drill-count");
+        await element(by.id("builder-start-session-control")).tap();
+        continue;
+      }
+      throw new Error(`Could not start session from builder: ${message}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Could not start session from builder:")) {
+        throw error;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error("Could not start session from builder after waiting for active practice.");
 }
 
 describe("Visual state snapshots", () => {
-  it("captures home, builder, active, and complete screens", async () => {
+  it("captures home, progress, profile, builder, active, and complete screens", async () => {
     try {
       await waitForVisible("home-quick-start-practice", 60000);
     } catch {
@@ -112,17 +153,26 @@ describe("Visual state snapshots", () => {
     }
     await device.takeScreenshot("01-home");
 
+    await openTab("progress", "progress-screen");
+    await device.takeScreenshot("01c-progress");
+
+    await openTab("profile", "profile-screen");
+    await device.takeScreenshot("01d-profile");
+
+    await openTab("home", "home-scroll");
+
     await openBuilderFromHome();
     await ensureBuilderReady();
 
     await ensureDrillExists();
     await device.takeScreenshot("02-builder");
 
+    await device.disableSynchronization();
     await startSessionFromBuilder();
     await device.takeScreenshot("03-active");
 
     await completeBySkipping();
-    await waitForVisible("complete-continue-button");
     await device.takeScreenshot("04-complete");
+    await device.enableSynchronization();
   });
 });

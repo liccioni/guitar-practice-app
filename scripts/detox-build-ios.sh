@@ -7,6 +7,17 @@ CODEGEN_OUTPUT_ROOT="${CODEGEN_OUTPUT_ROOT:-ios}"
 LOCK_DIR="${DERIVED_DATA_PATH}.lock"
 LOCK_POLL_SECONDS="${LOCK_POLL_SECONDS:-2}"
 LOCK_TIMEOUT_SECONDS="${LOCK_TIMEOUT_SECONDS:-300}"
+WORKSPACE_PATH="${WORKSPACE_PATH:-$(find ios -maxdepth 1 -name '*.xcworkspace' | head -n 1)}"
+SCHEME_NAME="${SCHEME_NAME:-}"
+
+if [[ -z "$WORKSPACE_PATH" ]]; then
+  echo "Could not find an iOS workspace under ios/" >&2
+  exit 1
+fi
+
+if [[ -z "$SCHEME_NAME" ]]; then
+  SCHEME_NAME="$(basename "$WORKSPACE_PATH" .xcworkspace)"
+fi
 
 acquire_lock() {
   local waited=0
@@ -51,8 +62,8 @@ trap release_lock EXIT
 prepare_codegen_artifacts
 
 xcodebuild \
-  -workspace ios/GuitarPractice.xcworkspace \
-  -scheme GuitarPractice \
+  -workspace "$WORKSPACE_PATH" \
+  -scheme "$SCHEME_NAME" \
   -configuration Release \
   -sdk iphonesimulator \
   IPHONEOS_DEPLOYMENT_TARGET="$IPHONEOS_DEPLOYMENT_TARGET" \
