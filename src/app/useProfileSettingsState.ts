@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 import { disableDailyReminder, parseReminderTime, scheduleDailyReminder } from "../application/reminders";
+import {
+  trackOnboardingCompleted,
+  trackStarterSessionReviewOpened,
+} from "./analytics";
 import type { CreateDrillInput } from "../domain/exercises/types";
 import type { GoalSettings, GoalType } from "../domain/goals/types";
 import {
@@ -132,6 +136,11 @@ export function useProfileSettingsState({
 
   function saveOnboardingAnswers(answers: PracticeOnboardingAnswers): void {
     const suggestion = buildPracticeOnboardingSuggestion(answers);
+    trackOnboardingCompleted({
+      answers,
+      recommendedMinutes: suggestion.recommendedMinutes,
+      recommendationVersion: ONBOARDING_RECOMMENDATION_VERSION,
+    });
     setOnboardingState({
       completed: true,
       answers,
@@ -149,6 +158,11 @@ export function useProfileSettingsState({
 
   function applyOnboardingSuggestionToBuilder(): void {
     if (!onboardingSuggestion) return;
+    trackStarterSessionReviewOpened({
+      sessionName: onboardingSuggestion.sessionName,
+      recommendedMinutes: onboardingSuggestion.recommendedMinutes,
+      drillCount: onboardingSuggestion.drillCount,
+    });
     onApplySuggestedSession({
       sessionName: onboardingSuggestion.sessionName,
       suggestedInputs: selectSuggestedDrills(DRILL_POOL, onboardingSuggestion),

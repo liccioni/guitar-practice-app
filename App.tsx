@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
 import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
+import { trackSessionCompleted } from "./src/app/analytics";
 import { buildBadgeState, makeId, usePracticeAppState } from "./src/app/usePracticeAppState";
 import type { Drill } from "./src/domain/exercises/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
@@ -240,6 +241,15 @@ export default function App() {
       streakDays: nextStreak,
       sessionsCompleted: nextSessionsCompleted,
       averageBpm: nextMetrics.averageBpm,
+    });
+
+    trackSessionCompleted({
+      template: selectedTemplate,
+      completedDrillCount: finalCompletedDrillIds.length,
+      totalDrillCount: finalActiveDrillIds.length,
+      durationCompletedSec: finalCompletedDurationSec,
+      elapsedSec: finalElapsedSec,
+      sessionXp: finalSessionXp,
     });
 
     setHistory(nextHistory);
