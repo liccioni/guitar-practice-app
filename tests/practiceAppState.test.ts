@@ -16,6 +16,7 @@ describe("usePracticeAppState helpers", () => {
     expect(state.templates[0]?.totalDurationSeconds).toBeGreaterThanOrEqual(4 * 60);
     expect(state.history).toEqual([]);
     expect(state.profile.totalXp).toBe(0);
+    expect(state.profile.entitlements.planId).toBe("free");
   });
 
   it("maps unlocked badge ids onto the fixed badge definitions", () => {

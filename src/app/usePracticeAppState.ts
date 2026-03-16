@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import type { Drill } from "../domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "../domain/goals/types";
 import {
+  getFeatureGate,
+  hasFeatureAccess,
+  type EntitlementFeatureId,
+  type EntitlementState,
+} from "../domain/monetization/entitlements";
+import {
   type PracticeOnboardingState,
 } from "../domain/profile/onboarding";
 import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
@@ -50,6 +56,7 @@ export function usePracticeAppState() {
   const [onboardingState, setOnboardingState] = useState<PracticeOnboardingState>(
     DEFAULT_PROFILE.onboarding,
   );
+  const [entitlements, setEntitlements] = useState<EntitlementState>(DEFAULT_PROFILE.entitlements);
   const [badges, setBadges] = useState<Badge[]>(() => buildBadgeState(DEFAULT_PROFILE.unlockedBadgeIds));
 
   useEffect(() => {
@@ -75,6 +82,7 @@ export function usePracticeAppState() {
         setGoalSettings(seed.goalSettings);
         setTotalXp(seed.profile.totalXp);
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
+        setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } catch {
@@ -86,6 +94,7 @@ export function usePracticeAppState() {
         setGoalSettings(seed.goalSettings);
         setTotalXp(seed.profile.totalXp);
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
+        setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } finally {
@@ -108,9 +117,10 @@ export function usePracticeAppState() {
         totalXp,
         unlockedBadgeIds: getUnlockedBadgeIds(badges),
         onboarding: onboardingState,
+        entitlements,
       },
     });
-  }, [allDrills, badges, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
+  }, [allDrills, badges, entitlements, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
 
   function resetToHome(): void {
     setScreen("home");
@@ -122,6 +132,14 @@ export function usePracticeAppState() {
 
   function startPracticeFlow(): void {
     setScreen("builder");
+  }
+
+  function canAccessFeature(featureId: EntitlementFeatureId): boolean {
+    return hasFeatureAccess(entitlements, featureId);
+  }
+
+  function getFeatureAvailability(featureId: EntitlementFeatureId) {
+    return getFeatureGate(entitlements, featureId);
   }
 
   const builderState = useBuilderState({
@@ -151,6 +169,7 @@ export function usePracticeAppState() {
     badges,
     builderDrills: builderState.builderDrills,
     builderError: builderState.builderError,
+    canAccessFeature,
     createTemplate: builderState.createTemplate,
     deleteTemplate: builderState.deleteTemplate,
     drillBpmInput: builderState.drillBpmInput,
@@ -159,6 +178,8 @@ export function usePracticeAppState() {
     drillRandomEveryBarsInput: builderState.drillRandomEveryBarsInput,
     drillRandomizerKindInput: builderState.drillRandomizerKindInput,
     duplicateTemplate: builderState.duplicateTemplate,
+    entitlements,
+    getFeatureAvailability,
     goalError: profileSettingsState.goalError,
     goalSettings,
     goalTarget: profileSettingsState.goalTarget,
@@ -188,6 +209,7 @@ export function usePracticeAppState() {
     setActiveTemplateId,
     setBadges,
     setBuilderError: builderState.setBuilderError,
+    setEntitlements,
     setGoalType: profileSettingsState.setGoalType,
     setHistory,
     setScreen,

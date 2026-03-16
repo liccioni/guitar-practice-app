@@ -51,6 +51,7 @@ describe("LocalStorageGateway", () => {
     expect(result.goalSettings.goalTarget).toBe(2);
     expect(result.profile.totalXp).toBe(1500);
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
+    expect(result.profile.entitlements.planId).toBe("free");
   });
 
   it("returns empty state when async get fails", async () => {
@@ -62,6 +63,7 @@ describe("LocalStorageGateway", () => {
     expect(result.history).toEqual([]);
     expect(result.profile.totalXp).toBe(0);
     expect(result.profile.unlockedBadgeIds).toEqual([]);
+    expect(result.profile.entitlements.planId).toBe("free");
   });
 
   it("saves versioned envelope", async () => {
@@ -109,6 +111,7 @@ describe("LocalStorageGateway", () => {
           totalXp: 0,
           unlockedBadgeIds: [],
           onboarding: { completed: false },
+          entitlements: { planId: "free", billingProvider: "local" },
         },
       }),
     ).resolves.toBeUndefined();
@@ -223,6 +226,7 @@ describe("LocalStorageGateway", () => {
 
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
+    expect(parsed.profile.entitlements.planId).toBe("free");
   });
 
   it("returns empty state for invalid or empty persisted payload", () => {
@@ -291,6 +295,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.goalSettings.reminderTime).toBe("19:30");
     expect(parsed.profile.totalXp).toBe(43);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b1", "b2"]);
+    expect(parsed.profile.entitlements.planId).toBe("free");
   });
 
   it("normalizes goal target defaults per goal type and invalid reminder format", () => {
@@ -419,6 +424,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.goalSettings.reminderTime).toBe("18:00");
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
     expect(parsed.profile.onboarding.completed).toBe(false);
+    expect(parsed.profile.entitlements.planId).toBe("free");
   });
 
   it("preserves valid onboarding answers and drops invalid ones", () => {
@@ -529,5 +535,70 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.onboarding.completed).toBe(true);
     expect(parsed.profile.onboarding.onboardingCompletedAt).toBeUndefined();
     expect(parsed.profile.onboarding.recommendationVersion).toBeUndefined();
+  });
+
+  it("preserves valid local entitlement state and drops invalid plans", () => {
+    const valid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            entitlements: {
+              planId: "premium-lifetime",
+              billingProvider: "storekit",
+              activatedAt: "2026-03-16T08:00:00.000Z",
+              expiresAt: "2027-03-16T08:00:00.000Z",
+            },
+          },
+        },
+      }),
+    );
+
+    const invalid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            entitlements: {
+              planId: "enterprise",
+              activatedAt: "   ",
+            },
+          },
+        },
+      }),
+    );
+
+    expect(valid.profile.entitlements).toEqual({
+      planId: "premium-lifetime",
+      billingProvider: "local",
+      activatedAt: "2026-03-16T08:00:00.000Z",
+      expiresAt: "2027-03-16T08:00:00.000Z",
+    });
+    expect(invalid.profile.entitlements).toEqual({
+      planId: "free",
+      billingProvider: "local",
+      activatedAt: undefined,
+      expiresAt: undefined,
+    });
   });
 });

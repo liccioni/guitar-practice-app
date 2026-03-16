@@ -4,6 +4,11 @@ import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
 import type { Drill, DrillRandomizerKind } from "../domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "../domain/goals/types";
 import {
+  DEFAULT_ENTITLEMENT_STATE,
+  type EntitlementPlanId,
+  type EntitlementState,
+} from "../domain/monetization/entitlements";
+import {
   DEFAULT_PRACTICE_ONBOARDING_STATE,
   type PracticeOnboardingAnswers,
   type PracticeOnboardingState,
@@ -12,12 +17,13 @@ import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill"
 import { isValidBpm } from "../domain/metronome/metronome";
 
 const STORAGE_KEY = "guitar-practice:v1";
-export const PERSISTENCE_SCHEMA_VERSION = 3;
+export const PERSISTENCE_SCHEMA_VERSION = 4;
 
 export interface PersistedProfileState {
   totalXp: number;
   unlockedBadgeIds: string[];
   onboarding: PracticeOnboardingState;
+  entitlements: EntitlementState;
 }
 
 export interface PersistedPracticeState {
@@ -32,6 +38,7 @@ const DEFAULT_PROFILE_STATE: PersistedProfileState = {
   totalXp: 0,
   unlockedBadgeIds: [],
   onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
+  entitlements: DEFAULT_ENTITLEMENT_STATE,
 };
 
 export const EMPTY_PRACTICE_STATE: PersistedPracticeState = {
@@ -260,11 +267,36 @@ function sanitizeProfileState(input: unknown): PersistedProfileState {
     : [];
 
   const onboarding = sanitizeOnboardingState(input.onboarding);
+  const entitlements = sanitizeEntitlementState(input.entitlements);
 
   return {
     totalXp: Number.isFinite(totalXp) && totalXp >= 0 ? Math.round(totalXp) : DEFAULT_PROFILE_STATE.totalXp,
     unlockedBadgeIds,
     onboarding,
+    entitlements,
+  };
+}
+
+function sanitizeEntitlementState(input: unknown): EntitlementState {
+  if (!isPlainObject(input)) return DEFAULT_ENTITLEMENT_STATE;
+
+  const planIdRaw = input.planId;
+  const planId: EntitlementPlanId =
+    planIdRaw === "premium-monthly" || planIdRaw === "premium-lifetime" || planIdRaw === "free"
+      ? planIdRaw
+      : DEFAULT_ENTITLEMENT_STATE.planId;
+
+  return {
+    planId,
+    billingProvider: "local",
+    activatedAt:
+      typeof input.activatedAt === "string" && input.activatedAt.trim().length > 0
+        ? input.activatedAt.trim()
+        : undefined,
+    expiresAt:
+      typeof input.expiresAt === "string" && input.expiresAt.trim().length > 0
+        ? input.expiresAt.trim()
+        : undefined,
   };
 }
 
