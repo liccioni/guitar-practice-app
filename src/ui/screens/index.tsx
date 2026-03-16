@@ -1317,7 +1317,7 @@ export function ProgressStats(props: {
       testID="progress-screen"
     >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Progress & Stats</Text>
+        <Text style={styles.title}>Progress</Text>
       </View>
       <GlowCard style={styles.stitchProgressHeroCard}>
         <Text style={styles.cardLabel}>This Week In Practice</Text>
@@ -1428,7 +1428,7 @@ export function SongsLibrary(props: {
       testID="songs-screen"
     >
       <View style={styles.topRow}>
-        <Text style={styles.title}>Songs & Library</Text>
+        <Text style={styles.title}>Songs</Text>
       </View>
       <Text style={styles.headerSubline}>Build your song library and launch practice instantly.</Text>
 
@@ -1643,21 +1643,13 @@ export function AppTabBar(props: {
     id: "home" | "sessions" | "progress" | "profile";
     label: string;
     icon: string;
-  }[] =
-    screen === "complete"
-      ? [
-          { id: "home", label: "Hub", icon: "⌂" },
-          { id: "sessions", label: "Songs", icon: "♪" },
-          { id: "progress", label: "Skills", icon: "⚡" },
-          { id: "profile", label: "Profile", icon: "◉" },
-        ]
-      : [
-          { id: "home", label: "Practice", icon: "▶" },
-          { id: "sessions", label: "Sessions", icon: "♪" },
-          { id: "progress", label: "Progress", icon: "▮" },
-          { id: "profile", label: "Profile", icon: "◉" },
-        ];
-  const selectedTab = screen === "active" ? "sessions" : screen === "complete" ? "home" : screen;
+  }[] = [
+    { id: "home", label: "Home", icon: "⌂" },
+    { id: "sessions", label: "Sessions", icon: "♪" },
+    { id: "progress", label: "Progress", icon: "▮" },
+    { id: "profile", label: "Profile", icon: "◉" },
+  ];
+  const selectedTab = screen === "active" || screen === "complete" ? "home" : screen;
 
   return (
     <View style={[styles.tabBar, selectedTab === "home" ? styles.homeTabBar : null]}>
