@@ -76,7 +76,7 @@ export function buildPracticeOnboardingSuggestion(
 
   return {
     sessionName: `${LEVEL_NAME[answers.level]} ${answers.focus} ${answers.durationMinutes}m`,
-    summary: `Start with ${drillCount} drills for ${styleLine} in ${answers.focus}, targeting ${answers.outcome}.`,
+    summary: `Your first session is a ${recommendedMinutes}-minute ${answers.focus} plan with ${drillCount} drills, built for ${answers.outcome} with ${styleLine}.`,
     recommendedMinutes,
     targetTags,
     drillCount,

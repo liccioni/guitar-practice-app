@@ -20,6 +20,7 @@ interface UseProfileSettingsStateInput {
   onApplySuggestedSession: (params: {
     sessionName: string;
     suggestedInputs: CreateDrillInput[];
+    destinationScreen?: "builder" | "overview";
   }) => void;
 }
 
@@ -151,6 +152,7 @@ export function useProfileSettingsState({
     onApplySuggestedSession({
       sessionName: onboardingSuggestion.sessionName,
       suggestedInputs: selectSuggestedDrills(DRILL_POOL, onboardingSuggestion),
+      destinationScreen: "overview",
     });
   }
 

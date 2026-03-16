@@ -99,6 +99,8 @@ describe("onboarding recommendation", () => {
     );
     expect(beginnerStructured.drillCount).toBe(3);
     expect(beginnerStructured.recommendedMinutes).toBe(20);
+    expect(beginnerStructured.summary).toContain("20-minute");
+    expect(beginnerStructured.summary).toContain("3 drills");
     expect(beginnerStructured.summary).toContain("structured progression");
 
     const intermediateBalanced = buildPracticeOnboardingSuggestion(
@@ -111,6 +113,8 @@ describe("onboarding recommendation", () => {
     );
     expect(intermediateBalanced.drillCount).toBe(4);
     expect(intermediateBalanced.recommendedMinutes).toBe(39);
+    expect(intermediateBalanced.summary).toContain("39-minute");
+    expect(intermediateBalanced.summary).toContain("4 drills");
     expect(intermediateBalanced.summary).toContain("balanced progression");
 
     const expertExploratory = buildPracticeOnboardingSuggestion(
@@ -123,6 +127,8 @@ describe("onboarding recommendation", () => {
     );
     expect(expertExploratory.drillCount).toBe(8);
     expect(expertExploratory.recommendedMinutes).toBe(73);
+    expect(expertExploratory.summary).toContain("73-minute");
+    expect(expertExploratory.summary).toContain("8 drills");
     expect(expertExploratory.summary).toContain("exploratory progression");
   });
 });

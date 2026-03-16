@@ -433,11 +433,14 @@ export function HomeDashboard(props: {
       <GlowCard style={styles.stitchQuestionnaireCard}>
         <View style={styles.stitchCardLabelRow}>
           <View style={styles.homeQuestionIcon} />
-          <Text style={styles.stitchSectionTitle}>Starter Questionnaire</Text>
+          <Text style={styles.stitchSectionTitle}>Build Your First Session</Text>
         </View>
         {!onboardingState.completed ? (
           <>
-            <Text style={styles.stitchQuestionLabel}>Choose your skill level</Text>
+            <Text style={styles.helperText}>
+              Two quick choices are enough. Fretline will line up a starter session you can review before you play.
+            </Text>
+            <Text style={styles.stitchQuestionLabel}>Step 1 · Current level</Text>
             <View style={styles.stitchThreeCol}>
               {(
                 [
@@ -470,7 +473,7 @@ export function HomeDashboard(props: {
               ))}
             </View>
 
-            <Text style={styles.stitchQuestionLabel}>Daily practice goal</Text>
+            <Text style={styles.stitchQuestionLabel}>Step 2 · Comfortable daily block</Text>
             <View style={styles.stitchThreeCol}>
               {([20, 30, 60] as const).map((minutes) => (
                 <TouchableOpacity
@@ -491,16 +494,32 @@ export function HomeDashboard(props: {
           </>
         ) : (
           <>
-            <Text style={styles.helperText}>{onboardingSuggestion?.summary ?? "Starter profile saved."}</Text>
+            <Text style={styles.cardLabel}>Starter session ready</Text>
+            <Text style={styles.helperText}>{onboardingSuggestion?.summary ?? "Your starter profile is saved."}</Text>
+            <View style={styles.onboardingPlanRow}>
+              <View style={styles.onboardingPlanChip}>
+                <Text style={styles.onboardingPlanChipText}>
+                  {onboardingSuggestion?.recommendedMinutes ?? goalTarget} min
+                </Text>
+              </View>
+              <View style={styles.onboardingPlanChip}>
+                <Text style={styles.onboardingPlanChipText}>
+                  {onboardingSuggestion?.drillCount ?? 0} drills
+                </Text>
+              </View>
+            </View>
             <Text style={styles.helperText}>
-              Suggested session: {onboardingSuggestion?.sessionName ?? onboardingState.lastSuggestedTemplateName}
+              {onboardingSuggestion?.sessionName ?? onboardingState.lastSuggestedTemplateName}
+            </Text>
+            <Text style={styles.helperText}>
+              Review the plan first. You can still customize it before the session starts.
             </Text>
             <View style={styles.inlineRow}>
               <TouchableOpacity style={styles.smallActionButton} onPress={onApplyOnboardingSuggestion} testID="onboarding-apply-suggestion">
-                <Text style={styles.smallActionText}>Build This Session</Text>
+                <Text style={styles.smallActionText}>Review Starter Session</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding} testID="onboarding-retake">
-                <Text style={styles.smallActionText}>Retake</Text>
+                <Text style={styles.smallActionText}>Retake Answers</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -2124,6 +2143,9 @@ export const styles = StyleSheet.create({
   stitchChoicePillActive: { borderColor: "rgba(230,126,0,0.9)", backgroundColor: "rgba(230,126,0,0.16)" },
   stitchChoiceLabel: { color: COLORS.muted, fontSize: 11, fontWeight: "700", textAlign: "center" },
   stitchChoiceLabelActive: { color: COLORS.accent },
+  onboardingPlanRow: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 2 },
+  onboardingPlanChip: { minHeight: 32, borderRadius: RADII.pill, borderWidth: 1, borderColor: "rgba(230,126,0,0.28)", backgroundColor: "rgba(230,126,0,0.12)", justifyContent: "center", paddingHorizontal: 12 },
+  onboardingPlanChipText: { color: COLORS.accent, fontSize: 12, fontWeight: "800" },
   hiddenCompatBlock: { height: 0, opacity: 0, overflow: "hidden" },
   homeHeroPanel: { borderColor: "rgba(230,126,0,0.52)", shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 18 },
   builderHeroCard: { borderColor: COLORS.divider, gap: 10 },

@@ -439,6 +439,7 @@ export function useBuilderState({
   function applySuggestedSession(params: {
     sessionName: string;
     suggestedInputs: CreateDrillInput[];
+    destinationScreen?: "builder" | "overview";
   }): void {
     const now = new Date().toISOString();
     const createdDrills = params.suggestedInputs.map((input) =>
@@ -463,7 +464,7 @@ export function useBuilderState({
     setTemplateNameInput(template.name);
     setSelectedDrillId(createdDrills[0]?.id ?? null);
     setBuilderError(null);
-    setScreen("builder");
+    setScreen(params.destinationScreen ?? "builder");
   }
 
   return {
