@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
+import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
@@ -1307,34 +1308,7 @@ export function ProgressStats(props: {
   streak: number;
 }) {
   const { weeklySummary, sessionInsights, averageBpm, streak } = props;
-  const base = Math.max(1, weeklySummary.weekMinutes);
-  const skillBars = [
-    { label: "Technique", value: Math.min(100, Math.round((weeklySummary.weekDrillsCompleted * 12) / base * 10)) },
-    { label: "Timing", value: Math.min(100, Math.round(averageBpm)) },
-    { label: "Speed", value: Math.min(100, Math.round((averageBpm / 160) * 100)) },
-    { label: "Fretboard", value: Math.min(100, Math.round((weeklySummary.weekSessions / 7) * 100)) },
-    { label: "Consistency", value: Math.min(100, Math.round((streak / 14) * 100)) },
-  ];
-  const milestones = [
-    {
-      id: "level_unlock",
-      title: `Level ${Math.max(2, Math.round((averageBpm + weeklySummary.weekSessions) / 12))} Unlocks`,
-      detail: "New blues soloing module",
-      progress: Math.max(10, Math.min(98, Math.round((weeklySummary.weekMinutes / 180) * 100))),
-    },
-    {
-      id: "streak_unlock",
-      title: "30 Day Streak",
-      detail: "Exclusive profile badge",
-      progress: Math.max(0, Math.min(100, Math.round((streak / 30) * 100))),
-    },
-    {
-      id: "speed_unlock",
-      title: "Speed Demon",
-      detail: "Hit 140 BPM on scales",
-      progress: Math.max(0, Math.min(100, Math.round((averageBpm / 140) * 100))),
-    },
-  ];
+  const milestones = buildProgressMilestones({ weeklySummary, streak, averageBpm });
 
   return (
     <ScrollView
@@ -1346,49 +1320,49 @@ export function ProgressStats(props: {
         <Text style={styles.title}>Progress & Stats</Text>
       </View>
       <GlowCard style={styles.stitchProgressHeroCard}>
-        <View style={styles.inlineRow}>
-          <View style={styles.stitchAvatarWrap}>
-            <Image
-              source={{
-                uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuBecwXB7K4D0a-abwjcMscljqFKZz65pn5RDrvl8Wu3evgORxl80U03zj2gAqHYez9MD6KBDADoM9xNflU7tnKjpRgl_aH2tnfBRWILGUyR2cCXg4NS3MCobImidirMsjI2Pxr-KJyWzqUi1QvHeHmtRtTTj-5bGamPa8dfkZQjFDe_jhDSoyhwNc3MQy_j7ak_RtdInrjKxcBU3DErNr-NexvKCcXN6acEAsui2L8a3VmC5XYQotPnBvTeguI6q26DhdfJE8qA0jtH",
-              }}
-              style={styles.stitchAvatar}
-            />
-            <View style={styles.stitchAvatarLevel}>
-              <Text style={styles.stitchAvatarLevelText}>LVL {Math.max(1, Math.round(averageBpm / 10))}</Text>
-            </View>
-          </View>
-          <View style={styles.stitchProgressHeroMeta}>
-            <Text style={styles.stitchProgressHeroName}>Guitar Hero</Text>
-            <Text style={styles.helperText}>{weeklySummary.weekMinutes} min this week</Text>
-            <Text style={styles.stitchMetaValue}>{Math.max(0, 240 - weeklySummary.weekMinutes)} XP to Level 13</Text>
-          </View>
-        </View>
+        <Text style={styles.cardLabel}>This Week In Practice</Text>
+        <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min</Text>
+        <Text style={styles.heroSubline}>
+          {weeklySummary.weekSessions} completed sessions • {weeklySummary.weekDrillsCompleted} drills finished
+        </Text>
+        <Text style={styles.stitchMetaValue}>
+          {weeklySummary.weekMinutesDelta >= 0 ? "+" : ""}
+          {weeklySummary.weekMinutesDelta} min vs last 7 days
+        </Text>
       </GlowCard>
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Practice Consistency</Text>
-        <View style={styles.inlineRowSpace}>
-          <Text style={styles.heroHeadline}>{(weeklySummary.weekMinutes / 60).toFixed(1)} hrs</Text>
-          <Text style={styles.stitchGreenPill}>+15%</Text>
+        <Text style={styles.cardLabel}>Trusted Signals</Text>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Goal completion rate</Text>
+            <Text style={styles.helperText}>{weeklySummary.completionRatePercent}%</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.max(4, weeklySummary.completionRatePercent)}%` }]} />
+          </View>
+        </View>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Average session length</Text>
+            <Text style={styles.helperText}>{weeklySummary.avgSessionMinutes} min</Text>
+          </View>
+        </View>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Current streak</Text>
+            <Text style={styles.helperText}>{streak} days</Text>
+          </View>
+        </View>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Average tracked tempo</Text>
+            <Text style={styles.helperText}>{averageBpm > 0 ? `${averageBpm} BPM` : "Not enough BPM history yet"}</Text>
+          </View>
         </View>
       </GlowCard>
       <GlowCard>
-        <Text style={styles.cardLabel}>Skills Mastered</Text>
-        {skillBars.map((skill) => (
-          <View key={skill.label} style={styles.skillRow}>
-            <View style={styles.inlineRowSpace}>
-              <Text style={styles.badgeLabel}>{skill.label}</Text>
-              <Text style={styles.helperText}>Level {Math.max(1, Math.round(skill.value / 10))}</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.max(4, skill.value)}%` }]} />
-            </View>
-          </View>
-        ))}
-      </GlowCard>
-      <GlowCard>
-        <Text style={styles.cardLabel}>Upcoming Milestones</Text>
+        <Text style={styles.cardLabel}>Next Milestones</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.milestoneRow}>
           {milestones.map((milestone) => (
             <View key={milestone.id} style={styles.milestoneCard}>
@@ -1397,7 +1371,7 @@ export function ProgressStats(props: {
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${Math.max(4, milestone.progress)}%` }]} />
               </View>
-              <Text style={styles.helperText}>{milestone.progress}% complete</Text>
+              <Text style={styles.helperText}>{milestone.progress}% toward this milestone</Text>
             </View>
           ))}
         </ScrollView>
