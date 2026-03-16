@@ -1353,8 +1353,9 @@ export function ProgressStats(props: {
       <View style={styles.topRow}>
         <Text style={styles.title}>Progress</Text>
       </View>
+      <Text style={styles.headerSubline}>Tracked output, session quality, and the trendlines earned by recent practice.</Text>
       <GlowCard style={styles.stitchProgressHeroCard}>
-        <Text style={styles.cardLabel}>This Week In Practice</Text>
+        <Text style={styles.cardLabel}>Weekly Output</Text>
         <Text style={styles.heroHeadline}>{weeklySummary.weekMinutes} min</Text>
         <Text style={styles.heroSubline}>
           {weeklySummary.weekSessions} completed sessions • {weeklySummary.weekDrillsCompleted} drills finished
@@ -1373,7 +1374,7 @@ export function ProgressStats(props: {
       ) : null}
 
       <GlowCard>
-        <Text style={styles.cardLabel}>Trusted Signals</Text>
+        <Text style={styles.cardLabel}>Improvement Signals</Text>
         <View style={styles.skillRow}>
           <View style={styles.inlineRowSpace}>
             <Text style={styles.badgeLabel}>Goal completion rate</Text>
@@ -1426,7 +1427,7 @@ export function ProgressStats(props: {
             <View key={insight.id} style={styles.recentSessionRow}>
               <Text style={styles.badgeLabel}>{insight.title}</Text>
               <Text style={styles.helperText}>
-                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills}
+                {insight.durationMinutes}m • {insight.averageBpm} BPM • {insight.completedDrills}/{insight.totalDrills} drills
               </Text>
             </View>
           ))
@@ -1627,36 +1628,90 @@ export function ProfileAchievements(props: {
   levelState: LevelState;
   totalXp: number;
   badges: Badge[];
+  goalType: GoalType;
+  goalTarget: number;
+  reminderEnabled: boolean;
+  reminderTime: string;
   onboardingState: PracticeOnboardingState;
   onResetOnboarding: () => void;
 }) {
-  const { levelState, totalXp, badges, onboardingState, onResetOnboarding } = props;
+  const {
+    levelState,
+    totalXp,
+    badges,
+    goalType,
+    goalTarget,
+    reminderEnabled,
+    reminderTime,
+    onboardingState,
+    onResetOnboarding,
+  } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
     6,
     Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100),
   );
+  const onboardingStatus = onboardingState.completed
+    ? onboardingState.lastSuggestedTemplateName ?? "Starter questionnaire complete"
+    : "Starter questionnaire not completed yet";
 
   return (
     <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
       <View style={styles.topRow}>
         <Text style={styles.title}>Profile</Text>
       </View>
+      <Text style={styles.headerSubline}>Your player identity, practice setup, and achievement history live here.</Text>
 
       <GlowCard style={styles.homeHeroPanel}>
         <Text style={styles.cardLabel}>Player Identity</Text>
         <Text style={styles.heroHeadline}>Level {levelState.level} Guitarist</Text>
-        <Text style={styles.heroSubline}>{totalXp} total XP • {unlocked} badges unlocked</Text>
+        <Text style={styles.heroSubline}>Fretline keeps your profile focused on who you are and how you prefer to practice.</Text>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${xpProgressPercent}%` }]} />
         </View>
         <Text style={styles.helperText}>
           {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
         </Text>
+        <View style={styles.profileIdentityGrid}>
+          <View style={styles.profileIdentityCard}>
+            <Text style={styles.cardLabel}>Total XP</Text>
+            <Text style={styles.statChipValue}>{totalXp}</Text>
+          </View>
+          <View style={styles.profileIdentityCard}>
+            <Text style={styles.cardLabel}>Unlocked Badges</Text>
+            <Text style={styles.statChipValue}>{unlocked}</Text>
+          </View>
+        </View>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Practice Setup</Text>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Daily target</Text>
+            <Text style={styles.helperText}>
+              {goalTarget} {goalUnit(goalType)}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Reminder</Text>
+            <Text style={styles.helperText}>{reminderEnabled ? `${reminderTime} active` : "Off"}</Text>
+          </View>
+        </View>
+        <View style={styles.skillRow}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.badgeLabel}>Starter plan</Text>
+            <Text style={styles.helperText}>{onboardingState.completed ? "Ready" : "Incomplete"}</Text>
+          </View>
+          <Text style={styles.helperText}>{onboardingStatus}</Text>
+        </View>
       </GlowCard>
 
       <GlowCard>
         <Text style={styles.cardLabel}>Achievements</Text>
+        <Text style={styles.helperText}>Badges stay here so profile feels like your player record, not another progress dashboard.</Text>
         <View style={styles.badgeRow}>
           {badges.map((badge) => (
             <View key={badge.id} style={[styles.badge, !badge.unlocked ? styles.badgeLocked : null]}>
@@ -1670,7 +1725,9 @@ export function ProfileAchievements(props: {
       <GlowCard>
         <Text style={styles.cardLabel}>Starter Plan</Text>
         <Text style={styles.helperText}>
-          {onboardingState.completed ? "Questionnaire completed and ready to apply." : "Questionnaire not completed yet."}
+          {onboardingState.completed
+            ? "Retake the starter questionnaire if your goals or playing style have changed."
+            : "Finish the starter questionnaire from Home to shape your recommended first session."}
         </Text>
         <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding}>
           <Text style={styles.smallActionText}>Reset Questionnaire</Text>
@@ -2188,6 +2245,8 @@ export const styles = StyleSheet.create({
   homeGoalFill: { backgroundColor: "#1d3f78" },
   badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   skillRow: { gap: 8 },
+  profileIdentityGrid: { flexDirection: "row", gap: 12 },
+  profileIdentityCard: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, paddingVertical: 12, paddingHorizontal: 14, gap: 6 },
   badge: { backgroundColor: COLORS.cardSoft, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10, borderWidth: 1, borderColor: COLORS.divider, minWidth: 96 },
   badgeLocked: { opacity: 0.45, borderColor: COLORS.divider },
   badgeIcon: { fontSize: 18, marginBottom: 4 },

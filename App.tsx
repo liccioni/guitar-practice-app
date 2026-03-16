@@ -342,6 +342,10 @@ export default function App() {
                 levelState={levelState}
                 totalXp={totalXp}
                 badges={badges}
+                goalType={goalType}
+                goalTarget={goalTarget}
+                reminderEnabled={goalSettings.reminderEnabled}
+                reminderTime={goalSettings.reminderTime}
                 onboardingState={onboardingState}
                 onResetOnboarding={resetOnboardingQuestionnaire}
               />
