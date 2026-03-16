@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
+import type { ComebackPrompt } from "../../app/comebackPrompts";
 import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
@@ -203,6 +204,7 @@ export function HomeDashboard(props: {
   goalUnitLabel: string;
   weeklySummary: WeeklySummary;
   sessionInsights: SessionInsight[];
+  comebackPrompt: ComebackPrompt;
   badges: Badge[];
   storageError: string | null;
   goalError: string | null;
@@ -231,6 +233,7 @@ export function HomeDashboard(props: {
     goalUnitLabel,
     weeklySummary,
     sessionInsights,
+    comebackPrompt,
     badges,
     storageError,
     goalError,
@@ -429,6 +432,21 @@ export function HomeDashboard(props: {
           </View>
         </View>
       </GlowCard>
+
+      {comebackPrompt.kind !== "active" ? (
+        <GlowCard style={styles.dashboardComebackCard}>
+          <Text style={styles.cardLabel}>{comebackPrompt.homeTitle}</Text>
+          <Text style={styles.helperText}>{comebackPrompt.homeBody}</Text>
+          <View style={styles.inlineRow}>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onStartPractice} testID="home-comeback-cta">
+              <Text style={styles.smallActionText}>{comebackPrompt.homeActionLabel}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.smallActionButton} onPress={onOpenSessions} testID="home-comeback-sessions">
+              <Text style={styles.smallActionText}>Open Sessions</Text>
+            </TouchableOpacity>
+          </View>
+        </GlowCard>
+      ) : null}
 
       <GlowCard style={styles.stitchQuestionnaireCard}>
         <View style={styles.stitchCardLabelRow}>
@@ -1325,8 +1343,9 @@ export function ProgressStats(props: {
   sessionInsights: SessionInsight[];
   averageBpm: number;
   streak: number;
+  comebackPrompt: ComebackPrompt;
 }) {
-  const { weeklySummary, sessionInsights, averageBpm, streak } = props;
+  const { weeklySummary, sessionInsights, averageBpm, streak, comebackPrompt } = props;
   const milestones = buildProgressMilestones({ weeklySummary, streak, averageBpm });
 
   return (
@@ -1349,6 +1368,13 @@ export function ProgressStats(props: {
           {weeklySummary.weekMinutesDelta} min vs last 7 days
         </Text>
       </GlowCard>
+
+      {comebackPrompt.kind !== "active" ? (
+        <GlowCard style={styles.dashboardComebackCard}>
+          <Text style={styles.cardLabel}>{comebackPrompt.progressTitle}</Text>
+          <Text style={styles.helperText}>{comebackPrompt.progressBody}</Text>
+        </GlowCard>
+      ) : null}
 
       <GlowCard>
         <Text style={styles.cardLabel}>Trusted Signals</Text>
@@ -1398,7 +1424,7 @@ export function ProgressStats(props: {
       <GlowCard>
         <Text style={styles.cardLabel}>Recent Form</Text>
         {sessionInsights.length === 0 ? (
-          <Text style={styles.helperText}>Complete one session to see improvement trends.</Text>
+          <Text style={styles.helperText}>{comebackPrompt.recentFormEmptyBody}</Text>
         ) : (
           sessionInsights.map((insight) => (
             <View key={insight.id} style={styles.recentSessionRow}>
@@ -2125,6 +2151,7 @@ export const styles = StyleSheet.create({
   statChipValue: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   stitchQuestionnaireCard: { borderRadius: 16, borderColor: "rgba(230,126,0,0.1)", backgroundColor: "rgba(230,126,0,0.05)", gap: 6, padding: 14, minHeight: 164 },
   dashboardActionCard: { gap: 12 },
+  dashboardComebackCard: { gap: 10, borderColor: "rgba(29,63,120,0.32)", backgroundColor: "rgba(29,63,120,0.12)" },
   dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },
   dashboardActionDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.08)" },
