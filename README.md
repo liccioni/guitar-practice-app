@@ -44,6 +44,7 @@ Migration notes and Detox overlap:
 ## Core Docs
 - Spec: `docs/SPEC.md`
 - Runbook: `docs/PROJECT_RUNBOOK.md`
+- Device QA checklist: `docs/DEVICE_QA_CHECKLIST.md`
 - Release notes: `docs/RELEASE_NOTES.md`
 - Architecture boundaries: `docs/ARCHITECTURE_BOUNDARIES.md`
 - Stitch design alignment: `docs/STITCH_FLOW_FEATURE_PLAN.md`
