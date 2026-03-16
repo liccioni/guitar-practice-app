@@ -26,7 +26,7 @@ import type { Drill, DrillRandomizerKind, DrillTag } from "../../domain/exercise
 import type { GoalType } from "../../domain/goals/types";
 import type { PracticeHistoryEntry } from "../../domain/history/types";
 import type { SessionTemplate } from "../../domain/sessions/sessionTemplate";
-import { GlowCard } from "../primitives/GlowCard";
+import { AppButton, AppChip, GlowCard, SectionHeader } from "../primitives";
 import { COLORS, RADII, SPACING } from "../theme";
 
 export interface SongLibraryItem {
@@ -357,25 +357,29 @@ export function HomeDashboard(props: {
               ]}
             />
           </View>
-          <TouchableOpacity
-            style={[styles.primaryCta, styles.homePrimaryCta]}
+          <AppButton
+            style={styles.homePrimaryCta}
+            variant="primary"
+            size="large"
+            shape="pill"
             onPress={onStartPractice}
-            accessibilityRole="button"
             testID="home-start-practice"
           >
             <View style={styles.homePrimaryCtaRow}>
               <Text style={styles.homePrimaryCtaIcon}>▶</Text>
               <Text style={[styles.primaryCtaText, styles.homePrimaryCtaText]}>Start Practice</Text>
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </AppButton>
+          <AppButton
             style={styles.stitchSecondaryHeroButton}
+            variant="secondary"
+            size="chip"
+            shape="pill"
             onPress={onOpenSessions}
-            accessibilityRole="button"
             testID="home-quick-start-practice"
           >
             <Text style={styles.stitchSecondaryHeroButtonText}>Customize Session</Text>
-          </TouchableOpacity>
+          </AppButton>
         </View>
       </View>
 
@@ -438,12 +442,12 @@ export function HomeDashboard(props: {
           <Text style={styles.cardLabel}>{comebackPrompt.homeTitle}</Text>
           <Text style={styles.helperText}>{comebackPrompt.homeBody}</Text>
           <View style={styles.inlineRow}>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onStartPractice} testID="home-comeback-cta">
+            <AppButton size="chip" shape="chip" variant="secondary" onPress={onStartPractice} testID="home-comeback-cta">
               <Text style={styles.smallActionText}>{comebackPrompt.homeActionLabel}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onOpenSessions} testID="home-comeback-sessions">
+            </AppButton>
+            <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenSessions} testID="home-comeback-sessions">
               <Text style={styles.smallActionText}>Open Sessions</Text>
-            </TouchableOpacity>
+            </AppButton>
           </View>
         </GlowCard>
       ) : null}
@@ -451,7 +455,7 @@ export function HomeDashboard(props: {
       <GlowCard style={styles.stitchQuestionnaireCard}>
         <View style={styles.stitchCardLabelRow}>
           <View style={styles.homeQuestionIcon} />
-          <Text style={styles.stitchSectionTitle}>Build Your First Session</Text>
+          <SectionHeader title="Build Your First Session" titleStyle={styles.stitchSectionTitle} />
         </View>
         {!onboardingState.completed ? (
           <>
@@ -467,36 +471,34 @@ export function HomeDashboard(props: {
                   { id: "expert", label: "Expert" },
                 ] as const
               ).map((level) => (
-                <TouchableOpacity
+                <AppChip
                   key={level.id}
-                  style={[
-                    styles.stitchChoicePill,
-                    levelInput === level.id ? styles.stitchChoicePillActive : null,
-                  ]}
+                  style={styles.choiceChip}
+                  tone="choice"
+                  size="compact"
+                  selected={levelInput === level.id}
                   onPress={() => {
                     setLevelInput(level.id);
                     submitOnboardingAnswers(level.id, durationInput);
                   }}
                   testID={`onboarding-level-${level.id}`}
                 >
-                  <Text
-                    style={[
-                      styles.stitchChoiceLabel,
-                      levelInput === level.id ? styles.stitchChoiceLabelActive : null,
-                    ]}
-                  >
+                  <Text style={[styles.stitchChoiceLabel, levelInput === level.id ? styles.stitchChoiceLabelActive : null]}>
                     {level.label}
                   </Text>
-                </TouchableOpacity>
+                </AppChip>
               ))}
             </View>
 
             <Text style={styles.stitchQuestionLabel}>Step 2 · Comfortable daily block</Text>
             <View style={styles.stitchThreeCol}>
               {([20, 30, 60] as const).map((minutes) => (
-                <TouchableOpacity
+                <AppChip
                   key={minutes}
-                  style={[styles.stitchChoicePill, durationInput === minutes ? styles.stitchChoicePillActive : null]}
+                  style={styles.choiceChip}
+                  tone="choice"
+                  size="compact"
+                  selected={durationInput === minutes}
                   onPress={() => {
                     setDurationInput(minutes);
                     submitOnboardingAnswers(levelInput, minutes);
@@ -506,7 +508,7 @@ export function HomeDashboard(props: {
                   <Text style={[styles.stitchChoiceLabel, durationInput === minutes ? styles.stitchChoiceLabelActive : null]}>
                     {minutes} min
                   </Text>
-                </TouchableOpacity>
+                </AppChip>
               ))}
             </View>
           </>
@@ -533,12 +535,12 @@ export function HomeDashboard(props: {
               Review the plan first. You can still customize it before the session starts.
             </Text>
             <View style={styles.inlineRow}>
-              <TouchableOpacity style={styles.smallActionButton} onPress={onApplyOnboardingSuggestion} testID="onboarding-apply-suggestion">
+              <AppButton size="chip" shape="chip" variant="secondary" onPress={onApplyOnboardingSuggestion} testID="onboarding-apply-suggestion">
                 <Text style={styles.smallActionText}>Review Starter Session</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding} testID="onboarding-retake">
+              </AppButton>
+              <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding} testID="onboarding-retake">
                 <Text style={styles.smallActionText}>Retake Answers</Text>
-              </TouchableOpacity>
+              </AppButton>
             </View>
           </>
         )}
@@ -547,34 +549,25 @@ export function HomeDashboard(props: {
       <GlowCard style={styles.dashboardSettingsCard}>
         <View style={styles.inlineRowSpace}>
           <View style={styles.dashboardActionBlock}>
-            <Text style={styles.stitchSectionTitle}>Practice Loop Settings</Text>
-            <Text style={styles.helperText}>Tune today&apos;s target and your reminder without leaving the dashboard.</Text>
+            <SectionHeader
+              title="Practice Loop Settings"
+              subtitle="Tune today&apos;s target and your reminder without leaving the dashboard."
+              titleStyle={styles.stitchSectionTitle}
+            />
           </View>
         </View>
 
         <Text style={styles.stitchQuestionLabel}>Goal type</Text>
         <View style={styles.inlineRow}>
-          <TouchableOpacity
-            style={[styles.smallActionButton, styles.settingsChip, goalType === "minutes" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("minutes")}
-            testID="dashboard-goal-type-minutes"
-          >
+          <AppChip style={styles.settingsChip} selected={goalType === "minutes"} onPress={() => onGoalTypeChange("minutes")} testID="dashboard-goal-type-minutes">
             <Text style={styles.smallActionText}>Minutes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.smallActionButton, styles.settingsChip, goalType === "sessions" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("sessions")}
-            testID="dashboard-goal-type-sessions"
-          >
+          </AppChip>
+          <AppChip style={styles.settingsChip} selected={goalType === "sessions"} onPress={() => onGoalTypeChange("sessions")} testID="dashboard-goal-type-sessions">
             <Text style={styles.smallActionText}>Sessions</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.smallActionButton, styles.settingsChip, goalType === "drills" ? styles.goalTypeActive : null]}
-            onPress={() => onGoalTypeChange("drills")}
-            testID="dashboard-goal-type-drills"
-          >
+          </AppChip>
+          <AppChip style={styles.settingsChip} selected={goalType === "drills"} onPress={() => onGoalTypeChange("drills")} testID="dashboard-goal-type-drills">
             <Text style={styles.smallActionText}>Drills</Text>
-          </TouchableOpacity>
+          </AppChip>
         </View>
 
         <View style={styles.inlineRowSpace}>
@@ -592,13 +585,16 @@ export function HomeDashboard(props: {
               style={[styles.timeInput, styles.dashboardTargetInput]}
               testID="dashboard-goal-target-input"
             />
-            <TouchableOpacity
-              style={[styles.smallActionButton, styles.dashboardSaveButton]}
+            <AppButton
+              style={styles.dashboardSaveButton}
+              size="chip"
+              shape="chip"
+              variant="secondary"
               onPress={() => onSaveGoalTarget(goalTargetInput)}
               testID="dashboard-goal-target-save"
             >
               <Text style={styles.smallActionText}>Save</Text>
-            </TouchableOpacity>
+            </AppButton>
           </View>
         </View>
 
@@ -609,13 +605,13 @@ export function HomeDashboard(props: {
               {reminderEnabled ? "Reminder is active for your usual practice window." : "Turn on a reminder for a repeatable practice cue."}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.pillButton, reminderEnabled ? styles.goalTypeActive : null]}
+          <AppChip
+            selected={reminderEnabled}
             onPress={onToggleReminder}
             testID="dashboard-reminder-toggle"
           >
             <Text style={styles.pillButtonText}>{reminderEnabled ? "On" : "Off"}</Text>
-          </TouchableOpacity>
+          </AppChip>
         </View>
 
         <View style={styles.dashboardReminderRow}>
@@ -627,13 +623,16 @@ export function HomeDashboard(props: {
             style={[styles.timeInput, styles.dashboardReminderInput]}
             testID="dashboard-reminder-time-input"
           />
-          <TouchableOpacity
-            style={[styles.smallActionButton, styles.dashboardSaveButton]}
+          <AppButton
+            style={styles.dashboardSaveButton}
+            size="chip"
+            shape="chip"
+            variant="secondary"
             onPress={() => onSaveReminderTime(timeInput)}
             testID="dashboard-reminder-time-save"
           >
             <Text style={styles.smallActionText}>Save Time</Text>
-          </TouchableOpacity>
+          </AppButton>
         </View>
       </GlowCard>
 
@@ -829,16 +828,13 @@ export function SessionBuilder(props: {
         <GlowCard style={styles.builderHeroCard}>
           <View style={styles.templatePillsRow}>
             {templates.map((template) => (
-              <TouchableOpacity
+              <AppChip
                 key={template.id}
-                style={[
-                  styles.templatePill,
-                  template.id === selectedTemplateId ? styles.templatePillActive : null,
-                ]}
+                selected={template.id === selectedTemplateId}
                 onPress={() => onSelectTemplate(template.id)}
               >
                 <Text style={styles.templatePillText}>{template.name}</Text>
-              </TouchableOpacity>
+              </AppChip>
             ))}
           </View>
 
@@ -890,9 +886,9 @@ export function SessionBuilder(props: {
             <Text style={styles.completeSubtext}>
               Add a drill with the + button, then start your session.
             </Text>
-            <TouchableOpacity style={styles.smallActionButton} onPress={onAddDrill}>
+            <AppButton size="chip" shape="chip" variant="secondary" onPress={onAddDrill}>
               <Text style={styles.smallActionText}>Add Starter Drill</Text>
-            </TouchableOpacity>
+            </AppButton>
           </GlowCard>
         }
         renderItem={({ item, index }) => (
@@ -1045,17 +1041,14 @@ export function SessionBuilder(props: {
                 <Text style={styles.helperText}>Random cue (optional)</Text>
                 <View style={styles.templatePillsRow}>
                   {RANDOMIZER_KIND_OPTIONS.map((option) => (
-                    <TouchableOpacity
+                    <AppChip
                       key={option.value}
-                      style={[
-                        styles.templatePill,
-                        drillRandomizerKindInput === option.value ? styles.templatePillActive : null,
-                      ]}
+                      selected={drillRandomizerKindInput === option.value}
                       onPress={() => onDrillRandomizerKindInput(option.value)}
                       testID={`builder-randomizer-${option.value}`}
                     >
                       <Text style={styles.templatePillText}>{option.label}</Text>
-                    </TouchableOpacity>
+                    </AppChip>
                   ))}
                 </View>
                 {drillRandomizerKindInput !== "none" ? (
@@ -1157,18 +1150,21 @@ export function SessionBuilder(props: {
       ) : null}
 
       <View style={styles.builderFooterBar}>
-        <TouchableOpacity style={styles.builderPreviewButton} onPress={onStartSession}>
+        <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onStartSession}>
           <Text style={styles.secondaryCtaText}>Preview Routine</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </AppButton>
+        <AppButton
           style={styles.builderStartButton}
+          variant="primary"
+          size="large"
+          shape="pill"
           onPress={handleStartSessionPress}
           onPressIn={handleStartSessionPressIn}
           onPressOut={handleStartSessionPressOut}
           testID="builder-start-session"
         >
           <Text style={styles.primaryCtaText}>Start Practicing</Text>
-        </TouchableOpacity>
+        </AppButton>
       </View>
     </View>
   );
@@ -1250,12 +1246,12 @@ export function SessionOverview(props: {
       </GlowCard>
 
       <View style={styles.overviewFooter}>
-        <TouchableOpacity style={styles.builderPreviewButton} onPress={onBack}>
+        <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onBack}>
           <Text style={styles.secondaryCtaText}>Back to Builder</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.builderStartButton} onPress={onStartSession} testID="overview-start-session">
+        </AppButton>
+        <AppButton style={styles.builderStartButton} variant="primary" size="large" shape="pill" onPress={onStartSession} testID="overview-start-session">
           <Text style={styles.primaryCtaText}>Start Practicing</Text>
-        </TouchableOpacity>
+        </AppButton>
       </View>
     </ScrollView>
   );
@@ -1301,9 +1297,9 @@ export function SessionsLibrary(props: {
               ))}
             </View>
           ) : null}
-          <TouchableOpacity style={styles.primaryCta} onPress={() => onOpenBuilder(featuredTemplate.id)}>
+          <AppButton variant="primary" onPress={() => onOpenBuilder(featuredTemplate.id)}>
             <Text style={styles.primaryCtaText}>Edit Featured Preset</Text>
-          </TouchableOpacity>
+          </AppButton>
         </GlowCard>
       ) : null}
 
@@ -1327,9 +1323,9 @@ export function SessionsLibrary(props: {
               <Text style={styles.sessionsPresetPreview} numberOfLines={1}>
                 {items.slice(0, 3).map((item) => item.name).join(" • ") || "No drills yet"}
               </Text>
-              <TouchableOpacity style={styles.primaryCta} onPress={() => onOpenBuilder(template.id)}>
+              <AppButton variant="primary" onPress={() => onOpenBuilder(template.id)}>
                 <Text style={styles.primaryCtaText}>Open Builder</Text>
-              </TouchableOpacity>
+              </AppButton>
             </GlowCard>
           );
         })}
@@ -1489,14 +1485,14 @@ export function SongsLibrary(props: {
         />
         <View style={styles.templatePillsRow}>
           {(["all", "beginner", "intermediate", "advanced"] as const).map((level) => (
-            <TouchableOpacity
+            <AppChip
               key={level}
-              style={[styles.templatePill, levelFilter === level ? styles.templatePillActive : null]}
+              selected={levelFilter === level}
               onPress={() => setLevelFilter(level)}
               testID={`songs-filter-${level}`}
             >
               <Text style={styles.templatePillText}>{level === "all" ? "All Levels" : level}</Text>
-            </TouchableOpacity>
+            </AppChip>
           ))}
         </View>
       </GlowCard>
@@ -1520,13 +1516,16 @@ export function SongsLibrary(props: {
                   <Text style={styles.stitchFeaturedArtist}>Brooks & Dunn</Text>
                   <Text style={styles.stitchFeaturedDifficulty}>Difficulty: Intermediate</Text>
                 </View>
-                <TouchableOpacity
+                <AppButton
                   style={styles.stitchFeaturedStart}
+                  size="chip"
+                  shape="chip"
+                  variant="secondary"
                   onPress={() => onStartNow(featuredSong)}
                   testID="songs-featured-start"
                 >
                   <Text style={styles.smallActionText}>Start Now</Text>
-                </TouchableOpacity>
+                </AppButton>
               </View>
             </View>
           </ImageBackground>
@@ -1541,13 +1540,15 @@ export function SongsLibrary(props: {
             </View>
           </View>
           <View style={styles.inlineRow}>
-            <TouchableOpacity
-              style={styles.smallActionButton}
+            <AppButton
+              size="chip"
+              shape="chip"
+              variant="secondary"
               onPress={() => onAddToBuilder(featuredSong)}
               testID="songs-featured-add"
             >
               <Text style={styles.smallActionText}>Add to Chain</Text>
-            </TouchableOpacity>
+            </AppButton>
           </View>
         </GlowCard>
       ) : null}
@@ -1671,9 +1672,9 @@ export function ProfileAchievements(props: {
         <Text style={styles.helperText}>
           {onboardingState.completed ? "Questionnaire completed and ready to apply." : "Questionnaire not completed yet."}
         </Text>
-        <TouchableOpacity style={styles.smallActionButton} onPress={onResetOnboarding}>
+        <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding}>
           <Text style={styles.smallActionText}>Reset Questionnaire</Text>
-        </TouchableOpacity>
+        </AppButton>
       </GlowCard>
     </ScrollView>
   );
@@ -1795,9 +1796,9 @@ export function ActivePractice(props: {
           <Text style={styles.cardLabel}>Practice Mode</Text>
           <Text style={styles.helperText}>Level {levelState.level} • {totalXp} total XP</Text>
         </View>
-        <TouchableOpacity style={styles.pillButton} onPress={onToggleFocusMode} testID="active-focus-toggle">
+        <AppChip onPress={onToggleFocusMode} testID="active-focus-toggle">
           <Text style={styles.pillButtonText}>{focusModeEnabled ? "Focus On" : "Focus Off"}</Text>
-        </TouchableOpacity>
+        </AppChip>
       </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
@@ -1867,12 +1868,13 @@ export function ActivePractice(props: {
               {metronomeEnabled ? "Click track is live and ready." : "Click track is muted."}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.pillButton, metronomeEnabled ? styles.metronomeToggleOn : styles.metronomeToggleOff]}
+          <AppChip
+            selected={metronomeEnabled}
+            style={metronomeEnabled ? styles.metronomeToggleOn : styles.metronomeToggleOff}
             onPress={onMetronomeToggle}
           >
             <Text style={styles.pillButtonText}>{metronomeEnabled ? "Live" : "Muted"}</Text>
-          </TouchableOpacity>
+          </AppChip>
         </View>
 
         <View style={styles.metronomeDeck}>
@@ -2019,16 +2021,17 @@ export function SessionComplete(props: {
         <Text style={styles.helperText}>Badges unlocked: {unlockedBadges}</Text>
       </GlowCard>
 
-      <TouchableOpacity style={styles.primaryCta} onPress={onContinue} testID="complete-continue-button">
+      <AppButton variant="primary" onPress={onContinue} testID="complete-continue-button">
         <Text style={styles.primaryCtaText}>Back to Practice Hub</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+      </AppButton>
+      <AppButton
         style={styles.secondaryCta}
+        variant="secondary"
         onPress={() => setShared(true)}
         testID="complete-share-button"
       >
         <Text style={styles.secondaryCtaText}>{shared ? "Summary copied. Ready to share." : "Share Achievements"}</Text>
-      </TouchableOpacity>
+      </AppButton>
     </ScrollView>
   );
 }
@@ -2166,6 +2169,7 @@ export const styles = StyleSheet.create({
   stitchSectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: "800" },
   stitchQuestionLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.3, marginBottom: 4 },
   stitchThreeCol: { flexDirection: "row", gap: 6 },
+  choiceChip: { flex: 1 },
   stitchChoicePill: { flex: 1, minHeight: 30, borderRadius: RADII.pill, borderWidth: 1, borderColor: "#334a73", backgroundColor: "rgba(0,0,0,0.12)", alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   stitchChoicePillActive: { borderColor: "rgba(230,126,0,0.9)", backgroundColor: "rgba(230,126,0,0.16)" },
   stitchChoiceLabel: { color: COLORS.muted, fontSize: 11, fontWeight: "700", textAlign: "center" },
