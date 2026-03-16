@@ -18,9 +18,11 @@ import {
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
+import { buildPricingPlanCards, buildPricingScreenSummary } from "../../app/pricingPlans";
 import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
+import type { EntitlementPlanId, EntitlementState } from "../../domain/monetization/entitlements";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
 import type { Drill, DrillRandomizerKind, DrillTag } from "../../domain/exercises/types";
 import type { GoalType } from "../../domain/goals/types";
@@ -222,6 +224,7 @@ export function HomeDashboard(props: {
   onResetOnboarding: () => void;
   onStartPractice: () => void;
   onOpenSessions: () => void;
+  onOpenPricing: () => void;
 }) {
   const {
     levelState,
@@ -251,6 +254,7 @@ export function HomeDashboard(props: {
     onResetOnboarding,
     onStartPractice,
     onOpenSessions,
+    onOpenPricing,
   } = props;
 
   const [timeInput, setTimeInput] = useState(reminderTime);
@@ -435,6 +439,27 @@ export function HomeDashboard(props: {
             <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
           </View>
         </View>
+      </GlowCard>
+
+      <GlowCard style={styles.pricingEntryCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.cardLabel}>Premium Practice</Text>
+            <Text style={styles.helperText}>
+              Compare monthly and lifetime plans in one clear screen before upgrade prompts are added around the app.
+            </Text>
+          </View>
+          <Text style={styles.levelChip}>2 plans</Text>
+        </View>
+        <AppButton
+          size="chip"
+          shape="pill"
+          variant="secondary"
+          onPress={onOpenPricing}
+          testID="home-open-pricing"
+        >
+          <Text style={styles.smallActionText}>See Plans</Text>
+        </AppButton>
       </GlowCard>
 
       {comebackPrompt.kind !== "active" ? (
@@ -1639,14 +1664,22 @@ export function ProfileAchievements(props: {
   totalXp: number;
   badges: Badge[];
   onboardingState: PracticeOnboardingState;
+  entitlements: EntitlementState;
   onResetOnboarding: () => void;
+  onOpenPricing: () => void;
 }) {
-  const { levelState, totalXp, badges, onboardingState, onResetOnboarding } = props;
+  const { levelState, totalXp, badges, onboardingState, entitlements, onResetOnboarding, onOpenPricing } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
     6,
     Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100),
   );
+  const currentPlanLabel =
+    entitlements.planId === "premium-lifetime"
+      ? "Lifetime"
+      : entitlements.planId === "premium-monthly"
+        ? "Monthly"
+        : "Free";
 
   return (
     <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent} testID="profile-screen">
@@ -1679,6 +1712,17 @@ export function ProfileAchievements(props: {
       </GlowCard>
 
       <GlowCard>
+        <Text style={styles.cardLabel}>Plan</Text>
+        <Text style={styles.heroSubline}>{currentPlanLabel} plan</Text>
+        <Text style={styles.helperText}>
+          Review the paid offer in one place so future upgrade entry points can all route here.
+        </Text>
+        <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenPricing} testID="profile-open-pricing">
+          <Text style={styles.smallActionText}>Open Pricing</Text>
+        </AppButton>
+      </GlowCard>
+
+      <GlowCard>
         <Text style={styles.cardLabel}>Starter Plan</Text>
         <Text style={styles.helperText}>
           {onboardingState.completed ? "Questionnaire completed and ready to apply." : "Questionnaire not completed yet."}
@@ -1686,6 +1730,94 @@ export function ProfileAchievements(props: {
         <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding}>
           <Text style={styles.smallActionText}>Reset Questionnaire</Text>
         </AppButton>
+      </GlowCard>
+    </ScrollView>
+  );
+}
+
+export function PricingScreen(props: {
+  entitlements: EntitlementState;
+  onBack: () => void;
+  onSelectPlan: (planId: EntitlementPlanId) => void;
+}) {
+  const { entitlements, onBack, onSelectPlan } = props;
+  const summary = buildPricingScreenSummary(entitlements.planId);
+  const planCards = buildPricingPlanCards(entitlements.planId);
+
+  return (
+    <ScrollView
+      style={styles.homeScroll}
+      contentContainerStyle={styles.homeScrollContent}
+      showsVerticalScrollIndicator={false}
+      testID="pricing-screen"
+    >
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Pricing</Text>
+        <AppButton size="chip" shape="pill" variant="secondary" onPress={onBack} testID="pricing-back">
+          <Text style={styles.smallActionText}>Back</Text>
+        </AppButton>
+      </View>
+
+      <GlowCard style={styles.pricingHeroCard}>
+        <Text style={styles.cardLabel}>{summary.eyebrow}</Text>
+        <Text style={styles.heroHeadline}>{summary.title}</Text>
+        <Text style={styles.heroSubline}>{summary.subtitle}</Text>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>At a Glance</Text>
+        <View style={styles.pricingComparisonList}>
+          {summary.comparisonRows.map((row) => (
+            <View key={row.label} style={styles.pricingComparisonRow}>
+              <Text style={styles.badgeLabel}>{row.label}</Text>
+              <View style={styles.pricingComparisonValues}>
+                <Text style={styles.helperText}>Free: {row.free}</Text>
+                <Text style={styles.helperText}>Premium: {row.premium}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </GlowCard>
+
+      {planCards.map((plan) => (
+        <GlowCard
+          key={plan.planId}
+          style={[styles.pricingPlanCard, plan.featured ? styles.pricingPlanCardFeatured : null]}
+        >
+          <View style={styles.inlineRowSpace}>
+            <View style={styles.dashboardActionBlock}>
+              <Text style={styles.cardLabel}>{plan.name}</Text>
+              <Text style={styles.pricingPriceLabel}>
+                {plan.priceLabel} <Text style={styles.pricingBillingLabel}>{plan.billingLabel}</Text>
+              </Text>
+            </View>
+            {plan.savingsLabel ? <Text style={styles.pricingFeaturedChip}>{plan.savingsLabel}</Text> : null}
+            {plan.isCurrent ? <Text style={styles.levelChip}>Current</Text> : null}
+          </View>
+          <Text style={styles.helperText}>{plan.kicker}</Text>
+          <View style={styles.pricingFeatureList}>
+            {plan.highlights.map((highlight) => (
+              <Text key={highlight} style={styles.pricingFeatureItem}>
+                • {highlight}
+              </Text>
+            ))}
+          </View>
+          <AppButton
+            variant={plan.featured ? "primary" : "secondary"}
+            onPress={() => onSelectPlan(plan.planId)}
+            disabled={plan.isCurrent}
+            testID={`pricing-select-${plan.planId}`}
+          >
+            <Text style={plan.featured ? styles.primaryCtaText : styles.secondaryCtaText}>{plan.ctaLabel}</Text>
+          </AppButton>
+        </GlowCard>
+      ))}
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Current Setup</Text>
+        <Text style={styles.helperText}>
+          This first version uses local plan state only. Billing, restore purchases, and locked premium flows land in later issues.
+        </Text>
       </GlowCard>
     </ScrollView>
   );
@@ -1706,7 +1838,7 @@ export function AppTabBar(props: {
     { id: "progress", label: "Progress", icon: "▮" },
     { id: "profile", label: "Profile", icon: "◉" },
   ];
-  const selectedTab = screen === "active" || screen === "complete" ? "home" : screen;
+  const selectedTab = screen === "active" || screen === "complete" ? "home" : screen === "pricing" ? "profile" : screen;
 
   return (
     <View style={[styles.tabBar, selectedTab === "home" ? styles.homeTabBar : null]}>
@@ -2174,6 +2306,7 @@ export const styles = StyleSheet.create({
   statChipValue: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   stitchQuestionnaireCard: { borderRadius: 16, borderColor: "rgba(230,126,0,0.1)", backgroundColor: "rgba(230,126,0,0.05)", gap: 6, padding: 14, minHeight: 164 },
   dashboardActionCard: { gap: 12 },
+  pricingEntryCard: { gap: 12, borderColor: "rgba(250,204,21,0.24)", backgroundColor: "rgba(250,204,21,0.08)" },
   dashboardComebackCard: { gap: 10, borderColor: "rgba(29,63,120,0.32)", backgroundColor: "rgba(29,63,120,0.12)" },
   dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },
@@ -2389,6 +2522,17 @@ export const styles = StyleSheet.create({
   stitchSummaryStatCard: { borderRadius: RADII.chip, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, paddingHorizontal: 14, paddingVertical: 8, gap: 4 },
   stitchSummaryMiniLabel: { color: COLORS.muted, fontSize: 13, fontWeight: "700" },
   stitchSummaryStatValue: { color: COLORS.text, fontSize: 22, fontWeight: "800" },
+  pricingHeroCard: { gap: 10, borderColor: "rgba(250,204,21,0.24)", backgroundColor: "rgba(250,204,21,0.08)" },
+  pricingComparisonList: { gap: 10 },
+  pricingComparisonRow: { gap: 6, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
+  pricingComparisonValues: { gap: 2 },
+  pricingPlanCard: { gap: 12 },
+  pricingPlanCardFeatured: { borderColor: "rgba(230,126,0,0.48)", shadowColor: COLORS.accent, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 4 } },
+  pricingPriceLabel: { color: COLORS.text, fontSize: 30, lineHeight: 34, fontWeight: "800" },
+  pricingBillingLabel: { color: COLORS.muted, fontSize: 14, fontWeight: "700" },
+  pricingFeaturedChip: { color: COLORS.xp, fontSize: 12, fontWeight: "800", paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "rgba(234,179,8,0.16)", borderRadius: RADII.pill, overflow: "hidden" },
+  pricingFeatureList: { gap: 6 },
+  pricingFeatureItem: { color: COLORS.text, fontSize: 14, lineHeight: 20, fontWeight: "600" },
   tabBar: { position: "absolute", left: 0, right: 0, bottom: 0, minHeight: 84, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.divider, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 24, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2 },
   homeTabBar: { backgroundColor: "#231a0f", borderTopColor: "rgba(230,126,0,0.1)" },
   tabItem: { flex: 1, minHeight: 50, borderRadius: RADII.chip, alignItems: "center", justifyContent: "center", gap: 2, backgroundColor: "transparent" },
