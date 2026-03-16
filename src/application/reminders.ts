@@ -32,8 +32,8 @@ export async function scheduleDailyReminder(time: string): Promise<void> {
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Guitar Practice",
-      body: "Time for your practice session.",
+      title: "Fretline",
+      body: "Time for your Fretline practice session.",
       sound: true,
     },
     trigger: {

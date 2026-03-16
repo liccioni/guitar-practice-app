@@ -53,3 +53,6 @@ npm run e2e:android:smoke
 
 ## 9. Release QA Pass
 - `docs/DEVICE_QA_CHECKLIST.md`
+
+## 10. Release Configuration
+- `docs/RELEASE_CONFIGURATION.md`
