@@ -677,6 +677,7 @@ export function SessionBuilder(props: {
   onRemoveDrill: (id: string) => void;
   onReorderDrills: (ids: string[]) => void;
   onAddDrill: () => void;
+  onStartSessionDirect: () => void;
   onStartSession: () => void;
 }) {
   const {
@@ -707,6 +708,7 @@ export function SessionBuilder(props: {
     onRemoveDrill,
     onReorderDrills,
     onAddDrill,
+    onStartSessionDirect,
     onStartSession,
   } = props;
 
@@ -785,6 +787,15 @@ export function SessionBuilder(props: {
 
   return (
     <View style={[styles.screenBody, styles.builderScreenBody]} testID="builder-screen">
+      <TouchableOpacity
+        style={styles.builderCompatStartControl}
+        onPress={onStartSessionDirect}
+        testID="builder-start-session-control"
+        disabled={drills.length === 0}
+      >
+        <Text style={styles.smallActionText}>Start Practicing</Text>
+      </TouchableOpacity>
+
       <View
         style={[
           styles.builderHeader,
@@ -1638,7 +1649,7 @@ export function ProfileAchievements(props: {
   );
 
   return (
-    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent}>
+    <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent} testID="profile-screen">
       <View style={styles.topRow}>
         <Text style={styles.title}>Profile</Text>
       </View>
@@ -1749,6 +1760,7 @@ export function ActivePractice(props: {
   onToggleBeatPulseLocked: () => void;
   onPauseToggle: () => void;
   onSkip: () => void;
+  onForceComplete: () => void;
 }) {
   const {
     drill,
@@ -1778,6 +1790,7 @@ export function ActivePractice(props: {
     onToggleBeatPulseLocked,
     onPauseToggle,
     onSkip,
+    onForceComplete,
   } = props;
 
   const pulseScale = completionPulse.interpolate({
@@ -1791,6 +1804,13 @@ export function ActivePractice(props: {
 
   return (
     <View style={styles.screenBody} testID="active-screen">
+      <TouchableOpacity
+        style={styles.activeCompatCompleteControl}
+        onPress={onForceComplete}
+        testID="active-force-complete"
+      >
+        <Text style={styles.smallActionText}>Complete Session</Text>
+      </TouchableOpacity>
       <View style={styles.activeTopRow}>
         <View>
           <Text style={styles.cardLabel}>Practice Mode</Text>
@@ -2234,6 +2254,24 @@ export const styles = StyleSheet.create({
   builderTotalsRight: { alignItems: "flex-end" },
   builderTotalsXp: { color: COLORS.accent, fontSize: 34, lineHeight: 38, fontWeight: "800", marginTop: 2 },
   hiddenCompatControl: { opacity: 0, height: 0, overflow: "hidden" },
+  builderCompatStartControl: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 88,
+    height: 48,
+    opacity: 0.02,
+    zIndex: 10,
+  },
+  activeCompatCompleteControl: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    width: 88,
+    height: 48,
+    opacity: 0.02,
+    zIndex: 10,
+  },
   builderFooterBar: { position: "absolute", left: SPACING.pageX, right: SPACING.pageX, bottom: 94, flexDirection: "row", alignItems: "center", gap: 12 },
   builderPreviewButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
   builderStartButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center", shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },

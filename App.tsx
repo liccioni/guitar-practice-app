@@ -259,6 +259,16 @@ export default function App() {
     setScreen("complete");
   }
 
+  function forceCompleteActiveSession(): void {
+    finishSession(
+      activeRuntime.activeDrillIds,
+      [...activeRuntime.completedDrillIds],
+      activeRuntime.completedDurationSec,
+      activeRuntime.elapsedSec,
+      activeRuntime.sessionXp,
+    );
+  }
+
   function startSongNow(song: (typeof SONG_LIBRARY)[number]): void {
     addSongToBuilder(song);
   }
@@ -376,6 +386,7 @@ export default function App() {
                 onRemoveDrill={removeDrillFromTemplate}
                 onReorderDrills={reorderDrillsInTemplate}
                 onAddDrill={addDrillToTemplate}
+                onStartSessionDirect={activeRuntime.startSession}
                 onStartSession={() => setScreen("overview")}
               />
             ) : null}
@@ -422,6 +433,7 @@ export default function App() {
                 onToggleBeatPulseLocked={activeRuntime.toggleBeatPulseLocked}
                 onPauseToggle={activeRuntime.togglePause}
                 onSkip={activeRuntime.skipDrill}
+                onForceComplete={forceCompleteActiveSession}
               />
             ) : null}
 

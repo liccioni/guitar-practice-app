@@ -65,6 +65,7 @@ interface UseActivePracticeRuntimeInput {
 
 export interface ActivePracticeRuntimeValue {
   activeDrill: Drill | null;
+  activeDrillIds: string[];
   beatFlash: boolean;
   beatPulseLocked: boolean;
   completedDrillIds: string[];
@@ -370,6 +371,7 @@ export function useActivePracticeRuntime({
 
   return {
     activeDrill,
+    activeDrillIds: progress.activeDrillIds,
     beatFlash,
     beatPulseLocked,
     completedDrillIds: progress.completedDrillIds,
