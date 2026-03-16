@@ -50,3 +50,6 @@ npm run e2e:android:smoke
 - `docs/design-import/stitch/stitch/practice_session`
 - `docs/design-import/stitch/stitch/session_summary`
 - `docs/design-import/stitch/stitch/progress_dashboard`
+
+## 9. Release QA Pass
+- `docs/DEVICE_QA_CHECKLIST.md`
