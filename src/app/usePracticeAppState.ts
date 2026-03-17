@@ -32,6 +32,7 @@ export type Screen =
   | "sessions"
   | "progress"
   | "profile"
+  | "pricing"
   | "builder"
   | "overview"
   | "active"

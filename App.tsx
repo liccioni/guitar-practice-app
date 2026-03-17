@@ -5,9 +5,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
 import { buildComebackPrompt } from "./src/app/comebackPrompts";
+import { createLocalPlanSelection } from "./src/app/pricingPlans";
 import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
 import { trackSessionCompleted } from "./src/app/analytics";
-import { buildBadgeState, makeId, usePracticeAppState } from "./src/app/usePracticeAppState";
+import { buildBadgeState, makeId, type Screen, usePracticeAppState } from "./src/app/usePracticeAppState";
+import type { EntitlementPlanId } from "./src/domain/monetization/entitlements";
 import type { Drill } from "./src/domain/exercises/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
 import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
@@ -23,6 +25,7 @@ import {
   goalUnit,
   HomeDashboard,
   ProfileAchievements,
+  PricingScreen,
   ProgressStats,
   SessionOverview,
   SessionBuilder,
@@ -59,6 +62,7 @@ export default function App() {
     drillRandomEveryBarsInput,
     drillRandomizerKindInput,
     duplicateTemplate,
+    entitlements,
     goalError,
     goalSettings,
     goalTarget,
@@ -86,6 +90,7 @@ export default function App() {
     setActiveTemplateId,
     setBadges,
     setBuilderError,
+    setEntitlements,
     setGoalType,
     setHistory,
     setScreen,
@@ -99,6 +104,9 @@ export default function App() {
     toggleReminder,
     totalXp,
   } = usePracticeAppState();
+
+  type PricingReturnScreen = Exclude<Screen, "active" | "complete" | "pricing">;
+  const pricingReturnScreen = useRef<PricingReturnScreen>("profile");
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const rewardScale = useRef(new Animated.Value(0.92)).current;
@@ -273,6 +281,20 @@ export default function App() {
     addSongToBuilder(song);
   }
 
+  function openPricingScreen(from: PricingReturnScreen): void {
+    pricingReturnScreen.current = from;
+    setScreen("pricing");
+  }
+
+  function closePricingScreen(): void {
+    setScreen(pricingReturnScreen.current);
+  }
+
+  function selectPricingPlan(planId: EntitlementPlanId): void {
+    setEntitlements(createLocalPlanSelection(planId, new Date().toISOString()));
+    closePricingScreen();
+  }
+
   function resetToHome(): void {
     activeRuntime.resetSession();
     activeRuntime.disableMetronome();
@@ -314,6 +336,7 @@ export default function App() {
                 onResetOnboarding={resetOnboardingQuestionnaire}
                 onStartPractice={startPracticeFlow}
                 onOpenSessions={() => setScreen("sessions")}
+                onOpenPricing={() => openPricingScreen("home")}
               />
             ) : null}
 
@@ -353,7 +376,17 @@ export default function App() {
                 totalXp={totalXp}
                 badges={badges}
                 onboardingState={onboardingState}
+                entitlements={entitlements}
                 onResetOnboarding={resetOnboardingQuestionnaire}
+                onOpenPricing={() => openPricingScreen("profile")}
+              />
+            ) : null}
+
+            {screen === "pricing" ? (
+              <PricingScreen
+                entitlements={entitlements}
+                onBack={closePricingScreen}
+                onSelectPlan={selectPricingPlan}
               />
             ) : null}
 
@@ -465,7 +498,7 @@ export default function App() {
               />
             ) : null}
           </Animated.View>
-          {screen !== "builder" && screen !== "overview" ? (
+          {screen !== "builder" && screen !== "overview" && screen !== "pricing" ? (
             <AppTabBar screen={screen} onNavigate={navigateFromTab} />
           ) : null}
         </SafeAreaView>
