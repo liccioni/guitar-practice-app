@@ -18,6 +18,7 @@ import {
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
+import type { PaywallEntryPoint } from "../../app/paywallEntryPoints";
 import { buildPricingPlanCards, buildPricingScreenSummary } from "../../app/pricingPlans";
 import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
@@ -1213,10 +1214,23 @@ export function SessionOverview(props: {
   totalXp: number;
   averageBpm: number | null;
   bpmRangeLabel: string;
+  paywallEntryPoint: PaywallEntryPoint | null;
   onBack: () => void;
   onStartSession: () => void;
+  onOpenPricing: () => void;
 }) {
-  const { templateName, drills, estimatedMinutes, totalXp, averageBpm, bpmRangeLabel, onBack, onStartSession } = props;
+  const {
+    templateName,
+    drills,
+    estimatedMinutes,
+    totalXp,
+    averageBpm,
+    bpmRangeLabel,
+    paywallEntryPoint,
+    onBack,
+    onStartSession,
+    onOpenPricing,
+  } = props;
   const summary = buildSessionOverviewSummary(drills);
 
   return (
@@ -1280,6 +1294,8 @@ export function SessionOverview(props: {
           ))}
         </View>
       </GlowCard>
+
+      {paywallEntryPoint ? <PaywallEntryCard entryPoint={paywallEntryPoint} onOpenPricing={onOpenPricing} /> : null}
 
       <View style={styles.overviewFooter}>
         <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onBack}>
@@ -1376,8 +1392,10 @@ export function ProgressStats(props: {
   averageBpm: number;
   streak: number;
   comebackPrompt: ComebackPrompt;
+  paywallEntryPoint: PaywallEntryPoint | null;
+  onOpenPricing: () => void;
 }) {
-  const { weeklySummary, sessionInsights, averageBpm, streak, comebackPrompt } = props;
+  const { weeklySummary, sessionInsights, averageBpm, streak, comebackPrompt, paywallEntryPoint, onOpenPricing } = props;
   const milestones = buildProgressMilestones({ weeklySummary, streak, averageBpm });
 
   return (
@@ -1468,7 +1486,33 @@ export function ProgressStats(props: {
           ))
         )}
       </GlowCard>
+
+      {paywallEntryPoint ? <PaywallEntryCard entryPoint={paywallEntryPoint} onOpenPricing={onOpenPricing} /> : null}
     </ScrollView>
+  );
+}
+
+function PaywallEntryCard(props: {
+  entryPoint: PaywallEntryPoint;
+  onOpenPricing: () => void;
+}) {
+  const { entryPoint, onOpenPricing } = props;
+
+  return (
+    <GlowCard style={styles.paywallEntryCard}>
+      <Text style={styles.cardLabel}>Premium Upgrade</Text>
+      <Text style={styles.heroSubline}>{entryPoint.title}</Text>
+      <Text style={styles.helperText}>{entryPoint.body}</Text>
+      <AppButton
+        size="chip"
+        shape="pill"
+        variant="secondary"
+        onPress={onOpenPricing}
+        testID={`paywall-entry-${entryPoint.surface}`}
+      >
+        <Text style={styles.smallActionText}>{entryPoint.ctaLabel}</Text>
+      </AppButton>
+    </GlowCard>
   );
 }
 
@@ -1476,8 +1520,10 @@ export function SongsLibrary(props: {
   songs: SongLibraryItem[];
   onAddToBuilder: (song: SongLibraryItem) => void;
   onStartNow: (song: SongLibraryItem) => void;
+  paywallEntryPoint: PaywallEntryPoint | null;
+  onOpenPricing: () => void;
 }) {
-  const { songs, onAddToBuilder, onStartNow } = props;
+  const { songs, onAddToBuilder, onStartNow, paywallEntryPoint, onOpenPricing } = props;
   const [query, setQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<"all" | SongLibraryItem["level"]>("all");
 
@@ -1655,6 +1701,8 @@ export function SongsLibrary(props: {
           ))
         )}
       </GlowCard>
+
+      {paywallEntryPoint ? <PaywallEntryCard entryPoint={paywallEntryPoint} onOpenPricing={onOpenPricing} /> : null}
     </ScrollView>
   );
 }
@@ -2307,6 +2355,7 @@ export const styles = StyleSheet.create({
   stitchQuestionnaireCard: { borderRadius: 16, borderColor: "rgba(230,126,0,0.1)", backgroundColor: "rgba(230,126,0,0.05)", gap: 6, padding: 14, minHeight: 164 },
   dashboardActionCard: { gap: 12 },
   pricingEntryCard: { gap: 12, borderColor: "rgba(250,204,21,0.24)", backgroundColor: "rgba(250,204,21,0.08)" },
+  paywallEntryCard: { gap: 12, borderColor: "rgba(230,126,0,0.32)", backgroundColor: "rgba(230,126,0,0.08)" },
   dashboardComebackCard: { gap: 10, borderColor: "rgba(29,63,120,0.32)", backgroundColor: "rgba(29,63,120,0.12)" },
   dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },

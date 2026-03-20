@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
 import { buildComebackPrompt } from "./src/app/comebackPrompts";
+import { buildPaywallEntryPoint } from "./src/app/paywallEntryPoints";
 import { createLocalPlanSelection } from "./src/app/pricingPlans";
 import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
 import { trackSessionCompleted } from "./src/app/analytics";
@@ -153,6 +154,28 @@ export default function App() {
   );
 
   const levelState = useMemo(() => getLevelState(totalXp), [totalXp]);
+  const completedSessions = useMemo(
+    () => history.filter((entry) => entry.completed).length,
+    [history],
+  );
+  const songsPaywallEntryPoint = useMemo(
+    () => buildPaywallEntryPoint({ surface: "songs", currentPlanId: entitlements.planId }),
+    [entitlements.planId],
+  );
+  const overviewPaywallEntryPoint = useMemo(
+    () => buildPaywallEntryPoint({ surface: "overview", currentPlanId: entitlements.planId }),
+    [entitlements.planId],
+  );
+  const progressPaywallEntryPoint = useMemo(
+    () =>
+      buildPaywallEntryPoint({
+        surface: "progress",
+        currentPlanId: entitlements.planId,
+        streak,
+        completedSessions,
+      }),
+    [completedSessions, entitlements.planId, streak],
+  );
   const sessionOverview = useMemo(
     () => buildSessionOverviewSummary(builderDrills),
     [builderDrills],
@@ -357,6 +380,8 @@ export default function App() {
                 songs={SONG_LIBRARY}
                 onAddToBuilder={addSongToBuilder}
                 onStartNow={startSongNow}
+                paywallEntryPoint={songsPaywallEntryPoint}
+                onOpenPricing={() => openPricingScreen("songs")}
               />
             ) : null}
 
@@ -367,6 +392,8 @@ export default function App() {
                 averageBpm={metrics.averageBpm}
                 streak={streak}
                 comebackPrompt={comebackPrompt}
+                paywallEntryPoint={progressPaywallEntryPoint}
+                onOpenPricing={() => openPricingScreen("progress")}
               />
             ) : null}
 
@@ -432,8 +459,10 @@ export default function App() {
                 totalXp={sessionOverview.totalXp}
                 averageBpm={sessionOverview.averageBpm}
                 bpmRangeLabel={sessionOverview.bpmRangeLabel}
+                paywallEntryPoint={overviewPaywallEntryPoint}
                 onBack={() => setScreen("builder")}
                 onStartSession={activeRuntime.startSession}
+                onOpenPricing={() => openPricingScreen("overview")}
               />
             ) : null}
 
