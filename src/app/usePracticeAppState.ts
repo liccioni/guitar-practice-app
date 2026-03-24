@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Drill } from "../domain/exercises/types";
+import type { DrillCueMode } from "../application/drillCueAudio";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "../domain/goals/types";
 import {
   getFeatureGate,
@@ -58,6 +59,7 @@ export function usePracticeAppState() {
     DEFAULT_PROFILE.onboarding,
   );
   const [entitlements, setEntitlements] = useState<EntitlementState>(DEFAULT_PROFILE.entitlements);
+  const [drillCueMode, setDrillCueMode] = useState<DrillCueMode>(DEFAULT_PROFILE.drillCueMode);
   const [badges, setBadges] = useState<Badge[]>(() => buildBadgeState(DEFAULT_PROFILE.unlockedBadgeIds));
 
   useEffect(() => {
@@ -84,6 +86,7 @@ export function usePracticeAppState() {
         setTotalXp(seed.profile.totalXp);
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
+        setDrillCueMode(seed.profile.drillCueMode ?? DEFAULT_PROFILE.drillCueMode);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } catch {
@@ -96,6 +99,7 @@ export function usePracticeAppState() {
         setTotalXp(seed.profile.totalXp);
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
+        setDrillCueMode(seed.profile.drillCueMode ?? DEFAULT_PROFILE.drillCueMode);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } finally {
@@ -119,9 +123,10 @@ export function usePracticeAppState() {
         unlockedBadgeIds: getUnlockedBadgeIds(badges),
         onboarding: onboardingState,
         entitlements,
+        drillCueMode,
       },
     });
-  }, [allDrills, badges, entitlements, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
+  }, [allDrills, badges, drillCueMode, entitlements, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
 
   function resetToHome(): void {
     setScreen("home");
@@ -173,6 +178,7 @@ export function usePracticeAppState() {
     canAccessFeature,
     createTemplate: builderState.createTemplate,
     deleteTemplate: builderState.deleteTemplate,
+    drillCueMode,
     drillBpmInput: builderState.drillBpmInput,
     drillDurationInput: builderState.drillDurationInput,
     drillNameInput: builderState.drillNameInput,
@@ -210,6 +216,7 @@ export function usePracticeAppState() {
     setActiveTemplateId,
     setBadges,
     setBuilderError: builderState.setBuilderError,
+    setDrillCueMode,
     setEntitlements,
     setGoalType: profileSettingsState.setGoalType,
     setHistory,

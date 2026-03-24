@@ -31,6 +31,8 @@ export interface DrillCompletionTransition {
   nextDrillName: string | null;
   nextDrillDurationSec: number | null;
   nextDrillTargetBpm: number | null;
+  nextDrillCueLine: string | null;
+  preparationCountdownSec: number;
   isSessionFinisher: boolean;
 }
 
@@ -166,8 +168,22 @@ export function buildDrillCompletionTransition(
     nextDrillName: nextSegment?.name ?? null,
     nextDrillDurationSec: nextSegment?.durationSeconds ?? null,
     nextDrillTargetBpm: nextSegment?.targetBpm ?? null,
+    nextDrillCueLine:
+      nextSegment === null
+        ? null
+        : buildNextDrillCueLine(nextSegment.name, nextSegment.durationSeconds, nextSegment.targetBpm),
+    preparationCountdownSec: nextSegment === null ? 0 : 3,
     isSessionFinisher: nextSegment === null,
   };
+}
+
+export function buildNextDrillCueLine(
+  nextDrillName: string,
+  durationSec: number,
+  targetBpm: number | undefined,
+): string {
+  const minutes = Math.max(1, Math.round(durationSec / 60));
+  return `${nextDrillName} in ${minutes} min${targetBpm ? ` at ${targetBpm} BPM` : ""}`;
 }
 
 function clampUnit(value: number): number {

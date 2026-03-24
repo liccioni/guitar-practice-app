@@ -52,6 +52,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.totalXp).toBe(1500);
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(result.profile.entitlements.planId).toBe("free");
+    expect(result.profile.drillCueMode).toBe("chime");
   });
 
   it("returns empty state when async get fails", async () => {
@@ -64,6 +65,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.totalXp).toBe(0);
     expect(result.profile.unlockedBadgeIds).toEqual([]);
     expect(result.profile.entitlements.planId).toBe("free");
+    expect(result.profile.drillCueMode).toBe("chime");
   });
 
   it("saves versioned envelope", async () => {
@@ -112,6 +114,7 @@ describe("LocalStorageGateway", () => {
           unlockedBadgeIds: [],
           onboarding: { completed: false },
           entitlements: { planId: "free", billingProvider: "local" },
+          drillCueMode: "chime",
         },
       }),
     ).resolves.toBeUndefined();
@@ -227,6 +230,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.totalXp).toBe(0);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
+    expect(parsed.profile.drillCueMode).toBe("chime");
   });
 
   it("returns empty state for invalid or empty persisted payload", () => {
@@ -296,6 +300,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.totalXp).toBe(43);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b1", "b2"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
+    expect(parsed.profile.drillCueMode).toBe("chime");
   });
 
   it("normalizes goal target defaults per goal type and invalid reminder format", () => {
@@ -425,6 +430,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.unlockedBadgeIds).toEqual([]);
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
+    expect(parsed.profile.drillCueMode).toBe("chime");
   });
 
   it("preserves valid onboarding answers and drops invalid ones", () => {
@@ -600,5 +606,52 @@ describe("LocalStorageGateway", () => {
       activatedAt: undefined,
       expiresAt: undefined,
     });
+  });
+
+  it("preserves valid drill cue settings and falls back for invalid ones", () => {
+    const valid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            drillCueMode: "spoken",
+          },
+        },
+      }),
+    );
+
+    const invalid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            drillCueMode: "sirens",
+          },
+        },
+      }),
+    );
+
+    expect(valid.profile.drillCueMode).toBe("spoken");
+    expect(invalid.profile.drillCueMode).toBe("chime");
   });
 });

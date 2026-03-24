@@ -17,6 +17,7 @@ describe("usePracticeAppState helpers", () => {
     expect(state.history).toEqual([]);
     expect(state.profile.totalXp).toBe(0);
     expect(state.profile.entitlements.planId).toBe("free");
+    expect(state.profile.drillCueMode).toBe("chime");
   });
 
   it("maps unlocked badge ids onto the fixed badge definitions", () => {

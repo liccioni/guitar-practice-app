@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   advanceRandomCueState,
+  buildNextDrillCueLine,
   buildDrillCompletionTransition,
   createEmptyRandomCueState,
   createRandomCueState,
@@ -166,6 +167,8 @@ describe("activePracticeRuntime helpers", () => {
       nextDrillName: "Scales",
       nextDrillDurationSec: 90,
       nextDrillTargetBpm: 120,
+      nextDrillCueLine: "Scales in 2 min at 120 BPM",
+      preparationCountdownSec: 3,
       isSessionFinisher: false,
     });
   });
@@ -197,7 +200,14 @@ describe("activePracticeRuntime helpers", () => {
       nextDrillName: null,
       nextDrillDurationSec: null,
       nextDrillTargetBpm: null,
+      nextDrillCueLine: null,
+      preparationCountdownSec: 0,
       isSessionFinisher: true,
     });
+  });
+
+  it("builds a readable next-drill cue line", () => {
+    expect(buildNextDrillCueLine("Arpeggio Climb", 300, 105)).toBe("Arpeggio Climb in 5 min at 105 BPM");
+    expect(buildNextDrillCueLine("Legato Builder", 120, undefined)).toBe("Legato Builder in 2 min");
   });
 });

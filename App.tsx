@@ -60,6 +60,7 @@ export default function App() {
     createTemplate,
     deleteTemplate,
     drillBpmInput,
+    drillCueMode,
     drillDurationInput,
     drillNameInput,
     drillRandomEveryBarsInput,
@@ -94,6 +95,7 @@ export default function App() {
     setActiveTemplateId,
     setBadges,
     setBuilderError,
+    setDrillCueMode,
     setEntitlements,
     setGoalType,
     setHistory,
@@ -198,6 +200,7 @@ export default function App() {
   );
   const activeRuntime = useActivePracticeRuntime({
     allDrills,
+    drillCueMode,
     screen,
     selectedTemplate,
     totalXp,
@@ -432,6 +435,8 @@ export default function App() {
                 onRestorePurchases={restorePurchases}
                 restoreMessage={restoreMessage}
                 planManagementGate={planManagementGate}
+                drillCueMode={drillCueMode}
+                onDrillCueModeChange={setDrillCueMode}
               />
             ) : null}
 
@@ -508,6 +513,8 @@ export default function App() {
                 microcopy={activeRuntime.currentMicrocopy}
                 completionPulse={activeRuntime.completionPulse}
                 drillCompletionTransition={activeRuntime.drillCompletionTransition}
+                transitionCountdownSec={activeRuntime.transitionCountdownSec}
+                drillCueMode={drillCueMode}
                 metronomeEnabled={activeRuntime.metronomeEnabled}
                 metronomeBpm={activeRuntime.metronomeBpm}
                 beatFlash={activeRuntime.beatFlash}

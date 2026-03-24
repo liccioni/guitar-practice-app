@@ -13,17 +13,19 @@ import {
   type PracticeOnboardingAnswers,
   type PracticeOnboardingState,
 } from "../domain/profile/onboarding";
+import type { DrillCueMode } from "../application/drillCueAudio";
 import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill";
 import { isValidBpm } from "../domain/metronome/metronome";
 
 const STORAGE_KEY = "guitar-practice:v1";
-export const PERSISTENCE_SCHEMA_VERSION = 4;
+export const PERSISTENCE_SCHEMA_VERSION = 5;
 
 export interface PersistedProfileState {
   totalXp: number;
   unlockedBadgeIds: string[];
   onboarding: PracticeOnboardingState;
   entitlements: EntitlementState;
+  drillCueMode: DrillCueMode;
 }
 
 export interface PersistedPracticeState {
@@ -39,6 +41,7 @@ const DEFAULT_PROFILE_STATE: PersistedProfileState = {
   unlockedBadgeIds: [],
   onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
   entitlements: DEFAULT_ENTITLEMENT_STATE,
+  drillCueMode: "chime",
 };
 
 export const EMPTY_PRACTICE_STATE: PersistedPracticeState = {
@@ -268,12 +271,17 @@ function sanitizeProfileState(input: unknown): PersistedProfileState {
 
   const onboarding = sanitizeOnboardingState(input.onboarding);
   const entitlements = sanitizeEntitlementState(input.entitlements);
+  const drillCueMode: DrillCueMode =
+    input.drillCueMode === "off" || input.drillCueMode === "chime" || input.drillCueMode === "spoken"
+      ? input.drillCueMode
+      : DEFAULT_PROFILE_STATE.drillCueMode;
 
   return {
     totalXp: Number.isFinite(totalXp) && totalXp >= 0 ? Math.round(totalXp) : DEFAULT_PROFILE_STATE.totalXp,
     unlockedBadgeIds,
     onboarding,
     entitlements,
+    drillCueMode,
   };
 }
 
