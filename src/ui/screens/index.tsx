@@ -26,6 +26,7 @@ import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
 import type { EntitlementPlanId, EntitlementState, FeatureGate } from "../../domain/monetization/entitlements";
+import type { DrillCueMode } from "../../application/drillCueAudio";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
 import type { Drill, DrillRandomizerKind, DrillTag } from "../../domain/exercises/types";
 import type { GoalType } from "../../domain/goals/types";
@@ -1767,6 +1768,8 @@ export function ProfileAchievements(props: {
   onRestorePurchases: () => void;
   restoreMessage: string | null;
   planManagementGate: FeatureGate | null;
+  drillCueMode: DrillCueMode;
+  onDrillCueModeChange: (mode: DrillCueMode) => void;
 }) {
   const {
     levelState,
@@ -1779,6 +1782,8 @@ export function ProfileAchievements(props: {
     onRestorePurchases,
     restoreMessage,
     planManagementGate,
+    drillCueMode,
+    onDrillCueModeChange,
   } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
@@ -1853,6 +1858,29 @@ export function ProfileAchievements(props: {
         <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding}>
           <Text style={styles.smallActionText}>Reset Questionnaire</Text>
         </AppButton>
+      </GlowCard>
+
+      <GlowCard>
+        <Text style={styles.cardLabel}>Upcoming Drill Cue</Text>
+        <Text style={styles.helperText}>
+          Choose how the app prepares you for the next drill during the transition window.
+        </Text>
+        <View style={styles.inlineRow}>
+          {(["off", "chime", "spoken"] as const).map((mode) => (
+            <AppButton
+              key={mode}
+              size="chip"
+              shape="chip"
+              variant={drillCueMode === mode ? "primary" : "secondary"}
+              onPress={() => onDrillCueModeChange(mode)}
+              testID={`profile-drill-cue-${mode}`}
+            >
+              <Text style={drillCueMode === mode ? styles.primaryCtaText : styles.smallActionText}>
+                {mode === "off" ? "Off" : mode === "chime" ? "Chime" : "Spoken"}
+              </Text>
+            </AppButton>
+          ))}
+        </View>
       </GlowCard>
     </ScrollView>
   );
@@ -2022,8 +2050,12 @@ export function ActivePractice(props: {
     nextDrillName: string | null;
     nextDrillDurationSec: number | null;
     nextDrillTargetBpm: number | null;
+    nextDrillCueLine: string | null;
+    preparationCountdownSec: number;
     isSessionFinisher: boolean;
   } | null;
+  transitionCountdownSec: number;
+  drillCueMode: DrillCueMode;
   metronomeEnabled: boolean;
   metronomeBpm: number;
   beatFlash: boolean;
@@ -2054,6 +2086,8 @@ export function ActivePractice(props: {
     microcopy,
     completionPulse,
     drillCompletionTransition,
+    transitionCountdownSec,
+    drillCueMode,
     metronomeEnabled,
     metronomeBpm,
     beatFlash,
@@ -2153,6 +2187,13 @@ export function ActivePractice(props: {
                 {drillCompletionTransition.nextDrillTargetBpm
                   ? ` • ${drillCompletionTransition.nextDrillTargetBpm} BPM`
                   : ""}
+              </Text>
+              {drillCompletionTransition.nextDrillCueLine ? (
+                <Text style={styles.helperText}>{drillCompletionTransition.nextDrillCueLine}</Text>
+              ) : null}
+              <Text style={styles.helperText}>
+                Prepare in {Math.max(0, transitionCountdownSec)}s
+                {drillCueMode !== "off" ? ` • ${drillCueMode} cue` : ""}
               </Text>
             </View>
           ) : null}
