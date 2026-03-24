@@ -6,8 +6,20 @@ export PATH="$JAVA_HOME/bin:$PATH:$HOME/.maestro/bin"
 export MAESTRO_CLI_NO_ANALYTICS=1
 
 SIMULATOR_NAME="${MAESTRO_DEVICE:-${DETOX_DEVICE:-iPhone 16e}}"
-APP_PATH="ios/build/Build/Products/Release-iphonesimulator/GuitarPractice.app"
 APP_ID="net.liccioni.guitarpractice"
+WORKSPACE_PATH="${WORKSPACE_PATH:-$(find ios -maxdepth 1 -name '*.xcworkspace' | head -n 1)}"
+APP_NAME="${APP_NAME:-}"
+
+if [[ -z "$WORKSPACE_PATH" ]]; then
+  echo "Could not find an iOS workspace under ios/" >&2
+  exit 1
+fi
+
+if [[ -z "$APP_NAME" ]]; then
+  APP_NAME="$(basename "$WORKSPACE_PATH" .xcworkspace)"
+fi
+
+APP_PATH="ios/build/Build/Products/Release-iphonesimulator/${APP_NAME}.app"
 
 if [[ ! -x "$HOME/.maestro/bin/maestro" ]] && ! command -v maestro >/dev/null 2>&1; then
   bash scripts/maestro-install.sh
