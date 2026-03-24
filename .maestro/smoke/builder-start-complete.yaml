@@ -8,15 +8,14 @@ name: Builder smoke starts and completes a session
 - tapOn:
     id: builder-start-session
 - assertVisible:
-    id: active-screen
+    id: overview-screen
+- swipe:
+    direction: UP
+- tapOn:
+    id: overview-start-session
 - assertVisible:
-    id: active-skip-button
-- repeat:
-    while:
-      notVisible:
-        id: complete-continue-button
-    commands:
-      - tapOn:
-          id: active-skip-button
+    id: active-screen
+- tapOn:
+    id: active-force-complete
 - assertVisible:
     id: complete-continue-button
