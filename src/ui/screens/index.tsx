@@ -19,12 +19,13 @@ import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
 import { buildCurrentPlanSummary } from "../../app/planManagement";
+import { buildLockedStateCopy } from "../../app/lockedStates";
 import type { PaywallEntryPoint } from "../../app/paywallEntryPoints";
 import { buildPricingPlanCards, buildPricingScreenSummary } from "../../app/pricingPlans";
 import { buildProgressMilestones } from "../../app/progressSignals";
 import { buildSessionOverviewSummary } from "../../app/sessionOverview";
 import type { Badge, Screen } from "../../app/usePracticeAppState";
-import type { EntitlementPlanId, EntitlementState } from "../../domain/monetization/entitlements";
+import type { EntitlementPlanId, EntitlementState, FeatureGate } from "../../domain/monetization/entitlements";
 import { buildPracticeOnboardingSuggestion, type GuitarLevel, type PracticeDurationMinutes, type PracticeFocus, type PracticeOnboardingAnswers, type PracticeOnboardingState, type PracticeOutcome, type PracticePreference, type WeeklyFrequencyDays } from "../../domain/profile/onboarding";
 import type { Drill, DrillRandomizerKind, DrillTag } from "../../domain/exercises/types";
 import type { GoalType } from "../../domain/goals/types";
@@ -1216,6 +1217,7 @@ export function SessionOverview(props: {
   averageBpm: number | null;
   bpmRangeLabel: string;
   paywallEntryPoint: PaywallEntryPoint | null;
+  advancedPracticeGate: FeatureGate | null;
   onBack: () => void;
   onStartSession: () => void;
   onOpenPricing: () => void;
@@ -1228,6 +1230,7 @@ export function SessionOverview(props: {
     averageBpm,
     bpmRangeLabel,
     paywallEntryPoint,
+    advancedPracticeGate,
     onBack,
     onStartSession,
     onOpenPricing,
@@ -1297,6 +1300,15 @@ export function SessionOverview(props: {
       </GlowCard>
 
       {paywallEntryPoint ? <PaywallEntryCard entryPoint={paywallEntryPoint} onOpenPricing={onOpenPricing} /> : null}
+
+      {advancedPracticeGate ? (
+        <LockedStateCard
+          gate={advancedPracticeGate}
+          variant="action"
+          onOpenPricing={onOpenPricing}
+          testID="overview-locked-advanced-practice"
+        />
+      ) : null}
 
       <View style={styles.overviewFooter}>
         <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onBack}>
@@ -1517,14 +1529,42 @@ function PaywallEntryCard(props: {
   );
 }
 
+function LockedStateCard(props: {
+  gate: FeatureGate;
+  variant?: "card" | "action";
+  onOpenPricing: () => void;
+  testID?: string;
+}) {
+  const { gate, variant = "card", onOpenPricing, testID } = props;
+  const copy = buildLockedStateCopy(gate, variant);
+
+  return (
+    <GlowCard style={variant === "card" ? styles.lockedCard : styles.lockedActionCard}>
+      <Text style={styles.cardLabel}>{copy.eyebrow}</Text>
+      <Text style={styles.heroSubline}>{copy.title}</Text>
+      <Text style={styles.helperText}>{copy.body}</Text>
+      <AppButton
+        size="chip"
+        shape="pill"
+        variant="secondary"
+        onPress={onOpenPricing}
+        testID={testID}
+      >
+        <Text style={styles.smallActionText}>{copy.ctaLabel}</Text>
+      </AppButton>
+    </GlowCard>
+  );
+}
+
 export function SongsLibrary(props: {
   songs: SongLibraryItem[];
   onAddToBuilder: (song: SongLibraryItem) => void;
   onStartNow: (song: SongLibraryItem) => void;
   paywallEntryPoint: PaywallEntryPoint | null;
+  premiumContentGate: FeatureGate | null;
   onOpenPricing: () => void;
 }) {
-  const { songs, onAddToBuilder, onStartNow, paywallEntryPoint, onOpenPricing } = props;
+  const { songs, onAddToBuilder, onStartNow, paywallEntryPoint, premiumContentGate, onOpenPricing } = props;
   const [query, setQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<"all" | SongLibraryItem["level"]>("all");
 
@@ -1704,6 +1744,14 @@ export function SongsLibrary(props: {
       </GlowCard>
 
       {paywallEntryPoint ? <PaywallEntryCard entryPoint={paywallEntryPoint} onOpenPricing={onOpenPricing} /> : null}
+
+      {premiumContentGate ? (
+        <LockedStateCard
+          gate={premiumContentGate}
+          onOpenPricing={onOpenPricing}
+          testID="songs-locked-premium-content"
+        />
+      ) : null}
     </ScrollView>
   );
 }
@@ -1718,6 +1766,7 @@ export function ProfileAchievements(props: {
   onOpenPricing: () => void;
   onRestorePurchases: () => void;
   restoreMessage: string | null;
+  planManagementGate: FeatureGate | null;
 }) {
   const {
     levelState,
@@ -1729,6 +1778,7 @@ export function ProfileAchievements(props: {
     onOpenPricing,
     onRestorePurchases,
     restoreMessage,
+    planManagementGate,
   } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
@@ -1785,6 +1835,15 @@ export function ProfileAchievements(props: {
           </AppButton>
         </View>
       </GlowCard>
+
+      {planManagementGate ? (
+        <LockedStateCard
+          gate={planManagementGate}
+          variant="action"
+          onOpenPricing={onOpenPricing}
+          testID="profile-locked-plan-management"
+        />
+      ) : null}
 
       <GlowCard>
         <Text style={styles.cardLabel}>Starter Plan</Text>
@@ -2397,6 +2456,8 @@ export const styles = StyleSheet.create({
   dashboardActionCard: { gap: 12 },
   pricingEntryCard: { gap: 12, borderColor: "rgba(250,204,21,0.24)", backgroundColor: "rgba(250,204,21,0.08)" },
   paywallEntryCard: { gap: 12, borderColor: "rgba(230,126,0,0.32)", backgroundColor: "rgba(230,126,0,0.08)" },
+  lockedCard: { gap: 12, borderColor: "rgba(229,62,62,0.28)", backgroundColor: "rgba(229,62,62,0.08)" },
+  lockedActionCard: { gap: 12, borderColor: "rgba(230,126,0,0.28)", backgroundColor: "rgba(17,13,9,0.52)" },
   dashboardComebackCard: { gap: 10, borderColor: "rgba(29,63,120,0.32)", backgroundColor: "rgba(29,63,120,0.12)" },
   dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },

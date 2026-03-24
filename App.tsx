@@ -56,6 +56,7 @@ export default function App() {
     badges,
     builderDrills,
     builderError,
+    canAccessFeature,
     createTemplate,
     deleteTemplate,
     drillBpmInput,
@@ -65,6 +66,7 @@ export default function App() {
     drillRandomizerKindInput,
     duplicateTemplate,
     entitlements,
+    getFeatureAvailability,
     goalError,
     goalSettings,
     goalTarget,
@@ -159,6 +161,18 @@ export default function App() {
   const completedSessions = useMemo(
     () => history.filter((entry) => entry.completed).length,
     [history],
+  );
+  const premiumContentGate = useMemo(
+    () => (canAccessFeature("premium-content") ? null : getFeatureAvailability("premium-content")),
+    [canAccessFeature, getFeatureAvailability],
+  );
+  const advancedPracticeGate = useMemo(
+    () => (canAccessFeature("advanced-practice") ? null : getFeatureAvailability("advanced-practice")),
+    [canAccessFeature, getFeatureAvailability],
+  );
+  const planManagementGate = useMemo(
+    () => (canAccessFeature("plan-management") ? null : getFeatureAvailability("plan-management")),
+    [canAccessFeature, getFeatureAvailability],
   );
   const songsPaywallEntryPoint = useMemo(
     () => buildPaywallEntryPoint({ surface: "songs", currentPlanId: entitlements.planId }),
@@ -389,6 +403,7 @@ export default function App() {
                 onAddToBuilder={addSongToBuilder}
                 onStartNow={startSongNow}
                 paywallEntryPoint={songsPaywallEntryPoint}
+                premiumContentGate={premiumContentGate}
                 onOpenPricing={() => openPricingScreen("songs")}
               />
             ) : null}
@@ -416,6 +431,7 @@ export default function App() {
                 onOpenPricing={() => openPricingScreen("profile")}
                 onRestorePurchases={restorePurchases}
                 restoreMessage={restoreMessage}
+                planManagementGate={planManagementGate}
               />
             ) : null}
 
@@ -472,6 +488,7 @@ export default function App() {
                 averageBpm={sessionOverview.averageBpm}
                 bpmRangeLabel={sessionOverview.bpmRangeLabel}
                 paywallEntryPoint={overviewPaywallEntryPoint}
+                advancedPracticeGate={advancedPracticeGate}
                 onBack={() => setScreen("builder")}
                 onStartSession={activeRuntime.startSession}
                 onOpenPricing={() => openPricingScreen("overview")}
