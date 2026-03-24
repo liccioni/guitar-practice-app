@@ -18,6 +18,7 @@ import {
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
+import { buildCurrentPlanSummary } from "../../app/planManagement";
 import type { PaywallEntryPoint } from "../../app/paywallEntryPoints";
 import { buildPricingPlanCards, buildPricingScreenSummary } from "../../app/pricingPlans";
 import { buildProgressMilestones } from "../../app/progressSignals";
@@ -1715,19 +1716,26 @@ export function ProfileAchievements(props: {
   entitlements: EntitlementState;
   onResetOnboarding: () => void;
   onOpenPricing: () => void;
+  onRestorePurchases: () => void;
+  restoreMessage: string | null;
 }) {
-  const { levelState, totalXp, badges, onboardingState, entitlements, onResetOnboarding, onOpenPricing } = props;
+  const {
+    levelState,
+    totalXp,
+    badges,
+    onboardingState,
+    entitlements,
+    onResetOnboarding,
+    onOpenPricing,
+    onRestorePurchases,
+    restoreMessage,
+  } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
     6,
     Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100),
   );
-  const currentPlanLabel =
-    entitlements.planId === "premium-lifetime"
-      ? "Lifetime"
-      : entitlements.planId === "premium-monthly"
-        ? "Monthly"
-        : "Free";
+  const currentPlanSummary = buildCurrentPlanSummary(entitlements);
 
   return (
     <ScrollView style={styles.homeScroll} contentContainerStyle={styles.homeScrollContent} testID="profile-screen">
@@ -1761,13 +1769,21 @@ export function ProfileAchievements(props: {
 
       <GlowCard>
         <Text style={styles.cardLabel}>Plan</Text>
-        <Text style={styles.heroSubline}>{currentPlanLabel} plan</Text>
-        <Text style={styles.helperText}>
-          Review the paid offer in one place so future upgrade entry points can all route here.
-        </Text>
-        <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenPricing} testID="profile-open-pricing">
-          <Text style={styles.smallActionText}>Open Pricing</Text>
-        </AppButton>
+        <Text style={styles.heroSubline}>{currentPlanSummary.title}</Text>
+        <Text style={styles.helperText}>{currentPlanSummary.statusLabel}</Text>
+        <Text style={styles.helperText}>{currentPlanSummary.detail}</Text>
+        {currentPlanSummary.renewalLabel ? (
+          <Text style={styles.helperText}>{currentPlanSummary.renewalLabel}</Text>
+        ) : null}
+        {restoreMessage ? <Text style={styles.helperText}>{restoreMessage}</Text> : null}
+        <View style={styles.inlineRow}>
+          <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenPricing} testID="profile-open-pricing">
+            <Text style={styles.smallActionText}>Open Pricing</Text>
+          </AppButton>
+          <AppButton size="chip" shape="chip" variant="secondary" onPress={onRestorePurchases} testID="profile-restore-purchases">
+            <Text style={styles.smallActionText}>Restore Purchases</Text>
+          </AppButton>
+        </View>
       </GlowCard>
 
       <GlowCard>
@@ -1787,10 +1803,13 @@ export function PricingScreen(props: {
   entitlements: EntitlementState;
   onBack: () => void;
   onSelectPlan: (planId: EntitlementPlanId) => void;
+  onRestorePurchases: () => void;
+  restoreMessage: string | null;
 }) {
-  const { entitlements, onBack, onSelectPlan } = props;
+  const { entitlements, onBack, onSelectPlan, onRestorePurchases, restoreMessage } = props;
   const summary = buildPricingScreenSummary(entitlements.planId);
   const planCards = buildPricingPlanCards(entitlements.planId);
+  const currentPlanSummary = buildCurrentPlanSummary(entitlements);
 
   return (
     <ScrollView
@@ -1810,6 +1829,28 @@ export function PricingScreen(props: {
         <Text style={styles.cardLabel}>{summary.eyebrow}</Text>
         <Text style={styles.heroHeadline}>{summary.title}</Text>
         <Text style={styles.heroSubline}>{summary.subtitle}</Text>
+      </GlowCard>
+
+      <GlowCard style={styles.pricingCurrentPlanCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.dashboardActionBlock}>
+            <Text style={styles.cardLabel}>Current Plan</Text>
+            <Text style={styles.heroSubline}>{currentPlanSummary.title}</Text>
+          </View>
+          <Text style={styles.levelChip}>{currentPlanSummary.statusLabel}</Text>
+        </View>
+        <Text style={styles.helperText}>{currentPlanSummary.detail}</Text>
+        {currentPlanSummary.renewalLabel ? <Text style={styles.helperText}>{currentPlanSummary.renewalLabel}</Text> : null}
+        {restoreMessage ? <Text style={styles.helperText}>{restoreMessage}</Text> : null}
+        <AppButton
+          size="chip"
+          shape="pill"
+          variant="secondary"
+          onPress={onRestorePurchases}
+          testID="pricing-restore-purchases"
+        >
+          <Text style={styles.smallActionText}>Restore Purchases</Text>
+        </AppButton>
       </GlowCard>
 
       <GlowCard>
@@ -2572,6 +2613,7 @@ export const styles = StyleSheet.create({
   stitchSummaryMiniLabel: { color: COLORS.muted, fontSize: 13, fontWeight: "700" },
   stitchSummaryStatValue: { color: COLORS.text, fontSize: 22, fontWeight: "800" },
   pricingHeroCard: { gap: 10, borderColor: "rgba(250,204,21,0.24)", backgroundColor: "rgba(250,204,21,0.08)" },
+  pricingCurrentPlanCard: { gap: 10 },
   pricingComparisonList: { gap: 10 },
   pricingComparisonRow: { gap: 6, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
   pricingComparisonValues: { gap: 2 },

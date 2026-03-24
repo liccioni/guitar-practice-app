@@ -1,10 +1,11 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
 import { buildComebackPrompt } from "./src/app/comebackPrompts";
+import { restoreLocalPurchases } from "./src/app/planManagement";
 import { buildPaywallEntryPoint } from "./src/app/paywallEntryPoints";
 import { createLocalPlanSelection } from "./src/app/pricingPlans";
 import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
@@ -108,6 +109,7 @@ export default function App() {
 
   type PricingReturnScreen = Exclude<Screen, "active" | "complete" | "pricing">;
   const pricingReturnScreen = useRef<PricingReturnScreen>("profile");
+  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const rewardScale = useRef(new Animated.Value(0.92)).current;
@@ -315,7 +317,13 @@ export default function App() {
 
   function selectPricingPlan(planId: EntitlementPlanId): void {
     setEntitlements(createLocalPlanSelection(planId, new Date().toISOString()));
+    setRestoreMessage(null);
     closePricingScreen();
+  }
+
+  function restorePurchases(): void {
+    const result = restoreLocalPurchases(entitlements);
+    setRestoreMessage(result.message);
   }
 
   function resetToHome(): void {
@@ -406,6 +414,8 @@ export default function App() {
                 entitlements={entitlements}
                 onResetOnboarding={resetOnboardingQuestionnaire}
                 onOpenPricing={() => openPricingScreen("profile")}
+                onRestorePurchases={restorePurchases}
+                restoreMessage={restoreMessage}
               />
             ) : null}
 
@@ -414,6 +424,8 @@ export default function App() {
                 entitlements={entitlements}
                 onBack={closePricingScreen}
                 onSelectPlan={selectPricingPlan}
+                onRestorePurchases={restorePurchases}
+                restoreMessage={restoreMessage}
               />
             ) : null}
 
