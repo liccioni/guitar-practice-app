@@ -2,13 +2,25 @@ appId: net.liccioni.guitarpractice
 name: Starter questionnaire builds a suggested session
 ---
 - runFlow: ../subflows/launch-home.yaml
+- swipe:
+    direction: UP
+- swipe:
+    direction: UP
 - tapOn:
     id: onboarding-level-beginner
+    optional: true
+- tapOn:
+    id: onboarding-duration-20
+    optional: true
 - assertVisible:
     id: onboarding-apply-suggestion
 - tapOn:
     id: onboarding-apply-suggestion
 - assertVisible:
-    id: builder-start-session
+    id: overview-screen
+- swipe:
+    direction: UP
+- tapOn:
+    id: overview-start-session
 - assertVisible:
-    id: builder-drill-count
+    id: active-screen
