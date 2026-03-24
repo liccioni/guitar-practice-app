@@ -25,9 +25,7 @@ if [[ ! -x "$HOME/.maestro/bin/maestro" ]] && ! command -v maestro >/dev/null 2>
   bash scripts/maestro-install.sh
 fi
 
-if [[ ! -d ios ]]; then
-  npm run e2e:prebuild:ios
-fi
+npm run e2e:prebuild:ios
 
 npm run e2e:patch:ios
 bash scripts/detox-build-ios.sh
