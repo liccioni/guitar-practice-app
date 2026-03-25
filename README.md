@@ -52,6 +52,7 @@ Migration notes and Detox overlap:
 ## Core Docs
 - Spec: `docs/SPEC.md`
 - Runbook: `docs/PROJECT_RUNBOOK.md`
+- Release captain checklist: `docs/RELEASE_CAPTAIN_CHECKLIST.md`
 - Device QA checklist: `docs/DEVICE_QA_CHECKLIST.md`
 - Release notes: `docs/RELEASE_NOTES.md`
 - Release configuration: `docs/RELEASE_CONFIGURATION.md`

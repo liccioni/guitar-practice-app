@@ -56,3 +56,6 @@ npm run e2e:android:smoke
 
 ## 10. Release Configuration
 - `docs/RELEASE_CONFIGURATION.md`
+
+## 11. Release Captain Checklist
+- `docs/RELEASE_CAPTAIN_CHECKLIST.md`

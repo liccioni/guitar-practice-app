@@ -53,6 +53,9 @@ npm run e2e:android:smoke
 Device QA:
 - [docs/DEVICE_QA_CHECKLIST.md](/Users/liccioni/CodexProjects/fretline/docs/DEVICE_QA_CHECKLIST.md)
 
+Release captain checklist:
+- [docs/RELEASE_CAPTAIN_CHECKLIST.md](/Users/liccioni/CodexProjects/fretline/docs/RELEASE_CAPTAIN_CHECKLIST.md)
+
 Build preparation:
 
 ```bash
@@ -110,3 +113,4 @@ These are currently acceptable, but should stay explicit:
 - [README.md](/Users/liccioni/CodexProjects/fretline/README.md)
 - [docs/PROJECT_RUNBOOK.md](/Users/liccioni/CodexProjects/fretline/docs/PROJECT_RUNBOOK.md)
 - [docs/DEVICE_QA_CHECKLIST.md](/Users/liccioni/CodexProjects/fretline/docs/DEVICE_QA_CHECKLIST.md)
+- [docs/RELEASE_CAPTAIN_CHECKLIST.md](/Users/liccioni/CodexProjects/fretline/docs/RELEASE_CAPTAIN_CHECKLIST.md)
