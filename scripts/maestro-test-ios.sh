@@ -7,6 +7,7 @@ export MAESTRO_CLI_NO_ANALYTICS=1
 
 SIMULATOR_NAME="${MAESTRO_DEVICE:-${DETOX_DEVICE:-iPhone 16e}}"
 OUTPUT_DIR="${MAESTRO_OUTPUT_DIR:-artifacts/maestro}"
+APP_ID="${MAESTRO_APP_ID:-$(node -p "require('./app.json').expo.ios.bundleIdentifier")}"
 
 if [[ ! -x "$HOME/.maestro/bin/maestro" ]] && ! command -v maestro >/dev/null 2>&1; then
   echo "Maestro CLI is not installed. Run: npm run e2e:maestro:install" >&2
@@ -18,6 +19,12 @@ if [[ -z "$UDID" ]]; then
   echo "Could not find available iOS simulator named: $SIMULATOR_NAME" >&2
   exit 1
 fi
+
+cleanup() {
+  xcrun simctl terminate "$UDID" "$APP_ID" >/dev/null 2>&1 || true
+}
+
+trap cleanup EXIT
 
 mkdir -p "$OUTPUT_DIR"
 maestro test \
