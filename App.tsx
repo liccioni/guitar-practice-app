@@ -400,7 +400,14 @@ export default function App() {
                 onSaveOnboardingAnswers={saveOnboardingAnswers}
                 onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
                 onResetOnboarding={resetOnboardingQuestionnaire}
-                onStartPractice={startPracticeFlow}
+                onStartPractice={() => {
+                  if (isFeatureEnabled("session_overview")) {
+                    startPracticeFlow();
+                    return;
+                  }
+
+                  activeRuntime.startSession();
+                }}
                 onOpenSessions={() => setScreen("sessions")}
                 showDashboardFeedback={isFeatureEnabled("dashboard_feedback_loops")}
               />
@@ -499,7 +506,7 @@ export default function App() {
                 onReorderDrills={reorderDrillsInTemplate}
                 onAddDrill={addDrillToTemplate}
                 onStartSessionDirect={activeRuntime.startSession}
-                onStartSession={() => {
+                onPreviewSession={() => {
                   if (isFeatureEnabled("session_overview")) {
                     setScreen("overview");
                     return;
@@ -507,6 +514,7 @@ export default function App() {
 
                   activeRuntime.startSession();
                 }}
+                onStartSession={activeRuntime.startSession}
               />
             ) : null}
 

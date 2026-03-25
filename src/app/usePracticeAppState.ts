@@ -146,7 +146,7 @@ export function usePracticeAppState() {
   }
 
   function startPracticeFlow(): void {
-    setScreen("builder");
+    setScreen("overview");
   }
 
   const canAccessFeature = useCallback((featureId: EntitlementFeatureId): boolean => {

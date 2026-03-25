@@ -1,7 +1,11 @@
 appId: net.liccioni.guitarpractice
 ---
 - tapOn:
-    id: home-start-practice
+    id: home-quick-start-practice
+- assertVisible:
+    text: Sessions
+- tapOn:
+    text: Open Builder
 - extendedWaitUntil:
     visible:
       id: builder-start-session

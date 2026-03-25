@@ -5,14 +5,10 @@ name: Builder smoke starts and completes a session
 - runFlow: ../subflows/open-builder-from-home.yaml
 - assertVisible:
     id: builder-drill-count
-- tapOn:
-    id: builder-start-session
 - assertVisible:
-    id: overview-screen
-- swipe:
-    direction: UP
+    id: builder-start-session
 - tapOn:
-    id: overview-start-session
+    id: builder-start-session-control
 - assertVisible:
     id: active-screen
 - tapOn:
