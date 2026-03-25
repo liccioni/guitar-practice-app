@@ -761,6 +761,17 @@ export function SessionBuilder(props: {
     (Number.isFinite(parsedRandomEveryBars) && parsedRandomEveryBars >= 1 && parsedRandomEveryBars <= 16);
   const useCompactDrillCard = width <= DRILL_CARD_COMPACT_MAX_WIDTH;
   const drillTitleLineLimit = useCompactDrillCard ? 4 : 2;
+  const [showCueOptions, setShowCueOptions] = useState(drillRandomizerKindInput !== "none");
+
+  useEffect(() => {
+    setShowCueOptions(drillRandomizerKindInput !== "none");
+  }, [drillRandomizerKindInput, selectedDrillId]);
+
+  useEffect(() => {
+    if (drillRandomizerKindInput !== "none") {
+      setShowCueOptions(true);
+    }
+  }, [drillRandomizerKindInput]);
 
   function handleSaveTemplatePress(): void {
     if (!isTemplateNameValid) return;
@@ -898,6 +909,7 @@ export function SessionBuilder(props: {
         </View>
         {selectedDrillId === item.id ? (
           <View style={styles.drillInlineEditor}>
+            <Text style={styles.builderEditorSectionLabel}>Core setup</Text>
             <TextInput
               value={drillNameInput}
               onChangeText={onDrillNameInput}
@@ -906,100 +918,130 @@ export function SessionBuilder(props: {
               style={styles.templateInput}
               testID="builder-drill-name-input"
             />
-            <View style={styles.inlineRow}>
-              <TextInput
-                value={drillDurationInput}
-                onChangeText={onDrillDurationInput}
-                keyboardType="number-pad"
-                placeholder="Minutes (1-30)"
-                placeholderTextColor={COLORS.muted}
-                style={styles.timeInput}
-                testID="builder-drill-duration-input"
-              />
-              <TextInput
-                value={drillBpmInput}
-                onChangeText={onDrillBpmInput}
-                keyboardType="number-pad"
-                placeholder="BPM (40-240)"
-                placeholderTextColor={COLORS.muted}
-                style={styles.timeInput}
-                testID="builder-drill-bpm-input"
-              />
-            </View>
-            <View style={styles.inlineRow}>
-              <TouchableOpacity
-                style={styles.pillButton}
-                onPress={() => nudgeDuration(-1)}
-                testID="builder-drill-duration-decrement"
-              >
-                <Text style={styles.pillButtonText}>-1 min</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.pillButton}
-                onPress={() => nudgeDuration(1)}
-                testID="builder-drill-duration-increment"
-              >
-                <Text style={styles.pillButtonText}>+1 min</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.pillButton}
-                onPress={() => nudgeBpm(-5)}
-                testID="builder-drill-bpm-decrement"
-              >
-                <Text style={styles.pillButtonText}>-5 BPM</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.pillButton}
-                onPress={() => nudgeBpm(5)}
-                testID="builder-drill-bpm-increment"
-              >
-                <Text style={styles.pillButtonText}>+5 BPM</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.helperText}>Random cue (optional)</Text>
-            <View style={styles.templatePillsRow}>
-              {RANDOMIZER_KIND_OPTIONS.map((option) => (
-                <AppChip
-                  key={option.value}
-                  selected={drillRandomizerKindInput === option.value}
-                  onPress={() => onDrillRandomizerKindInput(option.value)}
-                  testID={`builder-randomizer-${option.value}`}
-                >
-                  <Text style={styles.templatePillText}>{option.label}</Text>
-                </AppChip>
-              ))}
-            </View>
-            {drillRandomizerKindInput !== "none" ? (
-              <>
+            <View style={styles.builderEditorGrid}>
+              <View style={styles.builderEditorField}>
+                <Text style={styles.builderEditorFieldLabel}>Duration</Text>
+                <TextInput
+                  value={drillDurationInput}
+                  onChangeText={onDrillDurationInput}
+                  keyboardType="number-pad"
+                  placeholder="Minutes (1-30)"
+                  placeholderTextColor={COLORS.muted}
+                  style={styles.timeInput}
+                  testID="builder-drill-duration-input"
+                />
                 <View style={styles.inlineRow}>
-                  <TextInput
-                    value={drillRandomEveryBarsInput}
-                    onChangeText={onDrillRandomEveryBarsInput}
-                    keyboardType="number-pad"
-                    placeholder="Every N bars (1-16)"
-                    placeholderTextColor={COLORS.muted}
-                    style={styles.timeInput}
-                    testID="builder-random-bars-input"
-                  />
                   <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeRandomBars(-1)}
-                    testID="builder-random-bars-decrement"
+                    style={[styles.pillButton, styles.builderMiniPill]}
+                    onPress={() => nudgeDuration(-1)}
+                    testID="builder-drill-duration-decrement"
                   >
-                    <Text style={styles.pillButtonText}>-1 bar</Text>
+                    <Text style={styles.pillButtonText}>-1 min</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeRandomBars(1)}
-                    testID="builder-random-bars-increment"
+                    style={[styles.pillButton, styles.builderMiniPill]}
+                    onPress={() => nudgeDuration(1)}
+                    testID="builder-drill-duration-increment"
                   >
-                    <Text style={styles.pillButtonText}>+1 bar</Text>
+                    <Text style={styles.pillButtonText}>+1 min</Text>
                   </TouchableOpacity>
                 </View>
+              </View>
+              <View style={styles.builderEditorField}>
+                <Text style={styles.builderEditorFieldLabel}>Tempo</Text>
+                <TextInput
+                  value={drillBpmInput}
+                  onChangeText={onDrillBpmInput}
+                  keyboardType="number-pad"
+                  placeholder="BPM (40-240)"
+                  placeholderTextColor={COLORS.muted}
+                  style={styles.timeInput}
+                  testID="builder-drill-bpm-input"
+                />
+                <View style={styles.inlineRow}>
+                  <TouchableOpacity
+                    style={[styles.pillButton, styles.builderMiniPill]}
+                    onPress={() => nudgeBpm(-5)}
+                    testID="builder-drill-bpm-decrement"
+                  >
+                    <Text style={styles.pillButtonText}>-5 BPM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.pillButton, styles.builderMiniPill]}
+                    onPress={() => nudgeBpm(5)}
+                    testID="builder-drill-bpm-increment"
+                  >
+                    <Text style={styles.pillButtonText}>+5 BPM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.builderDisclosureRow}
+              onPress={() => setShowCueOptions((current) => !current)}
+              testID="builder-cue-options-toggle"
+            >
+              <View style={styles.builderDisclosureBody}>
+                <Text style={styles.builderEditorSectionLabel}>Cue options</Text>
                 <Text style={styles.helperText}>
-                  During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
+                  {drillRandomizerKindInput === "none"
+                    ? "Off by default. Open if you want note or triad cueing."
+                    : `Using ${drillRandomizerKindInput} cues every ${drillRandomEveryBarsInput || "?"} bars.`}
                 </Text>
-              </>
+              </View>
+              <Text style={styles.builderDisclosureGlyph}>{showCueOptions ? "−" : "+"}</Text>
+            </TouchableOpacity>
+            {showCueOptions ? (
+              <View style={styles.builderSecondaryEditor}>
+                <View style={styles.templatePillsRow}>
+                  {RANDOMIZER_KIND_OPTIONS.map((option) => (
+                    <AppChip
+                      key={option.value}
+                      selected={drillRandomizerKindInput === option.value}
+                      onPress={() => onDrillRandomizerKindInput(option.value)}
+                      testID={`builder-randomizer-${option.value}`}
+                    >
+                      <Text style={styles.templatePillText}>{option.label}</Text>
+                    </AppChip>
+                  ))}
+                </View>
+                {drillRandomizerKindInput !== "none" ? (
+                  <>
+                    <View style={styles.builderCueBarsRow}>
+                      <TextInput
+                        value={drillRandomEveryBarsInput}
+                        onChangeText={onDrillRandomEveryBarsInput}
+                        keyboardType="number-pad"
+                        placeholder="Every N bars (1-16)"
+                        placeholderTextColor={COLORS.muted}
+                        style={styles.timeInput}
+                        testID="builder-random-bars-input"
+                      />
+                      <TouchableOpacity
+                        style={[styles.pillButton, styles.builderMiniPill]}
+                        onPress={() => nudgeRandomBars(-1)}
+                        testID="builder-random-bars-decrement"
+                      >
+                        <Text style={styles.pillButtonText}>-1 bar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.pillButton, styles.builderMiniPill]}
+                        onPress={() => nudgeRandomBars(1)}
+                        testID="builder-random-bars-increment"
+                      >
+                        <Text style={styles.pillButtonText}>+1 bar</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.helperText}>
+                      During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.helperText}>
+                    Turn cueing on when you want the app to throw a fresh note, triad, or finger pattern into the rep.
+                  </Text>
+                )}
+              </View>
             ) : null}
             {!isDrillNameValid ? (
               <Text style={styles.helperText} testID="builder-drill-validation-name">
@@ -1021,7 +1063,7 @@ export function SessionBuilder(props: {
                 Random cue bars must be a number from 1 to 16.
               </Text>
             ) : null}
-            <Text style={styles.helperText}>Autosaves as you type.</Text>
+            <Text style={styles.helperText}>Autosaves as you type. Open cue options only when you need deeper control.</Text>
           </View>
         ) : null}
       </TouchableOpacity>
@@ -2687,6 +2729,16 @@ export const styles = StyleSheet.create({
   dragChipGlyph: { color: COLORS.accent, fontSize: 12, fontWeight: "900", letterSpacing: -1.2 },
   dragChipText: { color: COLORS.accent, fontWeight: "800", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
   drillInlineEditor: { borderTopWidth: 1, borderTopColor: COLORS.divider, paddingTop: 10, gap: 8 },
+  builderEditorSectionLabel: { color: COLORS.accentAlt, fontSize: 12, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase" },
+  builderEditorGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  builderEditorField: { flex: 1, minWidth: 140, gap: 8 },
+  builderEditorFieldLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
+  builderMiniPill: { minWidth: 0, flex: 1, paddingHorizontal: 10 },
+  builderDisclosureRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingTop: 4 },
+  builderDisclosureBody: { flex: 1, gap: 2 },
+  builderDisclosureGlyph: { color: COLORS.accent, fontSize: 22, lineHeight: 22, fontWeight: "700" },
+  builderSecondaryEditor: { gap: 8, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, padding: 12 },
+  builderCueBarsRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   drillXp: { color: COLORS.xp, fontWeight: "800", fontSize: 18, minWidth: 70, textAlign: "right", marginTop: 2 },
   drillXpCompact: { minWidth: 0, textAlign: "left", marginTop: 4 },
   activeCard: { alignItems: "center", justifyContent: "center", paddingVertical: 12 },
