@@ -73,6 +73,12 @@ PR description must include:
 - screenshots if UI was modified
 - notes about any limitations or follow-up work
 
+PR completion rule:
+
+- do not describe a PR as complete, ready, or safe to merge until the relevant verification for the changed surface has passed on that branch
+- if UI, navigation, CTA hierarchy, screen structure, or test IDs changed, run the relevant E2E flow before opening the PR or recommending merge
+- if native build, Expo prebuild, simulator install, or generated iOS/Android project behavior changed, run the full corresponding E2E prepare + test path before opening the PR or recommending merge
+
 Never push changes directly to main or master.
 
 All work must go through pull requests.
@@ -105,6 +111,22 @@ Before opening the PR:
 - check for obvious UI regressions
 - confirm no unrelated functionality was broken
 - if the issue extracts or moves critical orchestration logic, add or update focused regression tests around that behavior
+- run `npm run check` unless the user explicitly says not to
+
+Required branch verification based on change type:
+
+- if the change is logic-only and does not affect screens, navigation, hierarchy, or test hooks:
+  - `npm run check`
+- if the change affects UI copy, layout, screen hierarchy, CTA priority, navigation flow, or test IDs:
+  - `npm run check`
+  - `npm run e2e:maestro:test:ios`
+- if the change affects native build scripts, Expo prebuild output, simulator install paths, generated `ios/` state, or Maestro/Detox prepare steps:
+  - `npm run check`
+  - `npm run e2e:maestro:ios`
+- if the change affects Detox visual snapshot flows or screens explicitly covered by visual capture:
+  - run the relevant Detox visual flow in addition to the checks above
+
+If the required verification was not run, explicitly state that the task is not fully validated and do not present it as merge-ready.
 
 ------------------------------------------------
 
@@ -114,6 +136,12 @@ If you discover problems or improvements outside the issue scope:
 
 - do not implement them immediately
 - instead propose a new GitHub issue describing the problem
+
+Important scope boundary:
+
+- do not create a follow-up issue for a regression caused by the current branch until you have first attempted to fix it in the current branch
+- if the current branch changes UI flow, screen hierarchy, navigation, test hooks, or E2E assumptions, any broken automated flow caused by that change is part of the current issue and must be fixed before the PR is treated as complete
+- only create a separate follow-up issue when the problem is genuinely independent, pre-existing, or uncovered work that is not required to make the current issue safe
 
 ------------------------------------------------
 
