@@ -36,6 +36,8 @@
     "parity:stitch:sync-latest": "node scripts/stitch-parity-sync-latest.js",
     "parity:stitch:diff": "node scripts/stitch-parity-diff.js",
     "parity:stitch": "npm run parity:stitch:sync-latest && npm run parity:stitch:diff",
+    "screenshots:release:sync": "node scripts/release-screenshot-sync-latest.js",
+    "screenshots:release:ios": "npm run e2e:detox:visual:ios && npm run screenshots:release:sync",
     "stability:all": "bash scripts/stability-gate.sh",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run test:coverage",

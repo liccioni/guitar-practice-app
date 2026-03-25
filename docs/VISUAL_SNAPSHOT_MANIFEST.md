@@ -2,6 +2,8 @@
 
 Primary flow (`npm run e2e:detox:visual:ios`):
 - `01-home`
+- `01c-progress`
+- `01d-profile`
 - `02-builder`
 - `02b-builder-random-cue-preview`
 - `03-active`
