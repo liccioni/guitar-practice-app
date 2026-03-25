@@ -19,6 +19,7 @@ import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
 import { buildCurrentPlanSummary } from "../../app/planManagement";
+import { buildBeatPulseCopy, buildFocusAidCopy } from "../../app/practiceAids";
 import { buildLockedStateCopy } from "../../app/lockedStates";
 import type { PaywallEntryPoint } from "../../app/paywallEntryPoints";
 import { buildPricingPlanCards, buildPricingScreenSummary } from "../../app/pricingPlans";
@@ -2114,6 +2115,8 @@ export function ActivePractice(props: {
     inputRange: [0, 1],
     outputRange: [1, 1.06],
   });
+  const focusAidCopy = buildFocusAidCopy(focusModeEnabled);
+  const beatPulseCopy = buildBeatPulseCopy(beatPulseLocked, metronomeEnabled);
 
   return (
     <View style={styles.screenBody} testID="active-screen">
@@ -2129,9 +2132,7 @@ export function ActivePractice(props: {
           <Text style={styles.cardLabel}>Practice Mode</Text>
           <Text style={styles.helperText}>Level {levelState.level} • {totalXp} total XP</Text>
         </View>
-        <AppChip onPress={onToggleFocusMode} testID="active-focus-toggle">
-          <Text style={styles.pillButtonText}>{focusModeEnabled ? "Focus On" : "Focus Off"}</Text>
-        </AppChip>
+        <Text style={styles.metronomeStatusText}>Session {Math.max(1, Math.round(sessionProgress * 100))}% complete</Text>
       </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
@@ -2242,12 +2243,9 @@ export function ActivePractice(props: {
         </View>
 
         <View style={styles.metronomeStatusRow}>
-          <TouchableOpacity style={styles.inlineRow} onPress={onToggleBeatPulseLocked} testID="active-beat-pulse-toggle">
-            <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
-            <Text style={styles.helperText}>
-              Beat pulse {beatPulseLocked && metronomeEnabled ? "locked to the click" : "running free"}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.helperText}>
+            {metronomeEnabled ? "Click is active for steady time." : "Click is muted for silent rehearsal."}
+          </Text>
           <Text style={styles.metronomeStatusText}>{metronomeEnabled ? "Tap tempo feel" : "Silent rehearsal"}</Text>
         </View>
         {randomCueLabel ? (
@@ -2260,6 +2258,42 @@ export function ActivePractice(props: {
             <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
           </Animated.View>
         ) : null}
+      </GlowCard>
+
+      <GlowCard style={styles.practiceAidCard}>
+        <View style={styles.inlineRowSpace}>
+          <Text style={styles.cardLabel}>Practice Aids</Text>
+          <Text style={styles.helperText}>Tap to toggle</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.practiceAidRow}
+          onPress={onToggleFocusMode}
+          testID="active-focus-toggle"
+        >
+          <View style={styles.practiceAidBody}>
+            <Text style={styles.badgeLabel}>{focusAidCopy.title}</Text>
+            <Text style={styles.helperText}>{focusAidCopy.description}</Text>
+          </View>
+          <AppChip selected={focusModeEnabled}>
+            <Text style={styles.pillButtonText}>{focusAidCopy.statusLabel}</Text>
+          </AppChip>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.practiceAidRow}
+          onPress={onToggleBeatPulseLocked}
+          testID="active-beat-pulse-toggle"
+        >
+          <View style={styles.practiceAidLead}>
+            <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
+            <View style={styles.practiceAidBody}>
+              <Text style={styles.badgeLabel}>{beatPulseCopy.title}</Text>
+              <Text style={styles.helperText}>{beatPulseCopy.description}</Text>
+            </View>
+          </View>
+          <AppChip selected={beatPulseLocked && metronomeEnabled}>
+            <Text style={styles.pillButtonText}>{beatPulseCopy.statusLabel}</Text>
+          </AppChip>
+        </TouchableOpacity>
       </GlowCard>
 
       <Text style={styles.microcopy}>{microcopy}</Text>
@@ -2776,6 +2810,10 @@ export const styles = StyleSheet.create({
   metronomeToggleOff: { borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft },
   metronomeStatusRow: { marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   metronomeStatusText: { color: COLORS.accentAlt, fontSize: 12, fontWeight: "700" },
+  practiceAidCard: { gap: 10 },
+  practiceAidRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 2 },
+  practiceAidLead: { flexDirection: "row", alignItems: "flex-start", gap: 10, flex: 1 },
+  practiceAidBody: { flex: 1, gap: 2 },
   beatDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider },
   beatDotActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   randomCueCard: { marginTop: 10, borderRadius: RADII.chip, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, paddingHorizontal: 12, paddingVertical: 10, gap: 4 },
