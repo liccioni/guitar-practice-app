@@ -22,7 +22,7 @@ export type AnalyticsEvent =
   | {
       name: "session_started";
       params: {
-        source: "overview" | "builder" | "unknown";
+        source: "overview" | "builder" | "complete" | "unknown";
         sessionTemplateId: string;
         sessionName: string;
         drillCount: number;
@@ -130,7 +130,7 @@ export function trackStarterSessionReviewOpened(input: {
 }
 
 export function trackSessionStarted(input: {
-  source: "overview" | "builder" | "unknown";
+  source: "overview" | "builder" | "complete" | "unknown";
   template: SessionTemplate;
   drillCount: number;
 }): void {

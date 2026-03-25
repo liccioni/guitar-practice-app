@@ -2290,9 +2290,11 @@ export function SessionComplete(props: {
   badges: Badge[];
   rewardGlow: Animated.Value;
   rewardScale: Animated.Value;
+  onReplay: () => void;
+  onOpenBuilder: () => void;
   onContinue: () => void;
 }) {
-  const { sessionXp, leveledUp, levelState, totalXp, streak, badges, rewardGlow, rewardScale, onContinue } = props;
+  const { sessionXp, leveledUp, levelState, totalXp, streak, badges, rewardGlow, rewardScale, onReplay, onOpenBuilder, onContinue } = props;
   const [shared, setShared] = useState(false);
   const unlockedBadges = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
@@ -2362,17 +2364,40 @@ export function SessionComplete(props: {
         <Text style={styles.helperText}>Badges unlocked: {unlockedBadges}</Text>
       </GlowCard>
 
-      <AppButton variant="primary" onPress={onContinue} testID="complete-continue-button">
-        <Text style={styles.primaryCtaText}>Back to Practice Hub</Text>
-      </AppButton>
-      <AppButton
-        style={styles.secondaryCta}
-        variant="secondary"
-        onPress={() => setShared(true)}
-        testID="complete-share-button"
-      >
-        <Text style={styles.secondaryCtaText}>{shared ? "Summary copied. Ready to share." : "Share Achievements"}</Text>
-      </AppButton>
+      <GlowCard style={styles.completeNextCard}>
+        <Text style={styles.cardLabel}>Next Move</Text>
+        <Text style={styles.helperText}>
+          Keep the momentum with another pass, or jump back into Builder if you want to tune the routine first.
+        </Text>
+        <AppButton variant="primary" onPress={onReplay} testID="complete-replay-button">
+          <Text style={styles.primaryCtaText}>Replay Session</Text>
+        </AppButton>
+        <AppButton style={styles.secondaryCta} variant="secondary" onPress={onContinue} testID="complete-continue-button">
+          <Text style={styles.secondaryCtaText}>Back to Practice Hub</Text>
+        </AppButton>
+        <View style={styles.completeSecondaryActions}>
+          <AppButton
+            style={styles.completeChipAction}
+            variant="secondary"
+            size="chip"
+            shape="pill"
+            onPress={onOpenBuilder}
+            testID="complete-open-builder-button"
+          >
+            <Text style={styles.smallActionText}>Edit Session</Text>
+          </AppButton>
+          <AppButton
+            style={styles.completeChipAction}
+            variant="secondary"
+            size="chip"
+            shape="pill"
+            onPress={() => setShared(true)}
+            testID="complete-share-button"
+          >
+            <Text style={styles.smallActionText}>{shared ? "Summary copied" : "Share Summary"}</Text>
+          </AppButton>
+        </View>
+      </GlowCard>
     </ScrollView>
   );
 }
@@ -2651,6 +2676,9 @@ export const styles = StyleSheet.create({
   completeTopBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 46 },
   completeTopTitle: { color: COLORS.text, fontSize: 16, fontWeight: "700" },
   completeProgressCard: { gap: 8 },
+  completeNextCard: { gap: 12 },
+  completeSecondaryActions: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  completeChipAction: { flexGrow: 1 },
   levelUp: { color: COLORS.text, fontWeight: "800", fontSize: 16, marginTop: 6 },
   inlineRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   inlineRowSpace: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },

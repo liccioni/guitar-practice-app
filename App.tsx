@@ -559,6 +559,8 @@ export default function App() {
                 badges={badges.filter((badge) => badge.unlocked)}
                 rewardGlow={rewardGlow}
                 rewardScale={rewardScale}
+                onReplay={activeRuntime.startSession}
+                onOpenBuilder={() => setScreen("builder")}
                 onContinue={resetToHome}
               />
             ) : null}

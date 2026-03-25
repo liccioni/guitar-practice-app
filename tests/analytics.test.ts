@@ -123,4 +123,26 @@ describe("analytics contract", () => {
       }),
     ).not.toThrow();
   });
+
+  it("supports session replays starting from the completion screen", () => {
+    const track = vi.fn();
+    setAnalyticsClient({ track });
+
+    trackSessionStarted({
+      source: "complete",
+      template: TEMPLATE,
+      drillCount: 2,
+    });
+
+    expect(track).toHaveBeenCalledWith({
+      name: "session_started",
+      params: {
+        source: "complete",
+        sessionTemplateId: "template_1",
+        sessionName: "Starter Session",
+        drillCount: 2,
+        plannedDurationSec: 720,
+      },
+    });
+  });
 });
