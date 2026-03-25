@@ -203,7 +203,6 @@ export function getLevelState(totalXp: number): LevelState {
 
 export function HomeDashboard(props: {
   levelState: LevelState;
-  totalXp: number;
   streak: number;
   goalType: GoalType;
   goalCurrentValue: number;
@@ -214,29 +213,17 @@ export function HomeDashboard(props: {
   comebackPrompt: ComebackPrompt;
   badges: Badge[];
   storageError: string | null;
-  goalError: string | null;
-  reminderEnabled: boolean;
-  reminderTime: string;
-  reminderError: string | null;
   onboardingState: PracticeOnboardingState;
   onboardingSuggestion: ReturnType<typeof buildPracticeOnboardingSuggestion> | null;
-  onGoalTypeChange: (goalType: GoalType) => void;
-  onSaveGoalTarget: (target: string) => void;
-  onToggleReminder: () => void;
-  onSaveReminderTime: (time: string) => void;
   onSaveOnboardingAnswers: (answers: PracticeOnboardingAnswers) => void;
   onApplyOnboardingSuggestion: () => void;
   onResetOnboarding: () => void;
   onStartPractice: () => void;
   onOpenSessions: () => void;
-  onOpenPricing: () => void;
   showDashboardFeedback: boolean;
-  showPricingEntry: boolean;
-  showXpProgress: boolean;
 }) {
   const {
     levelState,
-    totalXp,
     streak,
     goalType,
     goalCurrentValue,
@@ -247,29 +234,16 @@ export function HomeDashboard(props: {
     comebackPrompt,
     badges,
     storageError,
-    goalError,
-    reminderEnabled,
-    reminderTime,
-    reminderError,
     onboardingState,
     onboardingSuggestion,
-    onGoalTypeChange,
-    onSaveGoalTarget,
-    onToggleReminder,
-    onSaveReminderTime,
     onSaveOnboardingAnswers,
     onApplyOnboardingSuggestion,
     onResetOnboarding,
     onStartPractice,
     onOpenSessions,
-    onOpenPricing,
     showDashboardFeedback,
-    showPricingEntry,
-    showXpProgress,
   } = props;
 
-  const [timeInput, setTimeInput] = useState(reminderTime);
-  const [goalTargetInput, setGoalTargetInput] = useState(String(goalTarget));
   const [levelInput, setLevelInput] = useState<GuitarLevel>(onboardingState.answers?.level ?? "beginner");
   const [durationInput, setDurationInput] = useState<PracticeDurationMinutes>(
     onboardingState.answers?.durationMinutes ?? 30,
@@ -294,14 +268,6 @@ export function HomeDashboard(props: {
       }),
     [goalCurrentValue, goalTarget, goalType, streak],
   );
-
-  useEffect(() => {
-    setTimeInput(reminderTime);
-  }, [reminderTime]);
-
-  useEffect(() => {
-    setGoalTargetInput(String(goalTarget));
-  }, [goalTarget]);
 
   useEffect(() => {
     if (!onboardingState.answers) return;
@@ -412,94 +378,18 @@ export function HomeDashboard(props: {
             <Text style={styles.statChipLabel}>NEXT LEVEL</Text>
           </View>
           <Text style={styles.statChipValue}>
-            {levelState.currentLevelXp}/{levelState.nextLevelXp} XP
+            {goalCurrentValue}/{goalTarget}
+            {goalUnitLabel}
           </Text>
         </View>
       </View>
 
-      {showXpProgress ? (
-        <GlowCard style={styles.dashboardXpCard}>
-          <View style={styles.inlineRowSpace}>
-            <View style={styles.dashboardActionBlock}>
-              <Text style={styles.cardLabel}>XP Progress</Text>
-              <Text style={styles.helperText}>{totalXp} total XP • Level {levelState.level}</Text>
-            </View>
-            <Text style={styles.levelChip}>Level {levelState.level + 1}</Text>
+      {!onboardingState.completed ? (
+        <GlowCard style={styles.stitchQuestionnaireCard}>
+          <View style={styles.stitchCardLabelRow}>
+            <View style={styles.homeQuestionIcon} />
+            <SectionHeader title="Build Your First Session" titleStyle={styles.stitchSectionTitle} />
           </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.helperText}>
-            {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward your next level.
-          </Text>
-        </GlowCard>
-      ) : null}
-
-      {showDashboardFeedback ? (
-        <GlowCard style={styles.dashboardActionCard}>
-          <View style={styles.inlineRowSpace}>
-            <View style={styles.dashboardActionBlock}>
-              <Text style={styles.cardLabel}>{dashboardFeedback.goalStatusLabel}</Text>
-              <Text style={styles.helperText}>{dashboardFeedback.goalStatusBody}</Text>
-            </View>
-            <View style={styles.dashboardActionDivider} />
-            <View style={styles.dashboardActionBlock}>
-              <Text style={styles.cardLabel}>{dashboardFeedback.streakStatusLabel}</Text>
-              <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
-            </View>
-          </View>
-        </GlowCard>
-      ) : null}
-
-      {showPricingEntry ? (
-        <GlowCard style={styles.pricingEntryCard}>
-          <View style={styles.inlineRowSpace}>
-            <View style={styles.dashboardActionBlock}>
-              <Text style={styles.cardLabel}>Premium Practice</Text>
-              <Text style={styles.helperText}>
-                Compare monthly and lifetime plans in one clear screen before upgrade prompts are added around the app.
-              </Text>
-            </View>
-            <Text style={styles.levelChip}>2 plans</Text>
-          </View>
-          <AppButton
-            size="chip"
-            shape="pill"
-            variant="secondary"
-            onPress={onOpenPricing}
-            testID="home-open-pricing"
-          >
-            <Text style={styles.smallActionText}>See Plans</Text>
-          </AppButton>
-        </GlowCard>
-      ) : null}
-
-      {comebackPrompt.kind !== "active" ? (
-        <GlowCard style={styles.dashboardComebackCard}>
-          <Text style={styles.cardLabel}>{comebackPrompt.homeTitle}</Text>
-          <Text style={styles.helperText}>{comebackPrompt.homeBody}</Text>
-          <View style={styles.inlineRow}>
-            <AppButton size="chip" shape="chip" variant="secondary" onPress={onStartPractice} testID="home-comeback-cta">
-              <Text style={styles.smallActionText}>{comebackPrompt.homeActionLabel}</Text>
-            </AppButton>
-            <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenSessions} testID="home-comeback-sessions">
-              <Text style={styles.smallActionText}>Open Sessions</Text>
-            </AppButton>
-          </View>
-        </GlowCard>
-      ) : null}
-
-      <GlowCard style={styles.stitchQuestionnaireCard}>
-        <View style={styles.stitchCardLabelRow}>
-          <View style={styles.homeQuestionIcon} />
-          <SectionHeader title="Build Your First Session" titleStyle={styles.stitchSectionTitle} />
-        </View>
-        {!onboardingState.completed ? (
           <>
             <Text style={styles.helperText}>
               Two quick choices are enough. Fretline will line up a starter session you can review before you play.
@@ -582,104 +472,32 @@ export function HomeDashboard(props: {
               </AppButton>
               <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding} testID="onboarding-retake">
                 <Text style={styles.smallActionText}>Retake Answers</Text>
-              </AppButton>
-            </View>
+                </AppButton>
+              </View>
           </>
-        )}
-      </GlowCard>
-
-      <GlowCard style={styles.dashboardSettingsCard}>
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardActionBlock}>
-            <SectionHeader
-              title="Practice Loop Settings"
-              subtitle="Tune today&apos;s target and your reminder without leaving the dashboard."
-              titleStyle={styles.stitchSectionTitle}
-            />
-          </View>
-        </View>
-
-        <Text style={styles.stitchQuestionLabel}>Goal type</Text>
-        <View style={styles.inlineRow}>
-          <AppChip style={styles.settingsChip} selected={goalType === "minutes"} onPress={() => onGoalTypeChange("minutes")} testID="dashboard-goal-type-minutes">
-            <Text style={styles.smallActionText}>Minutes</Text>
-          </AppChip>
-          <AppChip style={styles.settingsChip} selected={goalType === "sessions"} onPress={() => onGoalTypeChange("sessions")} testID="dashboard-goal-type-sessions">
-            <Text style={styles.smallActionText}>Sessions</Text>
-          </AppChip>
-          <AppChip style={styles.settingsChip} selected={goalType === "drills"} onPress={() => onGoalTypeChange("drills")} testID="dashboard-goal-type-drills">
-            <Text style={styles.smallActionText}>Drills</Text>
-          </AppChip>
-        </View>
-
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardSettingTextBlock}>
-            <Text style={styles.cardLabel}>Daily target</Text>
-            <Text style={styles.helperText}>Choose the amount that defines a good day of practice.</Text>
-          </View>
-          <View style={styles.dashboardSettingControls}>
-            <TextInput
-              value={goalTargetInput}
-              onChangeText={setGoalTargetInput}
-              keyboardType="number-pad"
-              placeholder="Target"
-              placeholderTextColor={COLORS.muted}
-              style={[styles.timeInput, styles.dashboardTargetInput]}
-              testID="dashboard-goal-target-input"
-            />
-            <AppButton
-              style={styles.dashboardSaveButton}
-              size="chip"
-              shape="chip"
-              variant="secondary"
-              onPress={() => onSaveGoalTarget(goalTargetInput)}
-              testID="dashboard-goal-target-save"
-            >
-              <Text style={styles.smallActionText}>Save</Text>
+        </GlowCard>
+      ) : comebackPrompt.kind !== "active" ? (
+        <GlowCard style={styles.dashboardComebackCard}>
+          <Text style={styles.cardLabel}>{comebackPrompt.homeTitle}</Text>
+          <Text style={styles.helperText}>{comebackPrompt.homeBody}</Text>
+          <View style={styles.inlineRow}>
+            <AppButton size="chip" shape="chip" variant="secondary" onPress={onStartPractice} testID="home-comeback-cta">
+              <Text style={styles.smallActionText}>{comebackPrompt.homeActionLabel}</Text>
+            </AppButton>
+            <AppButton size="chip" shape="chip" variant="secondary" onPress={onOpenSessions} testID="home-comeback-sessions">
+              <Text style={styles.smallActionText}>Open Sessions</Text>
             </AppButton>
           </View>
-        </View>
+        </GlowCard>
+      ) : showDashboardFeedback ? (
+        <GlowCard style={styles.homeFocusCard}>
+          <Text style={styles.cardLabel}>Today&apos;s Focus</Text>
+          <Text style={styles.badgeLabel}>{dashboardFeedback.goalStatusLabel}</Text>
+          <Text style={styles.helperText}>{dashboardFeedback.goalStatusBody}</Text>
+          <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
+        </GlowCard>
+      ) : null}
 
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardSettingTextBlock}>
-            <Text style={styles.cardLabel}>Daily reminder</Text>
-            <Text style={styles.helperText}>
-              {reminderEnabled ? "Reminder is active for your usual practice window." : "Turn on a reminder for a repeatable practice cue."}
-            </Text>
-          </View>
-          <AppChip
-            selected={reminderEnabled}
-            onPress={onToggleReminder}
-            testID="dashboard-reminder-toggle"
-          >
-            <Text style={styles.pillButtonText}>{reminderEnabled ? "On" : "Off"}</Text>
-          </AppChip>
-        </View>
-
-        <View style={styles.dashboardReminderRow}>
-          <TextInput
-            value={timeInput}
-            onChangeText={setTimeInput}
-            placeholder="18:00"
-            placeholderTextColor={COLORS.muted}
-            style={[styles.timeInput, styles.dashboardReminderInput]}
-            testID="dashboard-reminder-time-input"
-          />
-          <AppButton
-            style={styles.dashboardSaveButton}
-            size="chip"
-            shape="chip"
-            variant="secondary"
-            onPress={() => onSaveReminderTime(timeInput)}
-            testID="dashboard-reminder-time-save"
-          >
-            <Text style={styles.smallActionText}>Save Time</Text>
-          </AppButton>
-        </View>
-      </GlowCard>
-
-      {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
-      {reminderError ? <Text style={styles.errorText}>{reminderError}</Text> : null}
       {storageError ? <Text style={styles.errorText}>{storageError}</Text> : null}
       <View style={styles.hiddenCompatBlock}>
         <Text style={styles.cardLabel} testID="home-achievements-title">Achievements</Text>
@@ -2625,6 +2443,7 @@ export const styles = StyleSheet.create({
   lockedCard: { gap: 12, borderColor: "rgba(229,62,62,0.28)", backgroundColor: "rgba(229,62,62,0.08)" },
   lockedActionCard: { gap: 12, borderColor: "rgba(230,126,0,0.28)", backgroundColor: "rgba(17,13,9,0.52)" },
   dashboardComebackCard: { gap: 10, borderColor: "rgba(29,63,120,0.32)", backgroundColor: "rgba(29,63,120,0.12)" },
+  homeFocusCard: { gap: 8, borderColor: "rgba(230,126,0,0.18)", backgroundColor: "rgba(255,255,255,0.03)" },
   dashboardXpCard: { gap: 10 },
   dashboardActionBlock: { flex: 1, gap: 4 },
   dashboardActionDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.08)" },
