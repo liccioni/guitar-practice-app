@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "e2e:prebuild:ios": "rm -rf ios && expo prebuild --platform ios",
     "e2e:list:simulators": "xcrun simctl list devices available",
+    "e2e:ios:recover-simulator": "bash scripts/recover-ios-simulator.sh",
     "e2e:detox:build:ios": "npm run e2e:patch:ios && detox build -c ios.sim.debug",
     "e2e:detox:prepare:ios": "npm run e2e:prebuild:ios && npm run e2e:detox:build:ios",
     "e2e:detox:test:ios": "(command -v applesimutils >/dev/null 2>&1 || (echo \"Missing applesimutils. Install with: brew tap wix/brew && brew install applesimutils\" && exit 1)) && detox test -c ios.sim.debug",
