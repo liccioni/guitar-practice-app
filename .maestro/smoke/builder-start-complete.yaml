@@ -18,4 +18,8 @@ name: Builder smoke starts and completes a session
 - tapOn:
     id: active-force-complete
 - assertVisible:
+    id: complete-screen
+- swipe:
+    direction: UP
+- assertVisible:
     id: complete-continue-button
