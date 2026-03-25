@@ -214,10 +214,7 @@ export function HomeDashboard(props: {
   badges: Badge[];
   storageError: string | null;
   onboardingState: PracticeOnboardingState;
-  onboardingSuggestion: ReturnType<typeof buildPracticeOnboardingSuggestion> | null;
   onSaveOnboardingAnswers: (answers: PracticeOnboardingAnswers) => void;
-  onApplyOnboardingSuggestion: () => void;
-  onResetOnboarding: () => void;
   onStartPractice: () => void;
   onOpenSessions: () => void;
   showDashboardFeedback: boolean;
@@ -235,10 +232,7 @@ export function HomeDashboard(props: {
     badges,
     storageError,
     onboardingState,
-    onboardingSuggestion,
     onSaveOnboardingAnswers,
-    onApplyOnboardingSuggestion,
-    onResetOnboarding,
     onStartPractice,
     onOpenSessions,
     showDashboardFeedback,
@@ -390,91 +384,58 @@ export function HomeDashboard(props: {
             <View style={styles.homeQuestionIcon} />
             <SectionHeader title="Build Your First Session" titleStyle={styles.stitchSectionTitle} />
           </View>
-          <>
-            <Text style={styles.helperText}>
-              Two quick choices are enough. Fretline will line up a starter session you can review before you play.
-            </Text>
-            <Text style={styles.stitchQuestionLabel}>Step 1 · Current level</Text>
-            <View style={styles.stitchThreeCol}>
-              {(
-                [
-                  { id: "beginner", label: "Beginner" },
-                  { id: "intermediate", label: "Intermediate" },
-                  { id: "expert", label: "Expert" },
-                ] as const
-              ).map((level) => (
-                <AppChip
-                  key={level.id}
-                  style={styles.choiceChip}
-                  tone="choice"
-                  size="compact"
-                  selected={levelInput === level.id}
-                  onPress={() => {
-                    setLevelInput(level.id);
-                    submitOnboardingAnswers(level.id, durationInput);
-                  }}
-                  testID={`onboarding-level-${level.id}`}
-                >
-                  <Text style={[styles.stitchChoiceLabel, levelInput === level.id ? styles.stitchChoiceLabelActive : null]}>
-                    {level.label}
-                  </Text>
-                </AppChip>
-              ))}
-            </View>
+          <Text style={styles.helperText}>
+            Two quick choices are enough. Fretline will line up a starter session you can review before you play.
+          </Text>
+          <Text style={styles.stitchQuestionLabel}>Step 1 · Current level</Text>
+          <View style={styles.stitchThreeCol}>
+            {(
+              [
+                { id: "beginner", label: "Beginner" },
+                { id: "intermediate", label: "Intermediate" },
+                { id: "expert", label: "Expert" },
+              ] as const
+            ).map((level) => (
+              <AppChip
+                key={level.id}
+                style={styles.choiceChip}
+                tone="choice"
+                size="compact"
+                selected={levelInput === level.id}
+                onPress={() => {
+                  setLevelInput(level.id);
+                  submitOnboardingAnswers(level.id, durationInput);
+                }}
+                testID={`onboarding-level-${level.id}`}
+              >
+                <Text style={[styles.stitchChoiceLabel, levelInput === level.id ? styles.stitchChoiceLabelActive : null]}>
+                  {level.label}
+                </Text>
+              </AppChip>
+            ))}
+          </View>
 
-            <Text style={styles.stitchQuestionLabel}>Step 2 · Comfortable daily block</Text>
-            <View style={styles.stitchThreeCol}>
-              {([20, 30, 60] as const).map((minutes) => (
-                <AppChip
-                  key={minutes}
-                  style={styles.choiceChip}
-                  tone="choice"
-                  size="compact"
-                  selected={durationInput === minutes}
-                  onPress={() => {
-                    setDurationInput(minutes);
-                    submitOnboardingAnswers(levelInput, minutes);
-                  }}
-                  testID={`onboarding-duration-${minutes}`}
-                >
-                  <Text style={[styles.stitchChoiceLabel, durationInput === minutes ? styles.stitchChoiceLabelActive : null]}>
-                    {minutes} min
-                  </Text>
-                </AppChip>
-              ))}
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.cardLabel}>Starter session ready</Text>
-            <Text style={styles.helperText}>{onboardingSuggestion?.summary ?? "Your starter profile is saved."}</Text>
-            <View style={styles.onboardingPlanRow}>
-              <View style={styles.onboardingPlanChip}>
-                <Text style={styles.onboardingPlanChipText}>
-                  {onboardingSuggestion?.recommendedMinutes ?? goalTarget} min
+          <Text style={styles.stitchQuestionLabel}>Step 2 · Comfortable daily block</Text>
+          <View style={styles.stitchThreeCol}>
+            {([20, 30, 60] as const).map((minutes) => (
+              <AppChip
+                key={minutes}
+                style={styles.choiceChip}
+                tone="choice"
+                size="compact"
+                selected={durationInput === minutes}
+                onPress={() => {
+                  setDurationInput(minutes);
+                  submitOnboardingAnswers(levelInput, minutes);
+                }}
+                testID={`onboarding-duration-${minutes}`}
+              >
+                <Text style={[styles.stitchChoiceLabel, durationInput === minutes ? styles.stitchChoiceLabelActive : null]}>
+                  {minutes} min
                 </Text>
-              </View>
-              <View style={styles.onboardingPlanChip}>
-                <Text style={styles.onboardingPlanChipText}>
-                  {onboardingSuggestion?.drillCount ?? 0} drills
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.helperText}>
-              {onboardingSuggestion?.sessionName ?? onboardingState.lastSuggestedTemplateName}
-            </Text>
-            <Text style={styles.helperText}>
-              Review the plan first. You can still customize it before the session starts.
-            </Text>
-            <View style={styles.inlineRow}>
-              <AppButton size="chip" shape="chip" variant="secondary" onPress={onApplyOnboardingSuggestion} testID="onboarding-apply-suggestion">
-                <Text style={styles.smallActionText}>Review Starter Session</Text>
-              </AppButton>
-              <AppButton size="chip" shape="chip" variant="secondary" onPress={onResetOnboarding} testID="onboarding-retake">
-                <Text style={styles.smallActionText}>Retake Answers</Text>
-                </AppButton>
-              </View>
-          </>
+              </AppChip>
+            ))}
+          </View>
         </GlowCard>
       ) : comebackPrompt.kind !== "active" ? (
         <GlowCard style={styles.dashboardComebackCard}>
@@ -537,6 +498,7 @@ export function SessionBuilder(props: {
   onRemoveDrill: (id: string) => void;
   onReorderDrills: (ids: string[]) => void;
   onAddDrill: () => void;
+  useDragReorder: boolean;
   onStartSessionDirect: () => void;
   onPreviewSession: () => void;
   onStartSession: () => void;
@@ -569,6 +531,7 @@ export function SessionBuilder(props: {
     onRemoveDrill,
     onReorderDrills,
     onAddDrill,
+    useDragReorder,
     onStartSessionDirect,
     onPreviewSession,
     onStartSession,
@@ -594,6 +557,7 @@ export function SessionBuilder(props: {
   const useCompactDrillCard = width <= DRILL_CARD_COMPACT_MAX_WIDTH;
   const drillTitleLineLimit = useCompactDrillCard ? 4 : 2;
   const [showCueOptions, setShowCueOptions] = useState(drillRandomizerKindInput !== "none");
+  const builderListMountKey = useRef(`builder-list-${Date.now()}`);
 
   useEffect(() => {
     setShowCueOptions(drillRandomizerKindInput !== "none");
@@ -722,15 +686,17 @@ export function SessionBuilder(props: {
         </View>
 
         <View style={[styles.builderCardActions, useCompactDrillCard ? styles.builderCardActionsCompact : null]}>
-          <TouchableOpacity
-            style={[styles.dragChip, useCompactDrillCard ? styles.dragChipCompact : null]}
-            onLongPress={drag}
-            delayLongPress={120}
-            testID={index === 0 ? "builder-drag-first-handle" : `builder-drag-handle-${item.id}`}
-          >
-            <Text style={styles.dragChipGlyph}>⋮⋮</Text>
-            <Text style={styles.dragChipText}>Hold to move</Text>
-          </TouchableOpacity>
+          {useDragReorder ? (
+            <TouchableOpacity
+              style={[styles.dragChip, useCompactDrillCard ? styles.dragChipCompact : null]}
+              onLongPress={drag}
+              delayLongPress={120}
+              testID={index === 0 ? "builder-drag-first-handle" : `builder-drag-handle-${item.id}`}
+            >
+              <Text style={styles.dragChipGlyph}>⋮⋮</Text>
+              <Text style={styles.dragChipText}>Hold to move</Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             style={[styles.removeChip, useCompactDrillCard ? styles.removeChipCompact : null]}
             onPress={() => onRemoveDrill(item.id)}
@@ -902,168 +868,124 @@ export function SessionBuilder(props: {
     );
   }
 
-  return (
-    <View style={[styles.screenBody, styles.builderScreenBody]} testID="builder-screen">
+  const builderHeader = (
+    <View
+      style={[
+        styles.builderHeader,
+        Platform.OS === "android" ? styles.builderHeaderAndroidLayer : null,
+      ]}
+    >
+      <View style={styles.builderTopBar}>
+        <Pressable onPress={onBack} style={styles.builderIconAction}>
+          <Text style={styles.iconGlyph}>←</Text>
+        </Pressable>
+        <View style={styles.builderTopMeta}>
+          <Text style={styles.builderTopTitle}>Build Your Chain</Text>
+          <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
+        </View>
+        <View style={styles.builderTopActions}>
+          <TouchableOpacity
+            style={styles.builderNewChip}
+            onPress={onCreateTemplate}
+            testID="builder-template-new"
+          >
+            <Text style={styles.builderNewChipText}>New</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.builderIconAction} onPress={onDuplicateTemplate}>
+            <Text style={styles.iconGlyphMuted}>⧉</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.builderIconAction} onPress={onDeleteTemplate}>
+            <Text style={styles.iconGlyphMuted}>⌫</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.builderSaveChip, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
+            onPress={handleSaveTemplatePress}
+            disabled={!isTemplateNameValid}
+            testID="builder-template-save-button"
+          >
+            <Text style={styles.builderSaveChipText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
+
+      <GlowCard style={styles.builderHeroCard}>
+        <View style={styles.templatePillsRow}>
+          {templates.map((template) => (
+            <AppChip
+              key={template.id}
+              selected={template.id === selectedTemplateId}
+              onPress={() => onSelectTemplate(template.id)}
+            >
+              <Text style={styles.templatePillText}>{template.name}</Text>
+            </AppChip>
+          ))}
+        </View>
+
+        <TextInput
+          value={templateNameInput}
+          onChangeText={onTemplateNameInput}
+          placeholder="Session name"
+          placeholderTextColor={COLORS.muted}
+          style={styles.templateInput}
+          testID="builder-template-name-input"
+        />
+        {templateNameInput.length > 0 && !isTemplateNameValid ? (
+          <Text style={styles.helperText} testID="builder-template-name-validation">
+            Session name must be at least 3 characters.
+          </Text>
+        ) : null}
+
+        {builderError ? (
+          <Text style={styles.errorText} testID="builder-error-text">
+            {builderError}
+          </Text>
+        ) : null}
+      </GlowCard>
+
+      <Text style={styles.helperText}>Tap any drill card to edit in place. Changes autosave instantly.</Text>
+      <Text style={styles.helperText} testID="builder-drill-count">
+        {drills.length} drills
+      </Text>
+      <View
+        testID="builder-stats"
+        accessibilityLabel={`${drills.length} drills ${totalXp} xp lineLimit:${drillTitleLineLimit}`}
+        style={styles.builderStatsProbe}
+      />
+    </View>
+  );
+
+  const builderFooter = (
+    <View style={styles.builderListFooter}>
+      <TouchableOpacity style={styles.builderAddPlaceholder} onPress={onAddDrill} testID="builder-add-drill">
+        <View style={styles.builderAddCircle}>
+          <Text style={styles.builderAddPlus}>+</Text>
+        </View>
+        <Text style={styles.builderAddText}>Add Next Drill</Text>
+      </TouchableOpacity>
+      <View style={styles.builderTotalsBar}>
+        <View>
+          <Text style={styles.builderTotalsLabel}>Total Estimated Time</Text>
+          <Text style={styles.builderTotalsValue}>
+            {Math.max(0, Math.round(drills.reduce((sum, drill) => sum + drill.durationSeconds, 0) / 60))} Minutes
+          </Text>
+        </View>
+        <View style={styles.builderTotalsRight}>
+          <Text style={styles.builderTotalsLabel}>Total Reward</Text>
+          <Text style={styles.builderTotalsXp}>{totalXp} XP</Text>
+        </View>
+      </View>
       <TouchableOpacity
-        style={styles.builderCompatStartControl}
-        onPress={onStartSessionDirect}
-        testID="builder-start-session-control"
+        style={styles.hiddenCompatControl}
+        onPress={() => {
+          if (drills.length > 0) onRemoveDrill(drills[0].id);
+        }}
+        testID="builder-remove-first-control"
         disabled={drills.length === 0}
       >
-        <Text style={styles.smallActionText}>Start Practicing</Text>
+        <Text style={styles.smallActionText}>Remove First Drill</Text>
       </TouchableOpacity>
-
-      <View
-        style={[
-          styles.builderHeader,
-          Platform.OS === "android" ? styles.builderHeaderAndroidLayer : null,
-        ]}
-      >
-        <View style={styles.builderTopBar}>
-          <Pressable onPress={onBack} style={styles.builderIconAction}>
-            <Text style={styles.iconGlyph}>←</Text>
-          </Pressable>
-          <View style={styles.builderTopMeta}>
-            <Text style={styles.builderTopTitle}>Build Your Chain</Text>
-            <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
-          </View>
-          <View style={styles.builderTopActions}>
-            <TouchableOpacity
-              style={styles.builderNewChip}
-              onPress={onCreateTemplate}
-              testID="builder-template-new"
-            >
-              <Text style={styles.builderNewChipText}>New</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.builderIconAction} onPress={onDuplicateTemplate}>
-              <Text style={styles.iconGlyphMuted}>⧉</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.builderIconAction} onPress={onDeleteTemplate}>
-              <Text style={styles.iconGlyphMuted}>⌫</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.builderSaveChip, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
-              onPress={handleSaveTemplatePress}
-              disabled={!isTemplateNameValid}
-              testID="builder-template-save-button"
-            >
-              <Text style={styles.builderSaveChipText}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
-
-        <GlowCard style={styles.builderHeroCard}>
-          <View style={styles.templatePillsRow}>
-            {templates.map((template) => (
-              <AppChip
-                key={template.id}
-                selected={template.id === selectedTemplateId}
-                onPress={() => onSelectTemplate(template.id)}
-              >
-                <Text style={styles.templatePillText}>{template.name}</Text>
-              </AppChip>
-            ))}
-          </View>
-
-          <TextInput
-            value={templateNameInput}
-            onChangeText={onTemplateNameInput}
-            placeholder="Session name"
-            placeholderTextColor={COLORS.muted}
-            style={styles.templateInput}
-            testID="builder-template-name-input"
-          />
-          {templateNameInput.length > 0 && !isTemplateNameValid ? (
-            <Text style={styles.helperText} testID="builder-template-name-validation">
-              Session name must be at least 3 characters.
-            </Text>
-          ) : null}
-
-          {builderError ? (
-            <Text style={styles.errorText} testID="builder-error-text">
-              {builderError}
-            </Text>
-          ) : null}
-        </GlowCard>
-
-        <Text style={styles.helperText}>Tap any drill card to edit in place. Changes autosave instantly.</Text>
-        <Text style={styles.helperText} testID="builder-drill-count">
-          {drills.length} drills
-        </Text>
-        <View
-          testID="builder-stats"
-          accessibilityLabel={`${drills.length} drills ${totalXp} xp lineLimit:${drillTitleLineLimit}`}
-          style={styles.builderStatsProbe}
-        />
-      </View>
-
-      <DraggableFlatList
-        testID="builder-drill-list"
-        data={drills}
-        style={[
-          styles.builderList,
-          Platform.OS === "android" ? styles.builderListAndroidLayer : null,
-        ]}
-        keyExtractor={(item) => item.id}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.builderListContent}
-        activationDistance={8}
-        onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
-        ListEmptyComponent={
-          <GlowCard>
-            <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
-            <Text style={styles.completeSubtext}>
-              Add a drill with the + button, then start your session.
-            </Text>
-            <AppButton size="chip" shape="chip" variant="secondary" onPress={onAddDrill}>
-              <Text style={styles.smallActionText}>Add Starter Drill</Text>
-            </AppButton>
-          </GlowCard>
-        }
-        renderItem={renderBuilderDrill}
-        ListFooterComponent={
-          <View style={styles.builderListFooter}>
-            <TouchableOpacity style={styles.builderAddPlaceholder} onPress={onAddDrill} testID="builder-add-drill">
-              <View style={styles.builderAddCircle}>
-                <Text style={styles.builderAddPlus}>+</Text>
-              </View>
-              <Text style={styles.builderAddText}>Add Next Drill</Text>
-            </TouchableOpacity>
-            <View style={styles.builderTotalsBar}>
-              <View>
-                <Text style={styles.builderTotalsLabel}>Total Estimated Time</Text>
-                <Text style={styles.builderTotalsValue}>
-                  {Math.max(0, Math.round(drills.reduce((sum, drill) => sum + drill.durationSeconds, 0) / 60))} Minutes
-                </Text>
-              </View>
-              <View style={styles.builderTotalsRight}>
-                <Text style={styles.builderTotalsLabel}>Total Reward</Text>
-                <Text style={styles.builderTotalsXp}>{totalXp} XP</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.hiddenCompatControl}
-              onPress={() => {
-                if (drills.length > 0) onRemoveDrill(drills[0].id);
-              }}
-              testID="builder-remove-first-control"
-              disabled={drills.length === 0}
-            >
-              <Text style={styles.smallActionText}>Remove First Drill</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      />
-
-      {drills.length === 0 ? (
-        <GlowCard style={styles.builderEmptyCard}>
-          <Text style={styles.cardLabel} testID="builder-empty-title-fallback">No Drills Yet</Text>
-          <Text style={styles.completeSubtext}>Tap + to add your first drill to this template.</Text>
-        </GlowCard>
-      ) : null}
-
-      <View style={styles.builderFooterBar}>
+      <View style={styles.builderFooterInline}>
         <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onPreviewSession}>
           <Text style={styles.secondaryCtaText}>Preview Routine</Text>
         </AppButton>
@@ -1080,6 +1002,93 @@ export function SessionBuilder(props: {
           <Text style={styles.primaryCtaText}>Start Practicing</Text>
         </AppButton>
       </View>
+    </View>
+  );
+
+  return (
+    <View style={[styles.screenBody, styles.builderScreenBody]} testID="builder-screen">
+      <TouchableOpacity
+        style={styles.builderCompatStartControl}
+        onPress={onStartSessionDirect}
+        testID="builder-start-session-control"
+        disabled={drills.length === 0}
+      >
+        <Text style={styles.smallActionText}>Start Practicing</Text>
+      </TouchableOpacity>
+
+      {useDragReorder ? (
+        <DraggableFlatList
+          key={builderListMountKey.current}
+          testID="builder-drill-list"
+          data={drills}
+          style={[
+            styles.builderList,
+            Platform.OS === "android" ? styles.builderListAndroidLayer : null,
+          ]}
+          extraData={{
+            selectedDrillId,
+            drillNameInput,
+            drillDurationInput,
+            drillBpmInput,
+            drillRandomizerKindInput,
+            drillRandomEveryBarsInput,
+            showCueOptions,
+          }}
+          keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={false}
+          contentContainerStyle={styles.builderListContent}
+          activationDistance={8}
+          onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
+          ListHeaderComponent={builderHeader}
+          ListEmptyComponent={
+            <GlowCard>
+              <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
+              <Text style={styles.completeSubtext}>
+                Add a drill with the + button, then start your session.
+              </Text>
+              <AppButton size="chip" shape="chip" variant="secondary" onPress={onAddDrill}>
+                <Text style={styles.smallActionText}>Add Starter Drill</Text>
+              </AppButton>
+            </GlowCard>
+          }
+          renderItem={renderBuilderDrill}
+          ListFooterComponent={builderFooter}
+        />
+      ) : (
+        <ScrollView
+          testID="builder-drill-list"
+          style={styles.builderList}
+          contentContainerStyle={styles.builderListContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {builderHeader}
+          {drills.length === 0 ? (
+            <GlowCard>
+              <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
+              <Text style={styles.completeSubtext}>
+                Add a drill with the + button, then start your session.
+              </Text>
+              <AppButton size="chip" shape="chip" variant="secondary" onPress={onAddDrill}>
+                <Text style={styles.smallActionText}>Add Starter Drill</Text>
+              </AppButton>
+            </GlowCard>
+          ) : (
+            drills.map((item, index) => (
+              <View key={item.id}>
+                {renderBuilderDrill({
+                  item,
+                  index,
+                  drag: () => {},
+                  isActive: false,
+                  getIndex: () => index,
+                } as RenderItemParams<Drill>)}
+              </View>
+            ))
+          )}
+          {builderFooter}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -2001,7 +2010,11 @@ export function ActivePractice(props: {
   const beatPulseCopy = buildBeatPulseCopy(beatPulseLocked, metronomeEnabled);
 
   return (
-    <View style={styles.screenBody} testID="active-screen">
+    <ScrollView
+      style={styles.homeScroll}
+      contentContainerStyle={styles.activeScreenBody}
+      testID="active-screen"
+    >
       <TouchableOpacity
         style={styles.activeCompatCompleteControl}
         onPress={onForceComplete}
@@ -2194,7 +2207,7 @@ export function ActivePractice(props: {
           <Text style={styles.controlButtonText}>Skip</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -2494,9 +2507,9 @@ export const styles = StyleSheet.create({
   helperText: { color: COLORS.muted, fontSize: 15, lineHeight: 21 },
   builderStatsProbe: { width: 1, height: 1, opacity: 0 },
   builderProbe: { width: 1, height: 1, position: "absolute", top: 0, left: 0 },
-  builderList: { flex: 1 },
+  builderList: { flex: 1, minHeight: 0 },
   builderListAndroidLayer: { zIndex: 1 },
-  builderListContent: { gap: 12, paddingBottom: 180 },
+  builderListContent: { gap: 12, paddingBottom: 120 },
   builderHeader: { gap: 12, paddingBottom: 2, marginBottom: 8 },
   builderScreenBody: { gap: 0, paddingTop: 8, paddingBottom: 0 },
   builderHeaderAndroidLayer: { zIndex: 12, elevation: 12 },
@@ -2515,6 +2528,7 @@ export const styles = StyleSheet.create({
   builderNewChipText: { color: COLORS.accent, fontSize: 14, fontWeight: "700" },
   builderEmptyCard: { marginTop: 4 },
   builderListFooter: { gap: 14, paddingTop: 4 },
+  builderFooterInline: { flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 6 },
   builderAddPlaceholder: { minHeight: 134, borderRadius: RADII.card, borderWidth: 1, borderColor: "rgba(230,126,0,0.35)", borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "rgba(255,255,255,0.02)" },
   builderAddCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center" },
   builderAddPlus: { color: COLORS.text, fontSize: 30, lineHeight: 34, marginTop: -2 },
@@ -2543,7 +2557,13 @@ export const styles = StyleSheet.create({
     opacity: 0.02,
     zIndex: 10,
   },
-  builderFooterBar: { position: "absolute", left: SPACING.pageX, right: SPACING.pageX, bottom: 94, flexDirection: "row", alignItems: "center", gap: 12 },
+  activeScreenBody: {
+    paddingHorizontal: SPACING.pageX,
+    paddingTop: 16,
+    paddingBottom: 132,
+    gap: SPACING.sectionGap,
+    flexGrow: 1,
+  },
   builderPreviewButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
   builderStartButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center", shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
   overviewScreenBody: { paddingHorizontal: SPACING.pageX, paddingTop: 8, paddingBottom: 120, gap: 14 },

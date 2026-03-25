@@ -379,7 +379,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
           <StatusBar style="light" hidden />
           <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
             {screen === "home" ? (
@@ -396,10 +396,7 @@ export default function App() {
                 badges={badges}
                 storageError={storageError}
                 onboardingState={onboardingState}
-                onboardingSuggestion={onboardingSuggestion}
                 onSaveOnboardingAnswers={saveOnboardingAnswers}
-                onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
-                onResetOnboarding={resetOnboardingQuestionnaire}
                 onStartPractice={() => {
                   if (isFeatureEnabled("session_overview")) {
                     startPracticeFlow();
@@ -505,6 +502,7 @@ export default function App() {
                 onRemoveDrill={removeDrillFromTemplate}
                 onReorderDrills={reorderDrillsInTemplate}
                 onAddDrill={addDrillToTemplate}
+                useDragReorder={false}
                 onStartSessionDirect={activeRuntime.startSession}
                 onPreviewSession={() => {
                   if (isFeatureEnabled("session_overview")) {
