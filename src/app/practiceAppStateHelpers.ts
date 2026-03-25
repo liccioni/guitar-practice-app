@@ -2,6 +2,7 @@ import { createDrillFromInput } from "../domain/exercises/drill";
 import type { CreateDrillInput } from "../domain/exercises/types";
 import type { DrillCueMode } from "../application/drillCueAudio";
 import { DEFAULT_GOAL_SETTINGS, type GoalType } from "../domain/goals/types";
+import { DEFAULT_FEATURE_FLAGS, type FeatureFlags } from "../domain/features/flags";
 import { DEFAULT_ENTITLEMENT_STATE, type EntitlementState } from "../domain/monetization/entitlements";
 import {
   DEFAULT_PRACTICE_ONBOARDING_STATE,
@@ -50,12 +51,14 @@ export const DEFAULT_PROFILE: {
   onboarding: PracticeOnboardingState;
   entitlements: EntitlementState;
   drillCueMode: DrillCueMode;
+  featureFlags: FeatureFlags;
 } = {
   totalXp: 0,
   unlockedBadgeIds: [],
   onboarding: DEFAULT_PRACTICE_ONBOARDING_STATE,
   entitlements: DEFAULT_ENTITLEMENT_STATE,
   drillCueMode: "chime",
+  featureFlags: DEFAULT_FEATURE_FLAGS,
 };
 
 const GOAL_TARGET_BOUNDS: Record<GoalType, [number, number]> = {

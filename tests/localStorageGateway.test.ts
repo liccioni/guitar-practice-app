@@ -53,6 +53,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(result.profile.entitlements.planId).toBe("free");
     expect(result.profile.drillCueMode).toBe("chime");
+    expect(result.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("returns empty state when async get fails", async () => {
@@ -66,6 +67,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.unlockedBadgeIds).toEqual([]);
     expect(result.profile.entitlements.planId).toBe("free");
     expect(result.profile.drillCueMode).toBe("chime");
+    expect(result.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("saves versioned envelope", async () => {
@@ -109,14 +111,29 @@ describe("LocalStorageGateway", () => {
           reminderEnabled: false,
           reminderTime: "18:00",
         },
-        profile: {
-          totalXp: 0,
-          unlockedBadgeIds: [],
-          onboarding: { completed: false },
-          entitlements: { planId: "free", billingProvider: "local" },
-          drillCueMode: "chime",
-        },
-      }),
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            onboarding: { completed: false },
+            entitlements: { planId: "free", billingProvider: "local" },
+            drillCueMode: "chime",
+            featureFlags: {
+              pricing_screen: true,
+              session_overview: true,
+              drill_complete_transition: true,
+              drill_transition_audio_cues: true,
+              dashboard_feedback_loops: true,
+              xp_visibility: true,
+              progress_signal_refresh: true,
+              dashboard_goal_reminder_card: true,
+              contextual_paywalls: true,
+              locked_premium_states: true,
+              drag_reorder_builder: true,
+              compact_builder_editor: true,
+              onboarding_handoff_v2: true,
+            },
+          },
+        }),
     ).resolves.toBeUndefined();
   });
 
@@ -231,6 +248,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("returns empty state for invalid or empty persisted payload", () => {
@@ -301,6 +319,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b1", "b2"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("normalizes goal target defaults per goal type and invalid reminder format", () => {
@@ -431,6 +450,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("preserves valid onboarding answers and drops invalid ones", () => {
@@ -653,5 +673,58 @@ describe("LocalStorageGateway", () => {
 
     expect(valid.profile.drillCueMode).toBe("spoken");
     expect(invalid.profile.drillCueMode).toBe("chime");
+  });
+
+  it("preserves valid feature flags and falls back for invalid ones", () => {
+    const valid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            featureFlags: {
+              pricing_screen: false,
+              session_overview: false,
+            },
+          },
+        },
+      }),
+    );
+
+    const invalid = parsePersistedState(
+      JSON.stringify({
+        version: PERSISTENCE_SCHEMA_VERSION,
+        state: {
+          drills: [],
+          templates: [],
+          history: [],
+          goalSettings: {
+            dailyMinutesTarget: 30,
+            reminderEnabled: false,
+            reminderTime: "18:00",
+          },
+          profile: {
+            totalXp: 0,
+            unlockedBadgeIds: [],
+            featureFlags: {
+              pricing_screen: "no",
+            },
+          },
+        },
+      }),
+    );
+
+    expect(valid.profile.featureFlags.pricing_screen).toBe(false);
+    expect(valid.profile.featureFlags.session_overview).toBe(false);
+    expect(invalid.profile.featureFlags.pricing_screen).toBe(true);
   });
 });

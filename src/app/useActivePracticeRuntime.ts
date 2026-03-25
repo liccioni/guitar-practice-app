@@ -60,6 +60,8 @@ interface UseActivePracticeRuntimeInput {
   selectedTemplate: SessionTemplate | null;
   totalXp: number;
   drillCueMode: DrillCueMode;
+  drillCompletionTransitionEnabled: boolean;
+  drillTransitionAudioCuesEnabled: boolean;
   onBuilderError: (error: string | null) => void;
   onScreenChange: (screen: Screen) => void;
   onSessionFinished: (payload: SessionFinishedPayload) => void;
@@ -113,6 +115,8 @@ export function useActivePracticeRuntime({
   onSessionFinished,
   onTotalXpChange,
   drillCueMode,
+  drillCompletionTransitionEnabled,
+  drillTransitionAudioCuesEnabled,
 }: UseActivePracticeRuntimeInput): ActivePracticeRuntimeValue {
   const [runtimeState, setRuntimeState] = useState<RuntimeState | null>(null);
   const [metronomeEnabled, setMetronomeEnabled] = useState(true);
@@ -269,10 +273,21 @@ export function useActivePracticeRuntime({
     if (!runtimeState) return;
 
     if (runtimeState.status === "segmentComplete") {
+      if (!drillCompletionTransitionEnabled) {
+        const nextState = advanceToNextSegment(runtimeState);
+        if (nextState.currentIndex !== runtimeState.currentIndex) {
+          setCurrentMicrocopy(MOTIVATION[nextState.currentIndex % MOTIVATION.length]);
+        }
+        setDrillCompletionTransition(null);
+        setTransitionCountdownSec(0);
+        setRuntimeState(nextState);
+        return;
+      }
+
       const transition = buildDrillCompletionTransition(runtimeState);
       setDrillCompletionTransition(transition);
       setTransitionCountdownSec(transition?.preparationCountdownSec ?? 0);
-      if (transition && !transition.isSessionFinisher) {
+      if (transition && !transition.isSessionFinisher && drillTransitionAudioCuesEnabled) {
         void playDrillTransitionCue(drillCueMode, transition.nextDrillName);
       }
 
@@ -322,7 +337,7 @@ export function useActivePracticeRuntime({
       elapsedSec: progress.elapsedSec,
       sessionXp: sessionXpRef.current,
     });
-  }, [drillCompletionTransition, drillCueMode, onSessionFinished, progress.activeDrillIds, progress.elapsedSec, runtimeState]);
+  }, [drillCompletionTransition, drillCompletionTransitionEnabled, drillCueMode, drillTransitionAudioCuesEnabled, onSessionFinished, progress.activeDrillIds, progress.elapsedSec, runtimeState]);
 
   function startSession(): void {
     const prepared = prepareSessionStart({

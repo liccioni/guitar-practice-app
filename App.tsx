@@ -78,6 +78,7 @@ export default function App() {
     handleDrillRandomEveryBarsInput,
     handleDrillRandomizerKindInput,
     history,
+    isFeatureEnabled,
     navigateFromTab,
     onboardingState,
     onboardingSuggestion,
@@ -165,34 +166,51 @@ export default function App() {
     [history],
   );
   const premiumContentGate = useMemo(
-    () => (canAccessFeature("premium-content") ? null : getFeatureAvailability("premium-content")),
-    [canAccessFeature, getFeatureAvailability],
+    () =>
+      isFeatureEnabled("locked_premium_states") && isFeatureEnabled("pricing_screen") && !canAccessFeature("premium-content")
+        ? getFeatureAvailability("premium-content")
+        : null,
+    [canAccessFeature, getFeatureAvailability, isFeatureEnabled],
   );
   const advancedPracticeGate = useMemo(
-    () => (canAccessFeature("advanced-practice") ? null : getFeatureAvailability("advanced-practice")),
-    [canAccessFeature, getFeatureAvailability],
+    () =>
+      isFeatureEnabled("locked_premium_states") && isFeatureEnabled("pricing_screen") && !canAccessFeature("advanced-practice")
+        ? getFeatureAvailability("advanced-practice")
+        : null,
+    [canAccessFeature, getFeatureAvailability, isFeatureEnabled],
   );
   const planManagementGate = useMemo(
-    () => (canAccessFeature("plan-management") ? null : getFeatureAvailability("plan-management")),
-    [canAccessFeature, getFeatureAvailability],
+    () =>
+      isFeatureEnabled("locked_premium_states") && isFeatureEnabled("pricing_screen") && !canAccessFeature("plan-management")
+        ? getFeatureAvailability("plan-management")
+        : null,
+    [canAccessFeature, getFeatureAvailability, isFeatureEnabled],
   );
   const songsPaywallEntryPoint = useMemo(
-    () => buildPaywallEntryPoint({ surface: "songs", currentPlanId: entitlements.planId }),
-    [entitlements.planId],
+    () =>
+      isFeatureEnabled("contextual_paywalls") && isFeatureEnabled("pricing_screen")
+        ? buildPaywallEntryPoint({ surface: "songs", currentPlanId: entitlements.planId })
+        : null,
+    [entitlements.planId, isFeatureEnabled],
   );
   const overviewPaywallEntryPoint = useMemo(
-    () => buildPaywallEntryPoint({ surface: "overview", currentPlanId: entitlements.planId }),
-    [entitlements.planId],
+    () =>
+      isFeatureEnabled("contextual_paywalls") && isFeatureEnabled("pricing_screen")
+        ? buildPaywallEntryPoint({ surface: "overview", currentPlanId: entitlements.planId })
+        : null,
+    [entitlements.planId, isFeatureEnabled],
   );
   const progressPaywallEntryPoint = useMemo(
     () =>
-      buildPaywallEntryPoint({
-        surface: "progress",
-        currentPlanId: entitlements.planId,
-        streak,
-        completedSessions,
-      }),
-    [completedSessions, entitlements.planId, streak],
+      isFeatureEnabled("contextual_paywalls") && isFeatureEnabled("pricing_screen")
+        ? buildPaywallEntryPoint({
+            surface: "progress",
+            currentPlanId: entitlements.planId,
+            streak,
+            completedSessions,
+          })
+        : null,
+    [completedSessions, entitlements.planId, isFeatureEnabled, streak],
   );
   const sessionOverview = useMemo(
     () => buildSessionOverviewSummary(builderDrills),
@@ -201,6 +219,9 @@ export default function App() {
   const activeRuntime = useActivePracticeRuntime({
     allDrills,
     drillCueMode,
+    drillCompletionTransitionEnabled: isFeatureEnabled("drill_complete_transition"),
+    drillTransitionAudioCuesEnabled:
+      isFeatureEnabled("drill_complete_transition") && isFeatureEnabled("drill_transition_audio_cues"),
     screen,
     selectedTemplate,
     totalXp,
@@ -211,6 +232,17 @@ export default function App() {
     },
     onTotalXpChange: setTotalXp,
   });
+
+  useEffect(() => {
+    if (screen === "pricing" && !isFeatureEnabled("pricing_screen")) {
+      setScreen(pricingReturnScreen.current);
+      return;
+    }
+
+    if (screen === "overview" && !isFeatureEnabled("session_overview")) {
+      setScreen("builder");
+    }
+  }, [isFeatureEnabled, screen, setScreen]);
 
   useEffect(() => {
     fadeAnim.stopAnimation();
@@ -324,6 +356,7 @@ export default function App() {
   }
 
   function openPricingScreen(from: PricingReturnScreen): void {
+    if (!isFeatureEnabled("pricing_screen")) return;
     pricingReturnScreen.current = from;
     setScreen("pricing");
   }
@@ -385,6 +418,9 @@ export default function App() {
                 onStartPractice={startPracticeFlow}
                 onOpenSessions={() => setScreen("sessions")}
                 onOpenPricing={() => openPricingScreen("home")}
+                showDashboardFeedback={isFeatureEnabled("dashboard_feedback_loops")}
+                showPricingEntry={isFeatureEnabled("pricing_screen")}
+                showXpProgress={isFeatureEnabled("xp_visibility")}
               />
             ) : null}
 
@@ -437,6 +473,7 @@ export default function App() {
                 planManagementGate={planManagementGate}
                 drillCueMode={drillCueMode}
                 onDrillCueModeChange={setDrillCueMode}
+                showDrillCueSettings={isFeatureEnabled("drill_transition_audio_cues")}
               />
             ) : null}
 
@@ -480,7 +517,14 @@ export default function App() {
                 onReorderDrills={reorderDrillsInTemplate}
                 onAddDrill={addDrillToTemplate}
                 onStartSessionDirect={activeRuntime.startSession}
-                onStartSession={() => setScreen("overview")}
+                onStartSession={() => {
+                  if (isFeatureEnabled("session_overview")) {
+                    setScreen("overview");
+                    return;
+                  }
+
+                  activeRuntime.startSession();
+                }}
               />
             ) : null}
 
@@ -515,6 +559,8 @@ export default function App() {
                 drillCompletionTransition={activeRuntime.drillCompletionTransition}
                 transitionCountdownSec={activeRuntime.transitionCountdownSec}
                 drillCueMode={drillCueMode}
+                showDrillCompletionTransition={isFeatureEnabled("drill_complete_transition")}
+                showSessionXp={isFeatureEnabled("xp_visibility")}
                 metronomeEnabled={activeRuntime.metronomeEnabled}
                 metronomeBpm={activeRuntime.metronomeBpm}
                 beatFlash={activeRuntime.beatFlash}
@@ -562,6 +608,7 @@ export default function App() {
                 onReplay={activeRuntime.startSession}
                 onOpenBuilder={() => setScreen("builder")}
                 onContinue={resetToHome}
+                showXpProgress={isFeatureEnabled("xp_visibility")}
               />
             ) : null}
           </Animated.View>

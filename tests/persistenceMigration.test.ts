@@ -34,6 +34,7 @@ describe("persistence migration", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("migrates legacy direct payload", () => {
@@ -51,6 +52,7 @@ describe("persistence migration", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("falls back to empty state on invalid json", () => {
@@ -63,6 +65,7 @@ describe("persistence migration", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 
   it("drops malformed drills and invalid template drill references", () => {
@@ -112,5 +115,6 @@ describe("persistence migration", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
   });
 });

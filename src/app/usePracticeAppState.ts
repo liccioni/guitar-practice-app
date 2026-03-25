@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Drill } from "../domain/exercises/types";
 import type { DrillCueMode } from "../application/drillCueAudio";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings } from "../domain/goals/types";
+import {
+  isFeatureFlagEnabled,
+  type FeatureFlagId,
+  type FeatureFlags,
+} from "../domain/features/flags";
 import {
   getFeatureGate,
   hasFeatureAccess,
@@ -60,6 +65,7 @@ export function usePracticeAppState() {
   );
   const [entitlements, setEntitlements] = useState<EntitlementState>(DEFAULT_PROFILE.entitlements);
   const [drillCueMode, setDrillCueMode] = useState<DrillCueMode>(DEFAULT_PROFILE.drillCueMode);
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlags>(DEFAULT_PROFILE.featureFlags);
   const [badges, setBadges] = useState<Badge[]>(() => buildBadgeState(DEFAULT_PROFILE.unlockedBadgeIds));
 
   useEffect(() => {
@@ -87,6 +93,7 @@ export function usePracticeAppState() {
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
         setDrillCueMode(seed.profile.drillCueMode ?? DEFAULT_PROFILE.drillCueMode);
+        setFeatureFlags(seed.profile.featureFlags ?? DEFAULT_PROFILE.featureFlags);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } catch {
@@ -100,6 +107,7 @@ export function usePracticeAppState() {
         setOnboardingState(seed.profile.onboarding ?? DEFAULT_PROFILE.onboarding);
         setEntitlements(seed.profile.entitlements ?? DEFAULT_PROFILE.entitlements);
         setDrillCueMode(seed.profile.drillCueMode ?? DEFAULT_PROFILE.drillCueMode);
+        setFeatureFlags(seed.profile.featureFlags ?? DEFAULT_PROFILE.featureFlags);
         setBadges(buildBadgeState(seed.profile.unlockedBadgeIds));
         setActiveTemplateId(seed.templates[0]?.id ?? null);
       } finally {
@@ -124,9 +132,10 @@ export function usePracticeAppState() {
         onboarding: onboardingState,
         entitlements,
         drillCueMode,
+        featureFlags,
       },
     });
-  }, [allDrills, badges, drillCueMode, entitlements, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
+  }, [allDrills, badges, drillCueMode, entitlements, featureFlags, goalSettings, history, isHydrated, onboardingState, templates, totalXp]);
 
   function resetToHome(): void {
     setScreen("home");
@@ -140,13 +149,17 @@ export function usePracticeAppState() {
     setScreen("builder");
   }
 
-  function canAccessFeature(featureId: EntitlementFeatureId): boolean {
+  const canAccessFeature = useCallback((featureId: EntitlementFeatureId): boolean => {
     return hasFeatureAccess(entitlements, featureId);
-  }
+  }, [entitlements]);
 
-  function getFeatureAvailability(featureId: EntitlementFeatureId) {
+  const getFeatureAvailability = useCallback((featureId: EntitlementFeatureId) => {
     return getFeatureGate(entitlements, featureId);
-  }
+  }, [entitlements]);
+
+  const isFeatureEnabled = useCallback((featureId: FeatureFlagId): boolean => {
+    return isFeatureFlagEnabled(featureFlags, featureId);
+  }, [featureFlags]);
 
   const builderState = useBuilderState({
     activeTemplateId,
@@ -186,6 +199,7 @@ export function usePracticeAppState() {
     drillRandomizerKindInput: builderState.drillRandomizerKindInput,
     duplicateTemplate: builderState.duplicateTemplate,
     entitlements,
+    featureFlags,
     getFeatureAvailability,
     goalError: profileSettingsState.goalError,
     goalSettings,
@@ -197,6 +211,7 @@ export function usePracticeAppState() {
     handleDrillRandomEveryBarsInput: builderState.handleDrillRandomEveryBarsInput,
     handleDrillRandomizerKindInput: builderState.handleDrillRandomizerKindInput,
     history,
+    isFeatureEnabled,
     navigateFromTab,
     onboardingState,
     onboardingSuggestion: profileSettingsState.onboardingSuggestion,
@@ -218,6 +233,7 @@ export function usePracticeAppState() {
     setBuilderError: builderState.setBuilderError,
     setDrillCueMode,
     setEntitlements,
+    setFeatureFlags,
     setGoalType: profileSettingsState.setGoalType,
     setHistory,
     setScreen,
