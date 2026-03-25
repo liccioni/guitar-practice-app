@@ -37,6 +37,14 @@ This should cover:
 - first-run onboarding can generate a starter session
 - the builder can start a session and complete the core practice path
 
+Fast rerun path after a fresh native prepare on the same branch:
+
+```bash
+npm run e2e:maestro:rerun:ios
+```
+
+Use the fast rerun path only when the currently installed simulator app is known to match the current native state. For release validation, keep `npm run e2e:maestro:ios` as the required gate.
+
 Reference:
 - [docs/MAESTRO_MIGRATION.md](/Users/liccioni/CodexProjects/fretline/docs/MAESTRO_MIGRATION.md)
 

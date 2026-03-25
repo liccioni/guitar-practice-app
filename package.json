@@ -27,6 +27,7 @@
     "e2e:maestro:install": "bash scripts/maestro-install.sh",
     "e2e:maestro:prepare:ios": "bash scripts/maestro-prepare-ios.sh",
     "e2e:maestro:test:ios": "bash scripts/maestro-test-ios.sh",
+    "e2e:maestro:rerun:ios": "bash scripts/maestro-rerun-ios.sh",
     "e2e:maestro:ios": "npm run e2e:maestro:prepare:ios && npm run e2e:maestro:test:ios",
     "e2e:android:prepare": "bash scripts/with-android-env.sh npx expo run:android --no-bundler",
     "e2e:android:regression:start-session": "bash scripts/with-android-env.sh node scripts/android-smoke.js --mode=start-session",

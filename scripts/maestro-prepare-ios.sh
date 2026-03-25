@@ -9,6 +9,7 @@ SIMULATOR_NAME="${MAESTRO_DEVICE:-${DETOX_DEVICE:-iPhone 16e}}"
 APP_ID="net.liccioni.guitarpractice"
 WORKSPACE_PATH="${WORKSPACE_PATH:-$(find ios -maxdepth 1 -name '*.xcworkspace' | head -n 1)}"
 APP_NAME="${APP_NAME:-}"
+PREPARE_STATE_PATH="${MAESTRO_PREPARE_STATE_PATH:-artifacts/maestro/ios-prepare-state.json}"
 
 if [[ -z "$WORKSPACE_PATH" ]]; then
   echo "Could not find an iOS workspace under ios/" >&2
@@ -41,5 +42,16 @@ xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$UDID" -b
 xcrun simctl install "$UDID" "$APP_PATH"
 xcrun simctl terminate "$UDID" "$APP_ID" >/dev/null 2>&1 || true
+
+mkdir -p "$(dirname "$PREPARE_STATE_PATH")"
+cat >"$PREPARE_STATE_PATH" <<EOF
+{
+  "appId": "$APP_ID",
+  "appPath": "$APP_PATH",
+  "gitHead": "$(git rev-parse HEAD)",
+  "simulatorName": "$SIMULATOR_NAME",
+  "udid": "$UDID"
+}
+EOF
 
 echo "Prepared Maestro iOS app on simulator $SIMULATOR_NAME ($UDID)."

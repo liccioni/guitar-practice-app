@@ -35,6 +35,10 @@ Pass condition:
 
 If Android smoke cannot run because no emulator or device is online, the release is not fully validated yet.
 
+Important:
+- for the final merged release candidate, keep `npm run e2e:maestro:ios` as the required iOS gate
+- `npm run e2e:maestro:rerun:ios` is a safe speed-up only for repeated branch-level reruns after a fresh successful native prepare on the same simulator/app state
+
 ## 3. Confirm Store Assets And Screenshots
 
 Use the current screenshot pipeline output:
