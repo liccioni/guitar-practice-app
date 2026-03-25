@@ -46,6 +46,14 @@ Run only the flows after the app is already installed:
 npm run e2e:maestro:test:ios
 ```
 
+Safe fast rerun after a fresh native prepare on the current branch:
+
+```bash
+npm run e2e:maestro:rerun:ios
+```
+
+Use `e2e:maestro:ios` when native dependencies, Expo modules, prebuild output, or install state may have changed. Use `e2e:maestro:rerun:ios` only after a successful fresh prepare on the same native state.
+
 Migration notes and Detox overlap:
 - `docs/MAESTRO_MIGRATION.md`
 

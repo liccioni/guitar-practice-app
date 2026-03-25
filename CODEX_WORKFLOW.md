@@ -126,6 +126,11 @@ Required branch verification based on change type:
 - if the change affects Detox visual snapshot flows or screens explicitly covered by visual capture:
   - run the relevant Detox visual flow in addition to the checks above
 
+Safe rerun note:
+
+- `npm run e2e:maestro:test:ios` and `npm run e2e:maestro:rerun:ios` are only acceptable after a fresh successful `npm run e2e:maestro:prepare:ios` or `npm run e2e:maestro:ios` on the same native state
+- if native dependencies, Expo modules, prebuild output, app install state, or generated `ios/` contents may have changed, rerun the full `npm run e2e:maestro:ios`
+
 If the required verification was not run, explicitly state that the task is not fully validated and do not present it as merge-ready.
 
 ------------------------------------------------
