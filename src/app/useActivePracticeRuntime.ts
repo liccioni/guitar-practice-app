@@ -353,7 +353,14 @@ export function useActivePracticeRuntime({
     setMetronomeBpm(prepared.nextMetronomeBpm);
     setMetronomeEnabled(true);
     trackSessionStarted({
-      source: screen === "overview" ? "overview" : screen === "builder" ? "builder" : "unknown",
+      source:
+        screen === "overview"
+          ? "overview"
+          : screen === "builder"
+            ? "builder"
+            : screen === "complete"
+              ? "complete"
+              : "unknown",
       template: selectedTemplate,
       drillCount: prepared.resolvedDrills.length,
     });
