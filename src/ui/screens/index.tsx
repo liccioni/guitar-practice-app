@@ -230,6 +230,9 @@ export function HomeDashboard(props: {
   onStartPractice: () => void;
   onOpenSessions: () => void;
   onOpenPricing: () => void;
+  showDashboardFeedback: boolean;
+  showPricingEntry: boolean;
+  showXpProgress: boolean;
 }) {
   const {
     levelState,
@@ -260,6 +263,9 @@ export function HomeDashboard(props: {
     onStartPractice,
     onOpenSessions,
     onOpenPricing,
+    showDashboardFeedback,
+    showPricingEntry,
+    showXpProgress,
   } = props;
 
   const [timeInput, setTimeInput] = useState(reminderTime);
@@ -411,61 +417,67 @@ export function HomeDashboard(props: {
         </View>
       </View>
 
-      <GlowCard style={styles.dashboardXpCard}>
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardActionBlock}>
-            <Text style={styles.cardLabel}>XP Progress</Text>
-            <Text style={styles.helperText}>{totalXp} total XP • Level {levelState.level}</Text>
+      {showXpProgress ? (
+        <GlowCard style={styles.dashboardXpCard}>
+          <View style={styles.inlineRowSpace}>
+            <View style={styles.dashboardActionBlock}>
+              <Text style={styles.cardLabel}>XP Progress</Text>
+              <Text style={styles.helperText}>{totalXp} total XP • Level {levelState.level}</Text>
+            </View>
+            <Text style={styles.levelChip}>Level {levelState.level + 1}</Text>
           </View>
-          <Text style={styles.levelChip}>Level {levelState.level + 1}</Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
-            ]}
-          />
-        </View>
-        <Text style={styles.helperText}>
-          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward your next level.
-        </Text>
-      </GlowCard>
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.helperText}>
+            {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward your next level.
+          </Text>
+        </GlowCard>
+      ) : null}
 
-      <GlowCard style={styles.dashboardActionCard}>
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardActionBlock}>
-            <Text style={styles.cardLabel}>{dashboardFeedback.goalStatusLabel}</Text>
-            <Text style={styles.helperText}>{dashboardFeedback.goalStatusBody}</Text>
+      {showDashboardFeedback ? (
+        <GlowCard style={styles.dashboardActionCard}>
+          <View style={styles.inlineRowSpace}>
+            <View style={styles.dashboardActionBlock}>
+              <Text style={styles.cardLabel}>{dashboardFeedback.goalStatusLabel}</Text>
+              <Text style={styles.helperText}>{dashboardFeedback.goalStatusBody}</Text>
+            </View>
+            <View style={styles.dashboardActionDivider} />
+            <View style={styles.dashboardActionBlock}>
+              <Text style={styles.cardLabel}>{dashboardFeedback.streakStatusLabel}</Text>
+              <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
+            </View>
           </View>
-          <View style={styles.dashboardActionDivider} />
-          <View style={styles.dashboardActionBlock}>
-            <Text style={styles.cardLabel}>{dashboardFeedback.streakStatusLabel}</Text>
-            <Text style={styles.helperText}>{dashboardFeedback.streakStatusBody}</Text>
-          </View>
-        </View>
-      </GlowCard>
+        </GlowCard>
+      ) : null}
 
-      <GlowCard style={styles.pricingEntryCard}>
-        <View style={styles.inlineRowSpace}>
-          <View style={styles.dashboardActionBlock}>
-            <Text style={styles.cardLabel}>Premium Practice</Text>
-            <Text style={styles.helperText}>
-              Compare monthly and lifetime plans in one clear screen before upgrade prompts are added around the app.
-            </Text>
+      {showPricingEntry ? (
+        <GlowCard style={styles.pricingEntryCard}>
+          <View style={styles.inlineRowSpace}>
+            <View style={styles.dashboardActionBlock}>
+              <Text style={styles.cardLabel}>Premium Practice</Text>
+              <Text style={styles.helperText}>
+                Compare monthly and lifetime plans in one clear screen before upgrade prompts are added around the app.
+              </Text>
+            </View>
+            <Text style={styles.levelChip}>2 plans</Text>
           </View>
-          <Text style={styles.levelChip}>2 plans</Text>
-        </View>
-        <AppButton
-          size="chip"
-          shape="pill"
-          variant="secondary"
-          onPress={onOpenPricing}
-          testID="home-open-pricing"
-        >
-          <Text style={styles.smallActionText}>See Plans</Text>
-        </AppButton>
-      </GlowCard>
+          <AppButton
+            size="chip"
+            shape="pill"
+            variant="secondary"
+            onPress={onOpenPricing}
+            testID="home-open-pricing"
+          >
+            <Text style={styles.smallActionText}>See Plans</Text>
+          </AppButton>
+        </GlowCard>
+      ) : null}
 
       {comebackPrompt.kind !== "active" ? (
         <GlowCard style={styles.dashboardComebackCard}>
@@ -1812,6 +1824,7 @@ export function ProfileAchievements(props: {
   planManagementGate: FeatureGate | null;
   drillCueMode: DrillCueMode;
   onDrillCueModeChange: (mode: DrillCueMode) => void;
+  showDrillCueSettings?: boolean;
 }) {
   const {
     levelState,
@@ -1826,6 +1839,7 @@ export function ProfileAchievements(props: {
     planManagementGate,
     drillCueMode,
     onDrillCueModeChange,
+    showDrillCueSettings = true,
   } = props;
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
@@ -1902,28 +1916,30 @@ export function ProfileAchievements(props: {
         </AppButton>
       </GlowCard>
 
-      <GlowCard>
-        <Text style={styles.cardLabel}>Upcoming Drill Cue</Text>
-        <Text style={styles.helperText}>
-          Choose how the app prepares you for the next drill during the transition window.
-        </Text>
-        <View style={styles.inlineRow}>
-          {(["off", "chime", "spoken"] as const).map((mode) => (
-            <AppButton
-              key={mode}
-              size="chip"
-              shape="chip"
-              variant={drillCueMode === mode ? "primary" : "secondary"}
-              onPress={() => onDrillCueModeChange(mode)}
-              testID={`profile-drill-cue-${mode}`}
-            >
-              <Text style={drillCueMode === mode ? styles.primaryCtaText : styles.smallActionText}>
-                {mode === "off" ? "Off" : mode === "chime" ? "Chime" : "Spoken"}
-              </Text>
-            </AppButton>
-          ))}
-        </View>
-      </GlowCard>
+      {showDrillCueSettings ? (
+        <GlowCard>
+          <Text style={styles.cardLabel}>Upcoming Drill Cue</Text>
+          <Text style={styles.helperText}>
+            Choose how the app prepares you for the next drill during the transition window.
+          </Text>
+          <View style={styles.inlineRow}>
+            {(["off", "chime", "spoken"] as const).map((mode) => (
+              <AppButton
+                key={mode}
+                size="chip"
+                shape="chip"
+                variant={drillCueMode === mode ? "primary" : "secondary"}
+                onPress={() => onDrillCueModeChange(mode)}
+                testID={`profile-drill-cue-${mode}`}
+              >
+                <Text style={drillCueMode === mode ? styles.primaryCtaText : styles.smallActionText}>
+                  {mode === "off" ? "Off" : mode === "chime" ? "Chime" : "Spoken"}
+                </Text>
+              </AppButton>
+            ))}
+          </View>
+        </GlowCard>
+      ) : null}
     </ScrollView>
   );
 }
@@ -2098,6 +2114,8 @@ export function ActivePractice(props: {
   } | null;
   transitionCountdownSec: number;
   drillCueMode: DrillCueMode;
+  showDrillCompletionTransition: boolean;
+  showSessionXp: boolean;
   metronomeEnabled: boolean;
   metronomeBpm: number;
   beatFlash: boolean;
@@ -2130,6 +2148,8 @@ export function ActivePractice(props: {
     drillCompletionTransition,
     transitionCountdownSec,
     drillCueMode,
+    showDrillCompletionTransition,
+    showSessionXp,
     metronomeEnabled,
     metronomeBpm,
     beatFlash,
@@ -2179,23 +2199,25 @@ export function ActivePractice(props: {
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
       </View>
-      <GlowCard style={styles.activeXpCard}>
-        <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Session XP</Text>
-          <Text style={styles.drillTransitionXp}>+{sessionXp} XP</Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
-            ]}
-          />
-        </View>
-        <Text style={styles.helperText}>
-          {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
-        </Text>
-      </GlowCard>
+      {showSessionXp ? (
+        <GlowCard style={styles.activeXpCard}>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.cardLabel}>Session XP</Text>
+            <Text style={styles.drillTransitionXp}>+{sessionXp} XP</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.helperText}>
+            {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
+          </Text>
+        </GlowCard>
+      ) : null}
 
       <Animated.View style={[styles.activeCard, styles.activeCardHighlight, { transform: [{ scale: pulseScale }] }]}>
         <ProgressRing size={272} strokeWidth={16} progress={drillProgress} color={COLORS.accent} />
@@ -2207,7 +2229,7 @@ export function ActivePractice(props: {
         </View>
       </Animated.View>
 
-      {drillCompletionTransition ? (
+      {showDrillCompletionTransition && drillCompletionTransition ? (
         <View testID="active-drill-complete-transition">
           <GlowCard style={styles.drillTransitionCard}>
           <View style={styles.inlineRowSpace}>
@@ -2368,8 +2390,9 @@ export function SessionComplete(props: {
   onReplay: () => void;
   onOpenBuilder: () => void;
   onContinue: () => void;
+  showXpProgress?: boolean;
 }) {
-  const { sessionXp, leveledUp, levelState, totalXp, streak, badges, rewardGlow, rewardScale, onReplay, onOpenBuilder, onContinue } = props;
+  const { sessionXp, leveledUp, levelState, totalXp, streak, badges, rewardGlow, rewardScale, onReplay, onOpenBuilder, onContinue, showXpProgress = true } = props;
   const [shared, setShared] = useState(false);
   const unlockedBadges = badges.filter((badge) => badge.unlocked).length;
   const xpProgressPercent = Math.max(
@@ -2421,23 +2444,25 @@ export function SessionComplete(props: {
         </View>
       </View>
 
-      <GlowCard style={styles.completeProgressCard}>
-        <Text style={styles.stitchSummaryMiniLabel}>Progress to Level {levelState.level + 1}</Text>
-        <View style={styles.inlineRowSpace}>
-          <Text style={styles.helperText}>Your XP bar carries across every practice moment now.</Text>
-          <Text style={styles.stitchMetaValue}>{levelState.currentLevelXp}/{levelState.nextLevelXp} XP</Text>
-        </View>
-        {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {levelState.level}.</Text> : null}
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${xpProgressPercent}%` },
-            ]}
-          />
-        </View>
-        <Text style={styles.helperText}>Badges unlocked: {unlockedBadges}</Text>
-      </GlowCard>
+      {showXpProgress ? (
+        <GlowCard style={styles.completeProgressCard}>
+          <Text style={styles.stitchSummaryMiniLabel}>Progress to Level {levelState.level + 1}</Text>
+          <View style={styles.inlineRowSpace}>
+            <Text style={styles.helperText}>Your XP bar carries across every practice moment now.</Text>
+            <Text style={styles.stitchMetaValue}>{levelState.currentLevelXp}/{levelState.nextLevelXp} XP</Text>
+          </View>
+          {leveledUp ? <Text style={styles.levelUp}>Level Up! Welcome to Level {levelState.level}.</Text> : null}
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${xpProgressPercent}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.helperText}>Badges unlocked: {unlockedBadges}</Text>
+        </GlowCard>
+      ) : null}
 
       <GlowCard style={styles.completeNextCard}>
         <Text style={styles.cardLabel}>Next Move</Text>
