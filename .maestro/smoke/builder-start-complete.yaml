@@ -4,7 +4,7 @@ name: Builder smoke starts and completes a session
 - runFlow: ../subflows/launch-home.yaml
 - runFlow: ../subflows/open-builder-from-home.yaml
 - assertVisible:
-    id: builder-drill-card-first
+    id: builder-drill-count
 - tapOn:
     id: builder-start-session
 - assertVisible:

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
-  FlatList,
   Image,
   ImageBackground,
   Platform,
@@ -15,6 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import DraggableFlatList, { type RenderItemParams } from "react-native-draggable-flatlist";
 import Svg, { Circle } from "react-native-svg";
 import { buildDashboardFeedback } from "../../app/dashboardFeedback";
 import type { ComebackPrompt } from "../../app/comebackPrompts";
@@ -802,16 +802,229 @@ export function SessionBuilder(props: {
     }
   }
 
-  function moveDrill(drillId: string, direction: -1 | 1): void {
-    const currentIndex = drills.findIndex((drill) => drill.id === drillId);
-    if (currentIndex < 0) return;
-    const nextIndex = currentIndex + direction;
-    if (nextIndex < 0 || nextIndex >= drills.length) return;
+  function renderBuilderDrill({
+    item,
+    drag,
+    isActive,
+    getIndex,
+  }: RenderItemParams<Drill>): React.JSX.Element {
+    const index = getIndex() ?? drills.findIndex((drill) => drill.id === item.id);
 
-    const nextDrills = [...drills];
-    const [moved] = nextDrills.splice(currentIndex, 1);
-    nextDrills.splice(nextIndex, 0, moved);
-    onReorderDrills(nextDrills.map((drill) => drill.id));
+    return (
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => onSelectDrill(item.id)}
+        testID={`builder-drill-card-${item.id}`}
+        style={[
+          styles.drillCard,
+          selectedDrillId === item.id ? styles.drillCardSelected : null,
+          isActive ? styles.drillCardDragging : null,
+        ]}
+      >
+        {index === 0 ? (
+          <View
+            testID="builder-drill-first-id-probe"
+            accessibilityLabel={item.id}
+            style={styles.builderProbe}
+          />
+        ) : null}
+        {index === 1 ? (
+          <View
+            testID="builder-drill-second-id-probe"
+            accessibilityLabel={item.id}
+            style={styles.builderProbe}
+          />
+        ) : null}
+        <View style={styles.drillCardTopRow} testID={index === 0 ? "builder-drill-card-first" : undefined}>
+          <View style={[styles.drillLeft, useCompactDrillCard ? styles.drillLeftCompact : null]}>
+            <Text style={[styles.drillOrder, useCompactDrillCard ? styles.drillOrderCompact : null]}>#{index + 1}</Text>
+            <View style={styles.drillTextBlock}>
+              <Text
+                style={[styles.drillName, useCompactDrillCard ? styles.drillNameCompact : null]}
+                numberOfLines={drillTitleLineLimit}
+                ellipsizeMode="tail"
+                testID={`builder-drill-title-${item.id}`}
+              >
+                {item.name}
+              </Text>
+              {index === 0 ? (
+                <Text
+                  testID="builder-drill-title-lines-first"
+                  style={styles.drillLineLimitProbe}
+                >
+                  {String(drillTitleLineLimit)}
+                </Text>
+              ) : null}
+              <Text style={styles.drillMeta}>
+                {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
+              </Text>
+              {useCompactDrillCard ? (
+                <Text style={[styles.drillXp, styles.drillXpCompact]} testID={`builder-drill-xp-${item.id}`}>
+                  +{toXp(item)} XP
+                </Text>
+              ) : null}
+              {item.randomizer ? (
+                <Text style={styles.drillRandomMeta}>
+                  Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          {!useCompactDrillCard ? (
+            <Text style={styles.drillXp} testID={`builder-drill-xp-${item.id}`}>
+              +{toXp(item)} XP
+            </Text>
+          ) : null}
+        </View>
+
+        <View style={[styles.builderCardActions, useCompactDrillCard ? styles.builderCardActionsCompact : null]}>
+          <TouchableOpacity
+            style={[styles.dragChip, useCompactDrillCard ? styles.dragChipCompact : null]}
+            onLongPress={drag}
+            delayLongPress={120}
+            testID={index === 0 ? "builder-drag-first-handle" : `builder-drag-handle-${item.id}`}
+          >
+            <Text style={styles.dragChipGlyph}>⋮⋮</Text>
+            <Text style={styles.dragChipText}>Hold to move</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.removeChip, useCompactDrillCard ? styles.removeChipCompact : null]}
+            onPress={() => onRemoveDrill(item.id)}
+            testID={`builder-remove-${item.id}`}
+          >
+            <Text style={styles.removeChipText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+        {selectedDrillId === item.id ? (
+          <View style={styles.drillInlineEditor}>
+            <TextInput
+              value={drillNameInput}
+              onChangeText={onDrillNameInput}
+              placeholder="Drill name"
+              placeholderTextColor={COLORS.muted}
+              style={styles.templateInput}
+              testID="builder-drill-name-input"
+            />
+            <View style={styles.inlineRow}>
+              <TextInput
+                value={drillDurationInput}
+                onChangeText={onDrillDurationInput}
+                keyboardType="number-pad"
+                placeholder="Minutes (1-30)"
+                placeholderTextColor={COLORS.muted}
+                style={styles.timeInput}
+                testID="builder-drill-duration-input"
+              />
+              <TextInput
+                value={drillBpmInput}
+                onChangeText={onDrillBpmInput}
+                keyboardType="number-pad"
+                placeholder="BPM (40-240)"
+                placeholderTextColor={COLORS.muted}
+                style={styles.timeInput}
+                testID="builder-drill-bpm-input"
+              />
+            </View>
+            <View style={styles.inlineRow}>
+              <TouchableOpacity
+                style={styles.pillButton}
+                onPress={() => nudgeDuration(-1)}
+                testID="builder-drill-duration-decrement"
+              >
+                <Text style={styles.pillButtonText}>-1 min</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.pillButton}
+                onPress={() => nudgeDuration(1)}
+                testID="builder-drill-duration-increment"
+              >
+                <Text style={styles.pillButtonText}>+1 min</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.pillButton}
+                onPress={() => nudgeBpm(-5)}
+                testID="builder-drill-bpm-decrement"
+              >
+                <Text style={styles.pillButtonText}>-5 BPM</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.pillButton}
+                onPress={() => nudgeBpm(5)}
+                testID="builder-drill-bpm-increment"
+              >
+                <Text style={styles.pillButtonText}>+5 BPM</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.helperText}>Random cue (optional)</Text>
+            <View style={styles.templatePillsRow}>
+              {RANDOMIZER_KIND_OPTIONS.map((option) => (
+                <AppChip
+                  key={option.value}
+                  selected={drillRandomizerKindInput === option.value}
+                  onPress={() => onDrillRandomizerKindInput(option.value)}
+                  testID={`builder-randomizer-${option.value}`}
+                >
+                  <Text style={styles.templatePillText}>{option.label}</Text>
+                </AppChip>
+              ))}
+            </View>
+            {drillRandomizerKindInput !== "none" ? (
+              <>
+                <View style={styles.inlineRow}>
+                  <TextInput
+                    value={drillRandomEveryBarsInput}
+                    onChangeText={onDrillRandomEveryBarsInput}
+                    keyboardType="number-pad"
+                    placeholder="Every N bars (1-16)"
+                    placeholderTextColor={COLORS.muted}
+                    style={styles.timeInput}
+                    testID="builder-random-bars-input"
+                  />
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeRandomBars(-1)}
+                    testID="builder-random-bars-decrement"
+                  >
+                    <Text style={styles.pillButtonText}>-1 bar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.pillButton}
+                    onPress={() => nudgeRandomBars(1)}
+                    testID="builder-random-bars-increment"
+                  >
+                    <Text style={styles.pillButtonText}>+1 bar</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.helperText}>
+                  During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
+                </Text>
+              </>
+            ) : null}
+            {!isDrillNameValid ? (
+              <Text style={styles.helperText} testID="builder-drill-validation-name">
+                Drill name cannot be empty.
+              </Text>
+            ) : null}
+            {!isDurationValid ? (
+              <Text style={styles.helperText} testID="builder-drill-validation-duration">
+                Duration must be a number from 1 to 30 minutes.
+              </Text>
+            ) : null}
+            {!isBpmValid ? (
+              <Text style={styles.helperText} testID="builder-drill-validation-bpm">
+                BPM must be blank or between 40 and 240.
+              </Text>
+            ) : null}
+            {!isRandomEveryBarsValid ? (
+              <Text style={styles.helperText} testID="builder-drill-validation-random-bars">
+                Random cue bars must be a number from 1 to 16.
+              </Text>
+            ) : null}
+            <Text style={styles.helperText}>Autosaves as you type.</Text>
+          </View>
+        ) : null}
+      </TouchableOpacity>
+    );
   }
 
   return (
@@ -910,7 +1123,7 @@ export function SessionBuilder(props: {
         />
       </View>
 
-      <FlatList
+      <DraggableFlatList
         testID="builder-drill-list"
         data={drills}
         style={[
@@ -920,6 +1133,8 @@ export function SessionBuilder(props: {
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.builderListContent}
+        activationDistance={8}
+        onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
         ListEmptyComponent={
           <GlowCard>
             <Text style={styles.cardLabel} testID="builder-empty-title">No Drills Yet</Text>
@@ -931,223 +1146,7 @@ export function SessionBuilder(props: {
             </AppButton>
           </GlowCard>
         }
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => onSelectDrill(item.id)}
-            testID={`builder-drill-card-${item.id}`}
-            style={[
-              styles.drillCard,
-              selectedDrillId === item.id ? styles.drillCardSelected : null,
-            ]}
-          >
-            {index === 0 ? (
-              <>
-                <View testID="builder-drill-card-first" style={styles.builderProbe} />
-                <View
-                  testID="builder-drill-first-id-probe"
-                  accessibilityLabel={item.id}
-                  style={styles.builderProbe}
-                />
-              </>
-            ) : null}
-            <View style={styles.drillCardTopRow}>
-              <View style={[styles.drillLeft, useCompactDrillCard ? styles.drillLeftCompact : null]}>
-                <Text style={[styles.drillOrder, useCompactDrillCard ? styles.drillOrderCompact : null]}>#{index + 1}</Text>
-                <View style={styles.drillTextBlock}>
-                  <Text
-                    style={[styles.drillName, useCompactDrillCard ? styles.drillNameCompact : null]}
-                    numberOfLines={drillTitleLineLimit}
-                    ellipsizeMode="tail"
-                    testID={`builder-drill-title-${item.id}`}
-                  >
-                    {item.name}
-                  </Text>
-                  {index === 0 ? (
-                    <Text
-                      testID="builder-drill-title-lines-first"
-                      style={styles.drillLineLimitProbe}
-                    >
-                      {String(drillTitleLineLimit)}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.drillMeta}>
-                    {Math.round(item.durationSeconds / 60)} min • {item.targetBpm ?? 100} BPM
-                  </Text>
-                  {useCompactDrillCard ? (
-                    <Text style={[styles.drillXp, styles.drillXpCompact]} testID={`builder-drill-xp-${item.id}`}>
-                      +{toXp(item)} XP
-                    </Text>
-                  ) : null}
-                  {item.randomizer ? (
-                    <Text style={styles.drillRandomMeta}>
-                      Cue: {item.randomizer.kind} every {item.randomizer.everyBars} bars
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
-              {!useCompactDrillCard ? (
-                <Text style={styles.drillXp} testID={`builder-drill-xp-${item.id}`}>
-                  +{toXp(item)} XP
-                </Text>
-              ) : null}
-            </View>
-
-            <View style={[styles.builderCardActions, useCompactDrillCard ? styles.builderCardActionsCompact : null]}>
-              <TouchableOpacity
-                style={[styles.moveChip, useCompactDrillCard ? styles.moveChipCompact : null, index === 0 ? styles.actionButtonDisabled : null]}
-                onPress={() => moveDrill(item.id, -1)}
-                disabled={index === 0}
-                testID={`builder-move-up-${item.id}`}
-              >
-                <Text style={styles.smallActionText}>↑</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.moveChip, useCompactDrillCard ? styles.moveChipCompact : null, index === drills.length - 1 ? styles.actionButtonDisabled : null]}
-                onPress={() => moveDrill(item.id, 1)}
-                disabled={index === drills.length - 1}
-                testID={index === 0 ? "builder-move-first-down" : `builder-move-down-${item.id}`}
-              >
-                <Text style={styles.smallActionText}>↓</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.removeChip, useCompactDrillCard ? styles.removeChipCompact : null]}
-                onPress={() => onRemoveDrill(item.id)}
-                testID={`builder-remove-${item.id}`}
-              >
-                <Text style={styles.removeChipText}>Remove</Text>
-              </TouchableOpacity>
-            </View>
-            {selectedDrillId === item.id ? (
-              <View style={styles.drillInlineEditor}>
-                <TextInput
-                  value={drillNameInput}
-                  onChangeText={onDrillNameInput}
-                  placeholder="Drill name"
-                  placeholderTextColor={COLORS.muted}
-                  style={styles.templateInput}
-                  testID="builder-drill-name-input"
-                />
-                <View style={styles.inlineRow}>
-                  <TextInput
-                    value={drillDurationInput}
-                    onChangeText={onDrillDurationInput}
-                    keyboardType="number-pad"
-                    placeholder="Minutes (1-30)"
-                    placeholderTextColor={COLORS.muted}
-                    style={styles.timeInput}
-                    testID="builder-drill-duration-input"
-                  />
-                  <TextInput
-                    value={drillBpmInput}
-                    onChangeText={onDrillBpmInput}
-                    keyboardType="number-pad"
-                    placeholder="BPM (40-240)"
-                    placeholderTextColor={COLORS.muted}
-                    style={styles.timeInput}
-                    testID="builder-drill-bpm-input"
-                  />
-                </View>
-                <View style={styles.inlineRow}>
-                  <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeDuration(-1)}
-                    testID="builder-drill-duration-decrement"
-                  >
-                    <Text style={styles.pillButtonText}>-1 min</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeDuration(1)}
-                    testID="builder-drill-duration-increment"
-                  >
-                    <Text style={styles.pillButtonText}>+1 min</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeBpm(-5)}
-                    testID="builder-drill-bpm-decrement"
-                  >
-                    <Text style={styles.pillButtonText}>-5 BPM</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.pillButton}
-                    onPress={() => nudgeBpm(5)}
-                    testID="builder-drill-bpm-increment"
-                  >
-                    <Text style={styles.pillButtonText}>+5 BPM</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.helperText}>Random cue (optional)</Text>
-                <View style={styles.templatePillsRow}>
-                  {RANDOMIZER_KIND_OPTIONS.map((option) => (
-                    <AppChip
-                      key={option.value}
-                      selected={drillRandomizerKindInput === option.value}
-                      onPress={() => onDrillRandomizerKindInput(option.value)}
-                      testID={`builder-randomizer-${option.value}`}
-                    >
-                      <Text style={styles.templatePillText}>{option.label}</Text>
-                    </AppChip>
-                  ))}
-                </View>
-                {drillRandomizerKindInput !== "none" ? (
-                  <>
-                    <View style={styles.inlineRow}>
-                      <TextInput
-                        value={drillRandomEveryBarsInput}
-                        onChangeText={onDrillRandomEveryBarsInput}
-                        keyboardType="number-pad"
-                        placeholder="Every N bars (1-16)"
-                        placeholderTextColor={COLORS.muted}
-                        style={styles.timeInput}
-                        testID="builder-random-bars-input"
-                      />
-                      <TouchableOpacity
-                        style={styles.pillButton}
-                        onPress={() => nudgeRandomBars(-1)}
-                        testID="builder-random-bars-decrement"
-                      >
-                        <Text style={styles.pillButtonText}>-1 bar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.pillButton}
-                        onPress={() => nudgeRandomBars(1)}
-                        testID="builder-random-bars-increment"
-                      >
-                        <Text style={styles.pillButtonText}>+1 bar</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.helperText}>
-                      During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
-                    </Text>
-                  </>
-                ) : null}
-                {!isDrillNameValid ? (
-                  <Text style={styles.helperText} testID="builder-drill-validation-name">
-                    Drill name cannot be empty.
-                  </Text>
-                ) : null}
-                {!isDurationValid ? (
-                  <Text style={styles.helperText} testID="builder-drill-validation-duration">
-                    Duration must be a number from 1 to 30 minutes.
-                  </Text>
-                ) : null}
-                {!isBpmValid ? (
-                  <Text style={styles.helperText} testID="builder-drill-validation-bpm">
-                    BPM must be blank or between 40 and 240.
-                  </Text>
-                ) : null}
-                {!isRandomEveryBarsValid ? (
-                  <Text style={styles.helperText} testID="builder-drill-validation-random-bars">
-                    Random cue bars must be a number from 1 to 16.
-                  </Text>
-                ) : null}
-                <Text style={styles.helperText}>Autosaves as you type.</Text>
-              </View>
-            ) : null}
-          </TouchableOpacity>
-        )}
+        renderItem={renderBuilderDrill}
         ListFooterComponent={
           <View style={styles.builderListFooter}>
             <TouchableOpacity style={styles.builderAddPlaceholder} onPress={onAddDrill} testID="builder-add-drill">
@@ -2636,6 +2635,7 @@ export const styles = StyleSheet.create({
   drillCard: { minHeight: 126, borderRadius: RADII.card, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.divider, paddingHorizontal: 16, paddingVertical: 16, flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start", gap: 12 },
   drillCardTopRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
   drillCardSelected: { borderColor: COLORS.accent, shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } },
+  drillCardDragging: { borderColor: COLORS.accent, backgroundColor: COLORS.cardSoft, shadowColor: COLORS.accent, shadowOpacity: 0.32, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
   drillLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1, minWidth: 0 },
   drillLeftCompact: { alignItems: "flex-start", gap: 10 },
   drillTextBlock: { flex: 1, minWidth: 0 },
@@ -2648,6 +2648,10 @@ export const styles = StyleSheet.create({
   drillLineLimitProbe: { fontSize: 1, lineHeight: 1, height: 1, marginTop: 0, color: "transparent" },
   builderCardActions: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, flexShrink: 0, paddingTop: 2 },
   builderCardActionsCompact: { gap: 6 },
+  dragChip: { minHeight: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: "rgba(230,126,0,0.35)", backgroundColor: "rgba(230,126,0,0.1)", paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
+  dragChipCompact: { paddingHorizontal: 10, gap: 6 },
+  dragChipGlyph: { color: COLORS.accent, fontSize: 12, fontWeight: "900", letterSpacing: -1.2 },
+  dragChipText: { color: COLORS.accent, fontWeight: "800", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
   drillInlineEditor: { borderTopWidth: 1, borderTopColor: COLORS.divider, paddingTop: 10, gap: 8 },
   drillXp: { color: COLORS.xp, fontWeight: "800", fontSize: 18, minWidth: 70, textAlign: "right", marginTop: 2 },
   drillXpCompact: { minWidth: 0, textAlign: "left", marginTop: 4 },
@@ -2696,8 +2700,6 @@ export const styles = StyleSheet.create({
   smallActionText: { color: COLORS.text, fontWeight: "700", fontSize: 12 },
   removeChip: { minHeight: 30, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, paddingHorizontal: 10, justifyContent: "center", backgroundColor: COLORS.cardSoft },
   removeChipCompact: { paddingHorizontal: 8 },
-  moveChip: { minHeight: 30, minWidth: 30, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.cardSoft },
-  moveChipCompact: { minWidth: 28, minHeight: 28 },
   removeChipText: { color: COLORS.muted, fontWeight: "700", fontSize: 11 },
   recentSessionRow: { marginTop: 8, borderTopWidth: 1, borderTopColor: COLORS.divider, paddingTop: 8 },
   sessionsList: { gap: 12, paddingBottom: 24 },

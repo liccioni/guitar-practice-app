@@ -73,16 +73,9 @@ async function getFirstDrillId() {
   return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
 }
 
-async function ensureMoveFirstDownVisible() {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    try {
-      await waitForVisible("builder-move-first-down", 1500);
-      return;
-    } catch {
-      await element(by.id("builder-drill-list")).swipe("up", "fast", 0.55);
-    }
-  }
-  await waitForVisible("builder-move-first-down", 5000);
+async function getSecondDrillId() {
+  const attrs = await element(by.id("builder-drill-second-id-probe")).getAttributes();
+  return String(attrs.label ?? attrs.text ?? attrs.value ?? "");
 }
 
 async function waitForFirstDrillIdChange(previousId, timeoutMs = 8000) {
@@ -99,6 +92,25 @@ async function waitForFirstDrillIdChange(previousId, timeoutMs = 8000) {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   throw new Error("Timed out waiting for first drill id to change after move-down action.");
+}
+
+async function dragFirstDrillBelowSecond() {
+  await waitForVisible("builder-drag-first-handle", 5000);
+  const secondId = await getSecondDrillId();
+  if (!secondId) {
+    throw new Error("Could not determine second drill id for drag target.");
+  }
+
+  await element(by.id("builder-drag-first-handle")).longPressAndDrag(
+    1200,
+    NaN,
+    NaN,
+    element(by.id(`builder-drill-card-${secondId}`)),
+    NaN,
+    NaN,
+    "fast",
+    0,
+  );
 }
 
 async function createFreshTemplate() {
@@ -194,9 +206,8 @@ describe("Session builder e2e", () => {
       await waitForDrillCount(2, 10000);
     }
 
-    await ensureMoveFirstDownVisible();
     const firstBefore = await getFirstDrillId();
-    await element(by.id("builder-move-first-down")).tap();
+    await dragFirstDrillBelowSecond();
     await waitForFirstDrillIdChange(firstBefore, 8000);
   });
 
