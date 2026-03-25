@@ -15,9 +15,7 @@ if [[ -z "$UDID" ]]; then
   exit 1
 fi
 
-open -a Simulator --args -CurrentDeviceUDID "$UDID" >/dev/null 2>&1 || true
-xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
-xcrun simctl bootstatus "$UDID" -b
+bash scripts/recover-ios-simulator.sh "$SIMULATOR_NAME"
 
 if [[ ! -f "$PREPARE_STATE_PATH" ]]; then
   cat >&2 <<EOF
