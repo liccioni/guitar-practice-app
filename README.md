@@ -19,6 +19,14 @@ npm run ios:local
 npm run parity:stitch
 ```
 
+## Release Screenshots
+```bash
+npm run screenshots:release:ios
+```
+
+Pipeline doc:
+- `docs/RELEASE_SCREENSHOT_PIPELINE.md`
+
 ## Maestro iOS Smoke
 Install Maestro once:
 
@@ -47,6 +55,7 @@ Migration notes and Detox overlap:
 - Device QA checklist: `docs/DEVICE_QA_CHECKLIST.md`
 - Release notes: `docs/RELEASE_NOTES.md`
 - Release configuration: `docs/RELEASE_CONFIGURATION.md`
+- Release screenshot pipeline: `docs/RELEASE_SCREENSHOT_PIPELINE.md`
 - Architecture boundaries: `docs/ARCHITECTURE_BOUNDARIES.md`
 - Analytics hook map: `docs/ANALYTICS_HOOK_MAP.md`
 - Stitch design alignment: `docs/STITCH_FLOW_FEATURE_PLAN.md`
