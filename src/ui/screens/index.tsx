@@ -538,6 +538,7 @@ export function SessionBuilder(props: {
   onReorderDrills: (ids: string[]) => void;
   onAddDrill: () => void;
   onStartSessionDirect: () => void;
+  onPreviewSession: () => void;
   onStartSession: () => void;
 }) {
   const {
@@ -569,6 +570,7 @@ export function SessionBuilder(props: {
     onReorderDrills,
     onAddDrill,
     onStartSessionDirect,
+    onPreviewSession,
     onStartSession,
   } = props;
 
@@ -1062,7 +1064,7 @@ export function SessionBuilder(props: {
       ) : null}
 
       <View style={styles.builderFooterBar}>
-        <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onStartSession}>
+        <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onPreviewSession}>
           <Text style={styles.secondaryCtaText}>Preview Routine</Text>
         </AppButton>
         <AppButton
