@@ -68,7 +68,6 @@ export default function App() {
     duplicateTemplate,
     entitlements,
     getFeatureAvailability,
-    goalError,
     goalSettings,
     goalTarget,
     goalType,
@@ -82,13 +81,10 @@ export default function App() {
     navigateFromTab,
     onboardingState,
     onboardingSuggestion,
-    reminderError,
     removeDrillFromTemplate,
     reorderDrillsInTemplate,
     resetOnboardingQuestionnaire,
-    saveGoalTarget,
     saveOnboardingAnswers,
-    saveReminderTime,
     saveTemplate,
     screen,
     selectedBuilderDrill,
@@ -98,7 +94,6 @@ export default function App() {
     setBuilderError,
     setDrillCueMode,
     setEntitlements,
-    setGoalType,
     setHistory,
     setScreen,
     setSelectedDrillId,
@@ -108,7 +103,6 @@ export default function App() {
     storageError,
     templates,
     templateNameInput,
-    toggleReminder,
     totalXp,
   } = usePracticeAppState();
 
@@ -391,7 +385,6 @@ export default function App() {
             {screen === "home" ? (
               <HomeDashboard
                 levelState={levelState}
-                totalXp={totalXp}
                 streak={streak}
                 goalType={goalType}
                 goalCurrentValue={goalCurrentValue}
@@ -402,25 +395,14 @@ export default function App() {
                 comebackPrompt={comebackPrompt}
                 badges={badges}
                 storageError={storageError}
-                goalError={goalError}
-                reminderEnabled={goalSettings.reminderEnabled}
-                reminderTime={goalSettings.reminderTime}
-                reminderError={reminderError}
                 onboardingState={onboardingState}
                 onboardingSuggestion={onboardingSuggestion}
-                onGoalTypeChange={setGoalType}
-                onSaveGoalTarget={saveGoalTarget}
-                onToggleReminder={toggleReminder}
-                onSaveReminderTime={saveReminderTime}
                 onSaveOnboardingAnswers={saveOnboardingAnswers}
                 onApplyOnboardingSuggestion={applyOnboardingSuggestionToBuilder}
                 onResetOnboarding={resetOnboardingQuestionnaire}
                 onStartPractice={startPracticeFlow}
                 onOpenSessions={() => setScreen("sessions")}
-                onOpenPricing={() => openPricingScreen("home")}
                 showDashboardFeedback={isFeatureEnabled("dashboard_feedback_loops")}
-                showPricingEntry={isFeatureEnabled("pricing_screen")}
-                showXpProgress={isFeatureEnabled("xp_visibility")}
               />
             ) : null}
 
