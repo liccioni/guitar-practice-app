@@ -188,9 +188,13 @@ export function useActivePracticeRuntime({
   }, [activeDrill, metronomeBpm, metronomeEnabled, randomCuePulse, runtimeState, screen]);
 
   useEffect(() => {
-    if (screen !== "active" || !metronomeEnabled) return;
+    if (screen !== "active" || !runtimeState || runtimeState.status !== "running" || !metronomeEnabled) {
+      void releaseMetronomeAudio();
+      return;
+    }
+
     void primeMetronomeAudio();
-  }, [metronomeEnabled, screen]);
+  }, [metronomeEnabled, runtimeState, screen]);
 
   useEffect(() => {
     return () => {
