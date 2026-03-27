@@ -114,4 +114,73 @@ describe("drill validation", () => {
       updateDrillFromInput(base, { randomizer: { kind: "note", everyBars: 0 } }, "2026-03-03T00:00:00.000Z"),
     ).toThrow("Random cue bars must be between 1 and 16");
   });
+
+  it("supports the expanded cue config model", () => {
+    const randomPulse = createDrillFromInput(
+      "d7",
+      {
+        name: "Random pulse",
+        durationMinutes: 8,
+        tags: [],
+        cue: { mode: "random-pulse", kind: "triad", everyBars: 3 },
+      },
+      "2026-03-02T00:00:00.000Z",
+    );
+
+    const fixedNote = createDrillFromInput(
+      "d8",
+      {
+        name: "Fixed note",
+        durationMinutes: 8,
+        tags: [],
+        cue: { mode: "fixed-note" },
+      },
+      "2026-03-02T00:00:00.000Z",
+    );
+
+    const circleOfFifths = createDrillFromInput(
+      "d9",
+      {
+        name: "Fifths",
+        durationMinutes: 8,
+        tags: [],
+        cue: { mode: "circle-of-fifths", everyBars: 4 },
+      },
+      "2026-03-02T00:00:00.000Z",
+    );
+
+    expect(randomPulse.cue).toEqual({ mode: "random-pulse", kind: "triad", everyBars: 3 });
+    expect(randomPulse.randomizer).toEqual({ kind: "triad", everyBars: 3 });
+    expect(fixedNote.cue).toEqual({ mode: "fixed-note" });
+    expect(fixedNote.randomizer).toBeUndefined();
+    expect(circleOfFifths.cue).toEqual({ mode: "circle-of-fifths", everyBars: 4 });
+  });
+
+  it("rejects malformed cue configs", () => {
+    expect(() =>
+      createDrillFromInput(
+        "d10",
+        {
+          name: "Bad cue",
+          durationMinutes: 8,
+          tags: [],
+          cue: { mode: "random-pulse", kind: "note" },
+        },
+        "2026-03-02T00:00:00.000Z",
+      ),
+    ).toThrow("Random pulse cue bars are required");
+
+    expect(() =>
+      createDrillFromInput(
+        "d11",
+        {
+          name: "Bad cue",
+          durationMinutes: 8,
+          tags: [],
+          cue: { mode: "circle-of-fourths" },
+        },
+        "2026-03-02T00:00:00.000Z",
+      ),
+    ).toThrow("Cue bars are required");
+  });
 });

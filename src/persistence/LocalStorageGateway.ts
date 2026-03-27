@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { PracticeHistoryEntry } from "../domain/history/types";
 import type { SessionTemplate } from "../domain/sessions/sessionTemplate";
-import type { Drill, DrillRandomizerKind } from "../domain/exercises/types";
+import type { Drill, DrillCueConfig, DrillRandomizerKind } from "../domain/exercises/types";
 import { DEFAULT_GOAL_SETTINGS, type GoalSettings, type GoalType } from "../domain/goals/types";
 import {
   DEFAULT_ENTITLEMENT_STATE,
@@ -23,7 +23,7 @@ import { MAX_DRILL_MINUTES, MIN_DRILL_MINUTES } from "../domain/exercises/drill"
 import { isValidBpm } from "../domain/metronome/metronome";
 
 const STORAGE_KEY = "guitar-practice:v1";
-export const PERSISTENCE_SCHEMA_VERSION = 6;
+export const PERSISTENCE_SCHEMA_VERSION = 7;
 
 export interface PersistedProfileState {
   totalXp: number;
@@ -98,28 +98,15 @@ function sanitizeDrills(input: unknown): Drill[] {
       continue;
     }
 
-    const randomizer = isPlainObject(item.randomizer)
-      ? {
-          kind:
-            item.randomizer.kind === "note" ||
-            item.randomizer.kind === "triad" ||
-            item.randomizer.kind === "fingers4"
-              ? (item.randomizer.kind as DrillRandomizerKind)
-              : null,
-          everyBars: Number(item.randomizer.everyBars),
-        }
-      : null;
+    const randomizer = sanitizeLegacyRandomizer(item.randomizer);
     const normalizedRandomizer =
-      randomizer &&
-      randomizer.kind &&
-      Number.isFinite(randomizer.everyBars) &&
-      randomizer.everyBars >= 1 &&
-      randomizer.everyBars <= 16
+      randomizer && Number.isFinite(randomizer.everyBars)
         ? {
             kind: randomizer.kind,
             everyBars: Math.round(randomizer.everyBars),
           }
         : undefined;
+    const cue = sanitizeDrillCue(item.cue) ?? deriveCueFromLegacyRandomizer(normalizedRandomizer);
 
     sanitized.push({
       id: item.id,
@@ -129,6 +116,7 @@ function sanitizeDrills(input: unknown): Drill[] {
       targetBpm: Number.isFinite(targetBpm) && isValidBpm(targetBpm) ? targetBpm : undefined,
       tags: tags as Drill["tags"],
       randomizer: normalizedRandomizer,
+      cue,
       createdAt: typeof item.createdAt === "string" ? item.createdAt : "",
       updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : "",
     });
@@ -291,6 +279,70 @@ function sanitizeProfileState(input: unknown): PersistedProfileState {
     entitlements,
     drillCueMode,
     featureFlags,
+  };
+}
+
+function sanitizeLegacyRandomizer(input: unknown): { kind: DrillRandomizerKind; everyBars: number } | undefined {
+  if (!isPlainObject(input)) return undefined;
+
+  const kind =
+    input.kind === "note" || input.kind === "triad" || input.kind === "fingers4"
+      ? (input.kind as DrillRandomizerKind)
+      : null;
+  const everyBars = Number(input.everyBars);
+
+  if (!kind || !Number.isFinite(everyBars) || everyBars < 1 || everyBars > 16) {
+    return undefined;
+  }
+
+  return {
+    kind,
+    everyBars,
+  };
+}
+
+function sanitizeDrillCue(input: unknown): DrillCueConfig | undefined {
+  if (!isPlainObject(input)) return undefined;
+
+  if (input.mode === "random-pulse") {
+    const randomizer = sanitizeLegacyRandomizer(input);
+    if (!randomizer) return undefined;
+    return {
+      mode: "random-pulse",
+      kind: randomizer.kind,
+      everyBars: randomizer.everyBars,
+    };
+  }
+
+  if (input.mode === "fixed-note") {
+    return {
+      mode: "fixed-note",
+    };
+  }
+
+  if (input.mode === "circle-of-fifths" || input.mode === "circle-of-fourths") {
+    const everyBars = Number(input.everyBars);
+    if (!Number.isFinite(everyBars) || everyBars < 1 || everyBars > 16) {
+      return undefined;
+    }
+
+    return {
+      mode: input.mode,
+      everyBars: Math.round(everyBars),
+    };
+  }
+
+  return undefined;
+}
+
+function deriveCueFromLegacyRandomizer(
+  randomizer: { kind: DrillRandomizerKind; everyBars: number } | undefined,
+): DrillCueConfig | undefined {
+  if (!randomizer) return undefined;
+  return {
+    mode: "random-pulse",
+    kind: randomizer.kind,
+    everyBars: randomizer.everyBars,
   };
 }
 

@@ -27,7 +27,17 @@ describe("LocalStorageGateway", () => {
       JSON.stringify({
         version: PERSISTENCE_SCHEMA_VERSION,
         state: {
-          drills: [],
+          drills: [
+            {
+              id: "d1",
+              name: "Warmup",
+              durationSeconds: 300,
+              cue: { mode: "fixed-note" },
+              tags: [],
+              createdAt: "",
+              updatedAt: "",
+            },
+          ],
           templates: [],
           history: [],
           goalSettings: {
@@ -49,6 +59,7 @@ describe("LocalStorageGateway", () => {
     expect(result.goalSettings.dailyMinutesTarget).toBe(25);
     expect(result.goalSettings.goalType).toBe("sessions");
     expect(result.goalSettings.goalTarget).toBe(2);
+    expect(result.drills[0]?.cue).toEqual({ mode: "fixed-note" });
     expect(result.profile.totalXp).toBe(1500);
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(result.profile.entitlements.planId).toBe("free");
@@ -111,29 +122,29 @@ describe("LocalStorageGateway", () => {
           reminderEnabled: false,
           reminderTime: "18:00",
         },
-          profile: {
-            totalXp: 0,
-            unlockedBadgeIds: [],
-            onboarding: { completed: false },
-            entitlements: { planId: "free", billingProvider: "local" },
-            drillCueMode: "chime",
-            featureFlags: {
-              pricing_screen: true,
-              session_overview: true,
-              drill_complete_transition: true,
-              drill_transition_audio_cues: true,
-              dashboard_feedback_loops: true,
-              xp_visibility: true,
-              progress_signal_refresh: true,
-              dashboard_goal_reminder_card: true,
-              contextual_paywalls: true,
-              locked_premium_states: true,
-              drag_reorder_builder: true,
-              compact_builder_editor: true,
-              onboarding_handoff_v2: true,
-            },
+        profile: {
+          totalXp: 0,
+          unlockedBadgeIds: [],
+          onboarding: { completed: false },
+          entitlements: { planId: "free", billingProvider: "local" },
+          drillCueMode: "chime",
+          featureFlags: {
+            pricing_screen: true,
+            session_overview: true,
+            drill_complete_transition: true,
+            drill_transition_audio_cues: true,
+            dashboard_feedback_loops: true,
+            xp_visibility: true,
+            progress_signal_refresh: true,
+            dashboard_goal_reminder_card: true,
+            contextual_paywalls: true,
+            locked_premium_states: true,
+            drag_reorder_builder: true,
+            compact_builder_editor: true,
+            onboarding_handoff_v2: true,
           },
-        }),
+        },
+      }),
     ).resolves.toBeUndefined();
   });
 
@@ -161,15 +172,16 @@ describe("LocalStorageGateway", () => {
               updatedAt: "",
             },
             {
-              id: "good-drill",
-              name: "  Good Drill ",
-              durationSeconds: 300,
-              targetBpm: 300,
-              tags: ["warmup", 42],
-              createdAt: "",
-              updatedAt: "",
-            },
-          ],
+            id: "good-drill",
+            name: "  Good Drill ",
+            durationSeconds: 300,
+            targetBpm: 300,
+            tags: ["warmup", 42],
+            cue: { mode: "circle-of-fourths", everyBars: 2 },
+            createdAt: "",
+            updatedAt: "",
+          },
+        ],
           templates: [
             { id: "", name: "Invalid", drillIds: ["good-drill"] },
             {
@@ -222,6 +234,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.drills).toHaveLength(1);
     expect(parsed.drills[0]?.name).toBe("Good Drill");
     expect(parsed.drills[0]?.targetBpm).toBeUndefined();
+    expect(parsed.drills[0]?.cue).toEqual({ mode: "circle-of-fourths", everyBars: 2 });
 
     expect(parsed.templates).toHaveLength(1);
     expect(parsed.templates[0]?.name).toBe("Template One");
@@ -372,17 +385,18 @@ describe("LocalStorageGateway", () => {
         state: {
           drills: [
             {
-              id: "d-fallback",
-              name: "Fallback",
-              description: 42,
-              durationSeconds: 300,
-              targetBpm: 120,
-              tags: "not-array",
-              randomizer: { kind: "unknown", everyBars: 99 },
-              createdAt: 1,
-              updatedAt: null,
-            },
-          ],
+            id: "d-fallback",
+            name: "Fallback",
+            description: 42,
+            durationSeconds: 300,
+            targetBpm: 120,
+            tags: "not-array",
+            randomizer: { kind: "unknown", everyBars: 99 },
+            cue: { mode: "circle-of-fifths", everyBars: 99 },
+            createdAt: 1,
+            updatedAt: null,
+          },
+        ],
           templates: [
             {
               id: "t-fallback",
@@ -438,6 +452,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.drills[0]?.tags).toEqual([]);
     expect(parsed.drills[0]?.description).toBeUndefined();
     expect(parsed.drills[0]?.randomizer).toBeUndefined();
+    expect(parsed.drills[0]?.cue).toBeUndefined();
     expect(parsed.drills[0]?.createdAt).toBe("");
     expect(parsed.drills[0]?.updatedAt).toBe("");
     expect(parsed.templates[0]?.drillIds).toEqual([]);
