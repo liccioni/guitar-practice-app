@@ -14,6 +14,7 @@ describe("persistence migration", () => {
             id: "d1",
             name: "Warmup",
             durationSeconds: 300,
+            cue: { mode: "circle-of-fifths", everyBars: 4 },
             tags: [],
             createdAt: "",
             updatedAt: "",
@@ -31,6 +32,7 @@ describe("persistence migration", () => {
     expect(parsed.goalSettings.dailyMinutesTarget).toBe(20);
     expect(parsed.profile.totalXp).toBe(420);
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b4"]);
+    expect(parsed.drills[0]?.cue).toEqual({ mode: "circle-of-fifths", everyBars: 4 });
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
@@ -77,6 +79,7 @@ describe("persistence migration", () => {
             id: "valid",
             name: "Warmup",
             durationSeconds: 300,
+            cue: { mode: "fixed-note" },
             tags: [],
             createdAt: "",
             updatedAt: "",
@@ -108,6 +111,7 @@ describe("persistence migration", () => {
 
     const parsed = parsePersistedState(raw);
     expect(parsed.drills.map((drill) => drill.id)).toEqual(["valid"]);
+    expect(parsed.drills[0]?.cue).toEqual({ mode: "fixed-note" });
     expect(parsed.templates[0]?.drillIds).toEqual(["valid"]);
     expect(parsed.templates[0]?.totalDurationSeconds).toBe(300);
     expect(parsed.profile.totalXp).toBe(0);
