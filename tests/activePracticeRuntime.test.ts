@@ -16,6 +16,7 @@ describe("activePracticeRuntime helpers", () => {
       nextLabel: null,
       beatsRemaining: 0,
       pulseWindowActive: false,
+      sequenceIndex: null,
     });
   });
 
@@ -33,6 +34,7 @@ describe("activePracticeRuntime helpers", () => {
       nextLabel: "C",
       beatsRemaining: 8,
       pulseWindowActive: false,
+      sequenceIndex: null,
     });
   });
 
@@ -54,6 +56,7 @@ describe("activePracticeRuntime helpers", () => {
       nextLabel: "C",
       beatsRemaining: 1,
       pulseWindowActive: true,
+      sequenceIndex: null,
     });
   });
 
@@ -75,6 +78,74 @@ describe("activePracticeRuntime helpers", () => {
       nextLabel: "E",
       beatsRemaining: 8,
       pulseWindowActive: false,
+      sequenceIndex: null,
+    });
+  });
+
+  it("keeps a fixed-note cue stable for the whole drill", () => {
+    const state = createRandomCueState({ mode: "fixed-note" }, () => "F");
+    const result = advanceRandomCueState(state, { mode: "fixed-note" }, () => "A");
+
+    expect(state).toEqual({
+      label: "F",
+      nextLabel: "F",
+      beatsRemaining: 0,
+      pulseWindowActive: false,
+      sequenceIndex: null,
+    });
+    expect(result.shouldPulse).toBe(false);
+    expect(result.nextState).toEqual(state);
+  });
+
+  it("rotates through the circle of fifths on the configured cadence", () => {
+    const initial = createRandomCueState({ mode: "circle-of-fifths", everyBars: 1 });
+    const pulseWindow = advanceRandomCueState(initial, { mode: "circle-of-fifths", everyBars: 1 });
+    const advanced = advanceRandomCueState(
+      { ...pulseWindow.nextState, beatsRemaining: 1, pulseWindowActive: true },
+      { mode: "circle-of-fifths", everyBars: 1 },
+    );
+
+    expect(initial).toEqual({
+      label: "C",
+      nextLabel: "G",
+      beatsRemaining: 4,
+      pulseWindowActive: false,
+      sequenceIndex: 0,
+    });
+    expect(advanced.shouldPulse).toBe(true);
+    expect(advanced.nextState).toEqual({
+      label: "G",
+      nextLabel: "D",
+      beatsRemaining: 4,
+      pulseWindowActive: false,
+      sequenceIndex: 1,
+    });
+  });
+
+  it("rotates through the circle of fourths on the configured cadence", () => {
+    const initial = createRandomCueState({ mode: "circle-of-fourths", everyBars: 2 });
+    const advanced = advanceRandomCueState(
+      {
+        ...initial,
+        beatsRemaining: 1,
+        pulseWindowActive: true,
+      },
+      { mode: "circle-of-fourths", everyBars: 2 },
+    );
+
+    expect(initial).toEqual({
+      label: "C",
+      nextLabel: "F",
+      beatsRemaining: 8,
+      pulseWindowActive: false,
+      sequenceIndex: 0,
+    });
+    expect(advanced.nextState).toEqual({
+      label: "F",
+      nextLabel: "A#",
+      beatsRemaining: 8,
+      pulseWindowActive: false,
+      sequenceIndex: 1,
     });
   });
 

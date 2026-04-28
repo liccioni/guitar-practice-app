@@ -1,4 +1,9 @@
-import type { Drill, DrillRandomizer, DrillRandomizerKind } from "../domain/exercises/types";
+import type {
+  Drill,
+  DrillCueConfig,
+  DrillRandomizer,
+  DrillRandomizerKind,
+} from "../domain/exercises/types";
 import type { RuntimeState } from "../domain/sessions/runtimeState";
 
 export interface RandomCueRuntimeState {
@@ -6,6 +11,7 @@ export interface RandomCueRuntimeState {
   nextLabel: string | null;
   beatsRemaining: number;
   pulseWindowActive: boolean;
+  sequenceIndex?: number | null;
 }
 
 export interface RandomCueAdvanceResult {
@@ -53,33 +59,79 @@ export function createEmptyRandomCueState(): RandomCueRuntimeState {
     nextLabel: null,
     beatsRemaining: 0,
     pulseWindowActive: false,
+    sequenceIndex: null,
   };
 }
 
+const CIRCLE_OF_FIFTHS = ["C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#", "F"] as const;
+const CIRCLE_OF_FOURTHS = ["C", "F", "A#", "D#", "G#", "C#", "F#", "B", "E", "A", "D", "G"] as const;
+
 export function createRandomCueState(
-  randomizer: DrillRandomizer,
+  cueInput: DrillRandomizer | DrillCueConfig,
   pickCue: (kind: DrillRandomizerKind) => string = pickRandomCueValue,
 ): RandomCueRuntimeState {
-  const initialBeats = randomizer.everyBars * 4;
+  const cue = normalizeCueInput(cueInput);
+  if (!cue) return createEmptyRandomCueState();
+
+  if (cue.mode === "fixed-note") {
+    const fixedLabel = pickCue("note");
+    return {
+      label: fixedLabel,
+      nextLabel: fixedLabel,
+      beatsRemaining: 0,
+      pulseWindowActive: false,
+      sequenceIndex: null,
+    };
+  }
+
+  if (cue.mode === "circle-of-fifths" || cue.mode === "circle-of-fourths") {
+    const sequence = cue.mode === "circle-of-fifths" ? CIRCLE_OF_FIFTHS : CIRCLE_OF_FOURTHS;
+    const initialBeats = (cue.everyBars ?? 1) * 4;
+    return {
+      label: sequence[0],
+      nextLabel: sequence[1] ?? sequence[0],
+      beatsRemaining: initialBeats,
+      pulseWindowActive: false,
+      sequenceIndex: 0,
+    };
+  }
+
+  const initialBeats = (cue.everyBars ?? 1) * 4;
 
   return {
-    label: pickCue(randomizer.kind),
-    nextLabel: pickCue(randomizer.kind),
+    label: pickCue(cue.kind ?? "note"),
+    nextLabel: pickCue(cue.kind ?? "note"),
     beatsRemaining: initialBeats,
     pulseWindowActive: false,
+    sequenceIndex: null,
   };
 }
 
 export function advanceRandomCueState(
   current: RandomCueRuntimeState,
-  randomizer: DrillRandomizer,
+  cueInput: DrillRandomizer | DrillCueConfig,
   pickCue: (kind: DrillRandomizerKind) => string = pickRandomCueValue,
 ): RandomCueAdvanceResult {
+  const cue = normalizeCueInput(cueInput);
+  if (!cue) {
+    return {
+      nextState: createEmptyRandomCueState(),
+      shouldPulse: false,
+    };
+  }
+
+  if (cue.mode === "fixed-note") {
+    return {
+      nextState: current,
+      shouldPulse: false,
+    };
+  }
+
   const nextRemaining = current.beatsRemaining - 1;
 
   if (nextRemaining <= 0) {
-    const resetBeats = randomizer.everyBars * 4;
-    const nextCue = pickCue(randomizer.kind);
+    const resetBeats = (cue.everyBars ?? 1) * 4;
+    const nextCue = buildNextCueLabel(cue, current, pickCue);
 
     return {
       nextState: {
@@ -87,6 +139,7 @@ export function advanceRandomCueState(
         nextLabel: nextCue,
         beatsRemaining: resetBeats,
         pulseWindowActive: false,
+        sequenceIndex: getAdvancedSequenceIndex(cue, current),
       },
       shouldPulse: true,
     };
@@ -97,6 +150,7 @@ export function advanceRandomCueState(
       ...current,
       beatsRemaining: nextRemaining,
       pulseWindowActive: nextRemaining === 1,
+      sequenceIndex: current.sequenceIndex ?? null,
     },
     shouldPulse: nextRemaining === 1,
   };
@@ -195,4 +249,60 @@ function toXp(drill: Drill): number {
   const durationMinutes = Math.max(1, Math.round(drill.durationSeconds / 60));
   const bpmBonus = drill.targetBpm ? Math.round((drill.targetBpm - 40) / 10) : 0;
   return Math.max(25, durationMinutes * 10 + bpmBonus);
+}
+
+function normalizeCueInput(
+  cueInput: DrillRandomizer | DrillCueConfig,
+): (DrillCueConfig & { everyBars?: number; kind?: DrillRandomizerKind }) | null {
+  if ("mode" in cueInput) {
+    if (cueInput.mode === "random-pulse") {
+      if (!cueInput.kind || cueInput.everyBars === undefined) return null;
+      return cueInput;
+    }
+
+    if (cueInput.mode === "fixed-note") {
+      return cueInput;
+    }
+
+    if (cueInput.everyBars === undefined) return null;
+    return cueInput;
+  }
+
+  return {
+    mode: "random-pulse",
+    kind: cueInput.kind,
+    everyBars: cueInput.everyBars,
+  };
+}
+
+function buildNextCueLabel(
+  cue: DrillCueConfig,
+  current: RandomCueRuntimeState,
+  pickCue: (kind: DrillRandomizerKind) => string,
+): string {
+  if (cue.mode === "random-pulse" && cue.kind) {
+    return pickCue(cue.kind);
+  }
+
+  if (cue.mode === "circle-of-fifths" || cue.mode === "circle-of-fourths") {
+    const sequence = cue.mode === "circle-of-fifths" ? CIRCLE_OF_FIFTHS : CIRCLE_OF_FOURTHS;
+    const currentIndex = current.sequenceIndex ?? 0;
+    const nextIndex = (currentIndex + 2) % sequence.length;
+    return sequence[nextIndex] ?? sequence[0];
+  }
+
+  return current.label ?? "C";
+}
+
+function getAdvancedSequenceIndex(
+  cue: DrillCueConfig,
+  current: RandomCueRuntimeState,
+): number | null {
+  if (cue.mode !== "circle-of-fifths" && cue.mode !== "circle-of-fourths") {
+    return null;
+  }
+
+  const sequence = cue.mode === "circle-of-fifths" ? CIRCLE_OF_FIFTHS : CIRCLE_OF_FOURTHS;
+  const currentIndex = current.sequenceIndex ?? 0;
+  return (currentIndex + 1) % sequence.length;
 }

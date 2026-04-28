@@ -170,10 +170,10 @@ export function useActivePracticeRuntime({
       setBeatFlash((current) => !current);
       void playMetronomeTick();
 
-      const randomizer = activeDrill?.randomizer;
-      if (randomizer) {
+      const cue = activeDrill?.cue ?? activeDrill?.randomizer;
+      if (cue) {
         setRandomCueState((current) => {
-          const next = advanceRandomCueState(current, randomizer);
+          const next = advanceRandomCueState(current, cue);
           if (next.shouldPulse) {
             triggerRandomCuePulse(randomCuePulse);
           }
@@ -207,13 +207,14 @@ export function useActivePracticeRuntime({
   }, []);
 
   useEffect(() => {
-    if (screen !== "active" || !activeDrill?.randomizer) {
+    const cue = activeDrill?.cue ?? activeDrill?.randomizer;
+    if (screen !== "active" || !cue) {
       setRandomCueState(createEmptyRandomCueState());
       randomCuePulse.setValue(0);
       return;
     }
 
-    setRandomCueState(createRandomCueState(activeDrill.randomizer));
+    setRandomCueState(createRandomCueState(cue));
     randomCuePulse.setValue(0);
   }, [activeDrill, randomCuePulse, screen]);
 
