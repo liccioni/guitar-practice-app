@@ -4,6 +4,7 @@ import { Animated, Easing, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useActivePracticeRuntime } from "./src/app/useActivePracticeRuntime";
+import { buildSessionCompletionResult } from "./src/application/sessionCompletion";
 import { buildComebackPrompt } from "./src/app/comebackPrompts";
 import { restoreLocalPurchases } from "./src/app/planManagement";
 import { buildPaywallEntryPoint } from "./src/app/paywallEntryPoints";
@@ -12,11 +13,8 @@ import { buildSessionOverviewSummary } from "./src/app/sessionOverview";
 import { trackSessionCompleted } from "./src/app/analytics";
 import { buildBadgeState, makeId, type Screen, usePracticeAppState } from "./src/app/usePracticeAppState";
 import type { EntitlementPlanId } from "./src/domain/monetization/entitlements";
-import type { Drill } from "./src/domain/exercises/types";
 import { calculateGoalTypeStreak } from "./src/domain/goals/streak";
-import { computeUnlockedBadgeIds } from "./src/domain/gamification/badges";
 import { calculateDashboardMetrics, toLocalDayKey } from "./src/domain/history/metrics";
-import type { DrillSnapshot, PracticeHistoryEntry } from "./src/domain/history/types";
 import { GlowCard } from "./src/ui/primitives/GlowCard";
 import {
   ActivePractice,
@@ -37,15 +35,6 @@ import {
   SongsLibrary,
   styles,
 } from "./src/ui/screens";
-
-function toSnapshot(drill: Drill): DrillSnapshot {
-  return {
-    id: drill.id,
-    name: drill.name,
-    durationSeconds: drill.durationSeconds,
-    targetBpm: drill.targetBpm,
-  };
-}
 
 export default function App() {
   const {
@@ -277,49 +266,26 @@ export default function App() {
     finalElapsedSec: number,
     finalSessionXp: number,
   ): void {
-    if (!selectedTemplate) {
+    const completion = buildSessionCompletionResult({
+      selectedTemplate,
+      allDrills,
+      history,
+      currentUnlockedBadgeIds: badges.filter((badge) => badge.unlocked).map((badge) => badge.id),
+      goalType,
+      goalTarget,
+      dailyMinutesTarget: goalSettings.dailyMinutesTarget,
+      finalActiveDrillIds,
+      finalCompletedDrillIds,
+      finalCompletedDurationSec,
+      finalElapsedSec,
+      finalSessionXp,
+      createHistoryId: () => makeId("history"),
+    });
+
+    if (!completion || !selectedTemplate) {
       setScreen("complete");
       return;
     }
-
-    const drillsSnapshot = finalActiveDrillIds
-      .map((id) => allDrills.find((drill) => drill.id === id))
-      .filter((drill): drill is Drill => Boolean(drill))
-      .map(toSnapshot);
-
-    const entry: PracticeHistoryEntry = {
-      id: makeId("history"),
-      sessionTemplateId: selectedTemplate.id,
-      sessionNameSnapshot: selectedTemplate.name,
-      drillsSnapshot,
-      completedDrillIds: finalCompletedDrillIds,
-      startedAt: new Date(Date.now() - finalElapsedSec * 1000).toISOString(),
-      endedAt: new Date().toISOString(),
-      durationCompletedSeconds: finalCompletedDurationSec,
-      completed: finalCompletedDrillIds.length === finalActiveDrillIds.length,
-    };
-
-    const nextHistory = [entry, ...history];
-    const nextStreak = calculateGoalTypeStreak(
-      nextHistory,
-      new Date().toISOString(),
-      goalType,
-      goalTarget,
-    );
-    const nextMetrics = calculateDashboardMetrics({
-      entries: nextHistory,
-      nowIso: new Date().toISOString(),
-      dailyMinutesTarget: goalSettings.dailyMinutesTarget,
-    });
-    const nextSessionsCompleted = nextHistory.filter((item) => item.completed).length;
-    const nextUnlockedBadgeIds = computeUnlockedBadgeIds({
-      currentUnlockedBadgeIds: badges.filter((badge) => badge.unlocked).map((badge) => badge.id),
-      sessionXp: finalSessionXp,
-      completedDrillCount: finalCompletedDrillIds.length,
-      streakDays: nextStreak,
-      sessionsCompleted: nextSessionsCompleted,
-      averageBpm: nextMetrics.averageBpm,
-    });
 
     trackSessionCompleted({
       template: selectedTemplate,
@@ -330,8 +296,8 @@ export default function App() {
       sessionXp: finalSessionXp,
     });
 
-    setHistory(nextHistory);
-    setBadges(buildBadgeState(nextUnlockedBadgeIds));
+    setHistory(completion.nextHistory);
+    setBadges(buildBadgeState(completion.nextUnlockedBadgeIds));
     setScreen("complete");
   }
 
