@@ -594,6 +594,7 @@ export function SessionBuilder(props: {
   const useCompactDrillCard = width <= DRILL_CARD_COMPACT_MAX_WIDTH;
   const drillTitleLineLimit = useCompactDrillCard ? 4 : 2;
   const [showCueOptions, setShowCueOptions] = useState(drillRandomizerKindInput !== "none");
+  const [showTemplateActions, setShowTemplateActions] = useState(false);
 
   useEffect(() => {
     setShowCueOptions(drillRandomizerKindInput !== "none");
@@ -607,7 +608,23 @@ export function SessionBuilder(props: {
 
   function handleSaveTemplatePress(): void {
     if (!isTemplateNameValid) return;
+    setShowTemplateActions(false);
     onSaveTemplate();
+  }
+
+  function handleCreateTemplatePress(): void {
+    setShowTemplateActions(false);
+    onCreateTemplate();
+  }
+
+  function handleDuplicateTemplatePress(): void {
+    setShowTemplateActions(false);
+    onDuplicateTemplate();
+  }
+
+  function handleDeleteTemplatePress(): void {
+    setShowTemplateActions(false);
+    onDeleteTemplate();
   }
 
   function nudgeDuration(delta: number): void {
@@ -729,7 +746,7 @@ export function SessionBuilder(props: {
             testID={index === 0 ? "builder-drag-first-handle" : `builder-drag-handle-${item.id}`}
           >
             <Text style={styles.dragChipGlyph}>⋮⋮</Text>
-            <Text style={styles.dragChipText}>Hold to move</Text>
+            <Text style={styles.dragChipText}>Move</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.removeChip, useCompactDrillCard ? styles.removeChipCompact : null]}
@@ -815,10 +832,10 @@ export function SessionBuilder(props: {
             >
               <View style={styles.builderDisclosureBody}>
                 <Text style={styles.builderEditorSectionLabel}>Cue options</Text>
-                <Text style={styles.helperText}>
+                <Text style={styles.builderCueSummaryText}>
                   {drillRandomizerKindInput === "none"
-                    ? "Off by default. Open if you want note or triad cueing."
-                    : `Using ${drillRandomizerKindInput} cues every ${drillRandomEveryBarsInput || "?"} bars.`}
+                    ? "Off"
+                    : `${drillRandomizerKindInput} every ${drillRandomEveryBarsInput || "?"} bars`}
                 </Text>
               </View>
               <Text style={styles.builderDisclosureGlyph}>{showCueOptions ? "−" : "+"}</Text>
@@ -860,19 +877,12 @@ export function SessionBuilder(props: {
                         style={[styles.pillButton, styles.builderMiniPill]}
                         onPress={() => nudgeRandomBars(1)}
                         testID="builder-random-bars-increment"
-                      >
-                        <Text style={styles.pillButtonText}>+1 bar</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.helperText}>
-                      During active practice, cue pulses every {drillRandomEveryBarsInput || "?"} bars.
-                    </Text>
+                    >
+                      <Text style={styles.pillButtonText}>+1 bar</Text>
+                    </TouchableOpacity>
+                  </View>
                   </>
-                ) : (
-                  <Text style={styles.helperText}>
-                    Turn cueing on when you want the app to throw a fresh note, triad, or finger pattern into the rep.
-                  </Text>
-                )}
+                ) : null}
               </View>
             ) : null}
             {!isDrillNameValid ? (
@@ -895,7 +905,6 @@ export function SessionBuilder(props: {
                 Random cue bars must be a number from 1 to 16.
               </Text>
             ) : null}
-            <Text style={styles.helperText}>Autosaves as you type. Open cue options only when you need deeper control.</Text>
           </View>
         ) : null}
       </TouchableOpacity>
@@ -919,41 +928,77 @@ export function SessionBuilder(props: {
           Platform.OS === "android" ? styles.builderHeaderAndroidLayer : null,
         ]}
       >
-        <View style={styles.builderTopBar}>
-          <Pressable onPress={onBack} style={styles.builderIconAction}>
-            <Text style={styles.iconGlyph}>←</Text>
-          </Pressable>
-          <View style={styles.builderTopMeta}>
-            <Text style={styles.builderTopTitle}>Build Your Chain</Text>
-            <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
+        <View style={[styles.builderTopBar, useCompactDrillCard ? styles.builderTopBarCompact : null]}>
+          <View style={styles.builderTopLead}>
+            <Pressable onPress={onBack} style={styles.builderIconAction}>
+              <Text style={styles.iconGlyph}>←</Text>
+            </Pressable>
+            <View style={styles.builderTopMeta}>
+              <Text style={styles.builderTopTitle}>Build Your Chain</Text>
+              <Text style={styles.builderTopSubtitle}>Daily Shred Routine</Text>
+            </View>
           </View>
-          <View style={styles.builderTopActions}>
+          <View style={[styles.builderTopActions, useCompactDrillCard ? styles.builderTopActionsCompact : null]}>
             <TouchableOpacity
-              style={styles.builderNewChip}
-              onPress={onCreateTemplate}
+              style={styles.builderTopActionSecondary}
+              onPress={handleCreateTemplatePress}
               testID="builder-template-new"
             >
-              <Text style={styles.builderNewChipText}>New</Text>
+              <Text style={styles.builderTopActionSecondaryText}>New</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.builderIconAction} onPress={onDuplicateTemplate}>
-              <Text style={styles.iconGlyphMuted}>⧉</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.builderIconAction} onPress={onDeleteTemplate}>
-              <Text style={styles.iconGlyphMuted}>⌫</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.builderSaveChip, !isTemplateNameValid ? styles.actionButtonDisabled : null]}
-              onPress={handleSaveTemplatePress}
-              disabled={!isTemplateNameValid}
-              testID="builder-template-save-button"
-            >
-              <Text style={styles.builderSaveChipText}>Save</Text>
-            </TouchableOpacity>
+            <View style={styles.builderTopUtilityMenu}>
+              <TouchableOpacity
+                style={styles.builderTopUtilityAction}
+                onPress={() => setShowTemplateActions((current) => !current)}
+                testID="builder-template-more"
+              >
+                <Text style={styles.iconGlyphMuted}>⋯</Text>
+              </TouchableOpacity>
+              {showTemplateActions ? (
+                <View style={styles.builderTopUtilityPanel}>
+                  <TouchableOpacity
+                    style={styles.builderTopUtilityPanelAction}
+                    onPress={handleDuplicateTemplatePress}
+                    testID="builder-template-duplicate"
+                  >
+                    <Text style={styles.builderTopUtilityPanelText}>Duplicate</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.builderTopUtilityPanelAction}
+                    onPress={handleDeleteTemplatePress}
+                    testID="builder-template-delete"
+                  >
+                    <Text style={styles.builderTopUtilityPanelText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.builderTopUtilityGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.builderTopActionTertiary,
+                  !isTemplateNameValid ? styles.actionButtonDisabled : null,
+                ]}
+                onPress={handleSaveTemplatePress}
+                disabled={!isTemplateNameValid}
+                testID="builder-template-save-button"
+              >
+                <Text style={styles.builderTopActionTertiaryText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-        <Text style={styles.builderFlowTitle}>Your Drill Flow</Text>
 
         <GlowCard style={styles.builderHeroCard}>
+          <View style={styles.inlineRowSpace}>
+            <View style={styles.builderSectionLead}>
+              <Text style={styles.cardLabel}>Routine</Text>
+              <Text style={styles.builderSectionTitle}>Drill Flow</Text>
+            </View>
+            <Text style={styles.builderMiniMeta} testID="builder-drill-count">
+              {drills.length} drills
+            </Text>
+          </View>
           <View style={styles.templatePillsRow}>
             {templates.map((template) => (
               <AppChip
@@ -987,10 +1032,7 @@ export function SessionBuilder(props: {
           ) : null}
         </GlowCard>
 
-        <Text style={styles.helperText}>Tap any drill card to edit in place. Changes autosave instantly.</Text>
-        <Text style={styles.helperText} testID="builder-drill-count">
-          {drills.length} drills
-        </Text>
+        <Text style={styles.builderHint}>Tap a drill to edit. Hold to reorder.</Text>
         <View
           testID="builder-stats"
           accessibilityLabel={`${drills.length} drills ${totalXp} xp lineLimit:${drillTitleLineLimit}`}
@@ -1007,7 +1049,10 @@ export function SessionBuilder(props: {
         ]}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.builderListContent}
+        contentContainerStyle={[
+          styles.builderListContent,
+          useCompactDrillCard ? styles.builderListContentCompact : null,
+        ]}
         activationDistance={8}
         onDragEnd={({ data }) => onReorderDrills(data.map((drill) => drill.id))}
         ListEmptyComponent={
@@ -1063,12 +1108,26 @@ export function SessionBuilder(props: {
         </GlowCard>
       ) : null}
 
-      <View style={styles.builderFooterBar}>
-        <AppButton style={styles.builderPreviewButton} variant="secondary" size="large" shape="pill" onPress={onPreviewSession}>
+      <View style={[styles.builderFooterBar, useCompactDrillCard ? styles.builderFooterBarCompact : null]}>
+        <AppButton
+          style={[
+            styles.builderPreviewButton,
+            styles.builderFooterPreviewButton,
+            useCompactDrillCard ? styles.builderPreviewButtonCompact : null,
+          ]}
+          variant="secondary"
+          size="large"
+          shape="pill"
+          onPress={onPreviewSession}
+        >
           <Text style={styles.secondaryCtaText}>Preview Routine</Text>
         </AppButton>
         <AppButton
-          style={styles.builderStartButton}
+          style={[
+            styles.builderStartButton,
+            styles.builderFooterStartButton,
+            useCompactDrillCard ? styles.builderStartButtonCompact : null,
+          ]}
           variant="primary"
           size="large"
           shape="pill"
@@ -2497,22 +2556,35 @@ export const styles = StyleSheet.create({
   builderList: { flex: 1 },
   builderListAndroidLayer: { zIndex: 1 },
   builderListContent: { gap: 12, paddingBottom: 180 },
-  builderHeader: { gap: 12, paddingBottom: 2, marginBottom: 8 },
+  builderListContentCompact: { paddingBottom: 236 },
+  builderHeader: { gap: 10, paddingBottom: 2, marginBottom: 8 },
   builderScreenBody: { gap: 0, paddingTop: 8, paddingBottom: 0 },
   builderHeaderAndroidLayer: { zIndex: 12, elevation: 12 },
-  builderTopBar: { flexDirection: "row", alignItems: "center", gap: 10 },
+  builderTopBar: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  builderTopBarCompact: { gap: 10, flexDirection: "column", alignItems: "stretch" },
+  builderTopLead: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1, minWidth: 0 },
   builderTopMeta: { flex: 1, minWidth: 0 },
   builderTopTitle: { color: COLORS.text, fontSize: 26, lineHeight: 30, fontWeight: "800" },
   builderTopSubtitle: { color: COLORS.accentAlt, fontSize: 12, fontWeight: "700" },
-  builderTopActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  builderTopActions: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 0 },
+  builderTopActionsCompact: { justifyContent: "space-between" },
   builderIconAction: { width: 36, height: 36, borderRadius: RADII.pill, alignItems: "center", justifyContent: "center" },
   iconGlyph: { color: COLORS.text, fontSize: 18, fontWeight: "700" },
   iconGlyphMuted: { color: COLORS.muted, fontSize: 17, fontWeight: "700" },
-  builderSaveChip: { minHeight: 34, borderRadius: RADII.pill, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
-  builderSaveChipText: { color: COLORS.text, fontSize: 13, fontWeight: "800" },
-  builderFlowTitle: { color: COLORS.text, fontSize: 36, lineHeight: 40, fontWeight: "800", flex: 1 },
-  builderNewChip: { minHeight: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: "rgba(230,126,0,0.35)", backgroundColor: "rgba(230,126,0,0.13)", alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
-  builderNewChipText: { color: COLORS.accent, fontSize: 14, fontWeight: "700" },
+  builderTopUtilityGroup: { flexDirection: "row", alignItems: "center", gap: 8 },
+  builderTopUtilityMenu: { position: "relative" },
+  builderTopActionSecondary: { minHeight: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  builderTopActionSecondaryText: { color: COLORS.text, fontSize: 13, fontWeight: "700" },
+  builderTopUtilityAction: { width: 34, height: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
+  builderTopUtilityPanel: { position: "absolute", top: 40, right: 0, minWidth: 128, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.card, paddingVertical: 6, zIndex: 30, elevation: 30, shadowColor: "#000000", shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 6 } },
+  builderTopUtilityPanelAction: { minHeight: 40, justifyContent: "center", paddingHorizontal: 14 },
+  builderTopUtilityPanelText: { color: COLORS.text, fontSize: 14, fontWeight: "700" },
+  builderTopActionTertiary: { minHeight: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: "rgba(230,126,0,0.22)", backgroundColor: "rgba(230,126,0,0.08)", alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  builderTopActionTertiaryText: { color: COLORS.accent, fontSize: 13, fontWeight: "700" },
+  builderSectionLead: { gap: 4, flex: 1, minWidth: 0 },
+  builderSectionTitle: { color: COLORS.text, fontSize: 24, lineHeight: 28, fontWeight: "800" },
+  builderMiniMeta: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" },
+  builderHint: { color: COLORS.muted, fontSize: 14, lineHeight: 18 },
   builderEmptyCard: { marginTop: 4 },
   builderListFooter: { gap: 14, paddingTop: 4 },
   builderAddPlaceholder: { minHeight: 134, borderRadius: RADII.card, borderWidth: 1, borderColor: "rgba(230,126,0,0.35)", borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "rgba(255,255,255,0.02)" },
@@ -2544,8 +2616,13 @@ export const styles = StyleSheet.create({
     zIndex: 10,
   },
   builderFooterBar: { position: "absolute", left: SPACING.pageX, right: SPACING.pageX, bottom: 94, flexDirection: "row", alignItems: "center", gap: 12 },
+  builderFooterBarCompact: { flexDirection: "column-reverse", alignItems: "stretch", gap: 10, bottom: 88 },
   builderPreviewButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center" },
+  builderFooterPreviewButton: { flex: 0, minHeight: 50, paddingHorizontal: 18 },
+  builderPreviewButtonCompact: { width: "100%" },
   builderStartButton: { flex: 1, minHeight: 54, borderRadius: RADII.pill, backgroundColor: COLORS.accent, alignItems: "center", justifyContent: "center", shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
+  builderFooterStartButton: { minHeight: 58 },
+  builderStartButtonCompact: { width: "100%", flex: 0 },
   overviewScreenBody: { paddingHorizontal: SPACING.pageX, paddingTop: 8, paddingBottom: 120, gap: 14 },
   overviewHeroCard: { gap: 10 },
   overviewDrillList: { gap: 12, marginTop: 12 },
@@ -2568,7 +2645,7 @@ export const styles = StyleSheet.create({
   drillMeta: { color: COLORS.muted, marginTop: 2, fontSize: 13 },
   drillRandomMeta: { color: COLORS.accentAlt, marginTop: 2, fontSize: 12, fontWeight: "700" },
   drillLineLimitProbe: { fontSize: 1, lineHeight: 1, height: 1, marginTop: 0, color: "transparent" },
-  builderCardActions: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, flexShrink: 0, paddingTop: 2 },
+  builderCardActions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, flexShrink: 0, paddingTop: 2 },
   builderCardActionsCompact: { gap: 6 },
   dragChip: { minHeight: 34, borderRadius: RADII.pill, borderWidth: 1, borderColor: "rgba(230,126,0,0.35)", backgroundColor: "rgba(230,126,0,0.1)", paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
   dragChipCompact: { paddingHorizontal: 10, gap: 6 },
@@ -2582,6 +2659,7 @@ export const styles = StyleSheet.create({
   builderMiniPill: { minWidth: 0, flex: 1, paddingHorizontal: 10 },
   builderDisclosureRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingTop: 4 },
   builderDisclosureBody: { flex: 1, gap: 2 },
+  builderCueSummaryText: { color: COLORS.muted, fontSize: 13, lineHeight: 18 },
   builderDisclosureGlyph: { color: COLORS.accent, fontSize: 22, lineHeight: 22, fontWeight: "700" },
   builderSecondaryEditor: { gap: 8, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, padding: 12 },
   builderCueBarsRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
