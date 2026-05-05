@@ -84,7 +84,9 @@ describe("activePracticeRuntime helpers", () => {
 
   it("keeps a fixed-note cue stable for the whole drill", () => {
     const state = createRandomCueState({ mode: "fixed-note" }, () => "F");
-    const result = advanceRandomCueState(state, { mode: "fixed-note" }, () => "A");
+    const first = advanceRandomCueState(state, { mode: "fixed-note" }, () => "A");
+    const second = advanceRandomCueState(first.nextState, { mode: "fixed-note" }, () => "B");
+    const third = advanceRandomCueState(second.nextState, { mode: "fixed-note" }, () => "C");
 
     expect(state).toEqual({
       label: "F",
@@ -93,8 +95,12 @@ describe("activePracticeRuntime helpers", () => {
       pulseWindowActive: false,
       sequenceIndex: null,
     });
-    expect(result.shouldPulse).toBe(false);
-    expect(result.nextState).toEqual(state);
+    expect(first.shouldPulse).toBe(false);
+    expect(second.shouldPulse).toBe(false);
+    expect(third.shouldPulse).toBe(false);
+    expect(first.nextState).toEqual(state);
+    expect(second.nextState).toEqual(state);
+    expect(third.nextState).toEqual(state);
   });
 
   it("rotates through the circle of fifths on the configured cadence", () => {
@@ -147,6 +153,57 @@ describe("activePracticeRuntime helpers", () => {
       pulseWindowActive: false,
       sequenceIndex: 1,
     });
+  });
+
+  it("wraps the circle of fifths back to the start after a full cycle", () => {
+    let state = createRandomCueState({ mode: "circle-of-fifths", everyBars: 1 });
+
+    for (let index = 0; index < 12; index += 1) {
+      const result = advanceRandomCueState(
+        {
+          ...state,
+          beatsRemaining: 1,
+          pulseWindowActive: true,
+        },
+        { mode: "circle-of-fifths", everyBars: 1 },
+      );
+
+      expect(result.shouldPulse).toBe(true);
+      state = result.nextState;
+    }
+
+    expect(state).toEqual({
+      label: "C",
+      nextLabel: "G",
+      beatsRemaining: 4,
+      pulseWindowActive: false,
+      sequenceIndex: 0,
+    });
+  });
+
+  it("resets to an empty state when cue input is invalid", () => {
+    const invalidCue = { mode: "random-pulse", kind: "note" } as never;
+    const initial = createRandomCueState(invalidCue);
+    const advanced = advanceRandomCueState(
+      {
+        label: "A",
+        nextLabel: "B",
+        beatsRemaining: 1,
+        pulseWindowActive: true,
+        sequenceIndex: null,
+      },
+      invalidCue,
+    );
+
+    expect(initial).toEqual({
+      label: null,
+      nextLabel: null,
+      beatsRemaining: 0,
+      pulseWindowActive: false,
+      sequenceIndex: null,
+    });
+    expect(advanced.shouldPulse).toBe(false);
+    expect(advanced.nextState).toEqual(initial);
   });
 
   it("derives session and drill progress from runtime state", () => {
