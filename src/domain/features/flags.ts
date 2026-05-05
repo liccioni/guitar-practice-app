@@ -130,35 +130,24 @@ export const LAUNCH_CANDIDATE_FEATURE_FLAGS: FeatureFlags = {
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = LAUNCH_CANDIDATE_FEATURE_FLAGS;
 
-const RUNTIME_FEATURE_FLAG_OVERRIDES: Partial<FeatureFlags> = {
-  ...LAUNCH_CANDIDATE_FEATURE_FLAGS,
-};
-
 export function normalizeFeatureFlags(input: unknown): FeatureFlags {
   const normalized = { ...DEFAULT_FEATURE_FLAGS };
-  if (!isPlainObject(input)) return applyRuntimeFeatureFlagOverrides(normalized);
+  if (!isPlainObject(input)) return normalized;
 
   for (const definition of FEATURE_FLAG_DEFINITIONS) {
     const rawValue = input[definition.id];
     normalized[definition.id] =
-      typeof rawValue === "boolean" ? rawValue : definition.defaultEnabled;
+      typeof rawValue === "boolean" ? rawValue : DEFAULT_FEATURE_FLAGS[definition.id];
   }
 
-  return applyRuntimeFeatureFlagOverrides(normalized);
+  return normalized;
 }
 
 export function isFeatureFlagEnabled(
   featureFlags: FeatureFlags,
   featureFlagId: FeatureFlagId,
 ): boolean {
-  return applyRuntimeFeatureFlagOverrides(featureFlags)[featureFlagId];
-}
-
-function applyRuntimeFeatureFlagOverrides(featureFlags: FeatureFlags): FeatureFlags {
-  return {
-    ...featureFlags,
-    ...RUNTIME_FEATURE_FLAG_OVERRIDES,
-  };
+  return featureFlags[featureFlagId] ?? DEFAULT_FEATURE_FLAGS[featureFlagId];
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

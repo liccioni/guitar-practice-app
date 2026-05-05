@@ -707,7 +707,7 @@ describe("LocalStorageGateway", () => {
             totalXp: 0,
             unlockedBadgeIds: [],
             featureFlags: {
-              pricing_screen: false,
+              pricing_screen: true,
               session_overview: false,
             },
           },
@@ -738,8 +738,8 @@ describe("LocalStorageGateway", () => {
       }),
     );
 
-    expect(valid.profile.featureFlags.pricing_screen).toBe(false);
-    expect(valid.profile.featureFlags.session_overview).toBe(true);
+    expect(valid.profile.featureFlags.pricing_screen).toBe(true);
+    expect(valid.profile.featureFlags.session_overview).toBe(false);
     expect(invalid.profile.featureFlags.pricing_screen).toBe(false);
   });
 });

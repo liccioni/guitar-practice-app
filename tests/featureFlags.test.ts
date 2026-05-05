@@ -15,26 +15,39 @@ describe("feature flags", () => {
     expect(DEFAULT_FEATURE_FLAGS).toEqual(LAUNCH_CANDIDATE_FEATURE_FLAGS);
   });
 
-  it("normalizes invalid payloads back to defaults", () => {
-    expect(normalizeFeatureFlags(null)).toEqual(DEFAULT_FEATURE_FLAGS);
+  it("honors valid persisted flag values", () => {
     expect(
       normalizeFeatureFlags({
         pricing_screen: true,
-        session_overview: "nope",
         contextual_paywalls: true,
+        drill_transition_audio_cues: false,
+        session_overview: false,
       }),
     ).toEqual({
       ...DEFAULT_FEATURE_FLAGS,
-      pricing_screen: false,
-      contextual_paywalls: false,
+      pricing_screen: true,
+      contextual_paywalls: true,
+      drill_transition_audio_cues: false,
+      session_overview: false,
     });
+  });
+
+  it("normalizes invalid or missing payload values back to launch defaults", () => {
+    expect(normalizeFeatureFlags(null)).toEqual(DEFAULT_FEATURE_FLAGS);
+    expect(
+      normalizeFeatureFlags({
+        pricing_screen: "yes",
+        session_overview: "nope",
+        contextual_paywalls: undefined,
+      }),
+    ).toEqual(DEFAULT_FEATURE_FLAGS);
   });
 
   it("reads enabled state with a safe default fallback", () => {
     expect(isFeatureFlagEnabled(DEFAULT_FEATURE_FLAGS, "pricing_screen")).toBe(false);
     expect(
-      isFeatureFlagEnabled({ ...DEFAULT_FEATURE_FLAGS, drill_transition_audio_cues: false }, "drill_transition_audio_cues"),
-    ).toBe(false);
+      isFeatureFlagEnabled({ ...DEFAULT_FEATURE_FLAGS, pricing_screen: true }, "pricing_screen"),
+    ).toBe(true);
     expect(
       isFeatureFlagEnabled({ pricing_screen: undefined } as never, "pricing_screen"),
     ).toBe(false);
