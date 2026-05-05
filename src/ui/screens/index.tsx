@@ -2068,35 +2068,29 @@ export function ActivePractice(props: {
       >
         <Text style={styles.smallActionText}>Complete Session</Text>
       </TouchableOpacity>
-      <View style={styles.activeTopRow}>
-        <View>
-          <Text style={styles.cardLabel}>Practice Mode</Text>
-          <Text style={styles.helperText}>Level {levelState.level} • {totalXp} total XP</Text>
+      <View style={styles.activeHeaderBlock}>
+        <View style={styles.activeTopRow}>
+          <View style={styles.activeTopMeta}>
+            <Text style={styles.cardLabel}>Practice Mode</Text>
+            <Text style={styles.activeHeaderSubline}>
+              Level {levelState.level}
+              {showSessionXp ? ` • +${sessionXp} XP this session` : ` • ${totalXp} total XP`}
+            </Text>
+          </View>
+          <View style={styles.activeProgressMeta}>
+            <Text style={styles.activeProgressPercent}>{Math.max(1, Math.round(sessionProgress * 100))}%</Text>
+            <Text style={styles.activeProgressLabel}>session</Text>
+          </View>
         </View>
-        <Text style={styles.metronomeStatusText}>Session {Math.max(1, Math.round(sessionProgress * 100))}% complete</Text>
-      </View>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
-      </View>
-      {showSessionXp ? (
-        <GlowCard style={styles.activeXpCard}>
-          <View style={styles.inlineRowSpace}>
-            <Text style={styles.cardLabel}>Session XP</Text>
-            <Text style={styles.drillTransitionXp}>+{sessionXp} XP</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.max(6, Math.round((levelState.currentLevelXp / Math.max(1, levelState.nextLevelXp)) * 100))}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.helperText}>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.max(4, sessionProgress * 100)}%` }]} />
+        </View>
+        {showSessionXp ? (
+          <Text style={styles.activeXpHint}>
             {levelState.currentLevelXp}/{levelState.nextLevelXp} XP toward Level {levelState.level + 1}
           </Text>
-        </GlowCard>
-      ) : null}
+        ) : null}
+      </View>
 
       <Animated.View style={[styles.activeCard, styles.activeCardHighlight, { transform: [{ scale: pulseScale }] }]}>
         <ProgressRing size={272} strokeWidth={16} progress={drillProgress} color={COLORS.accent} />
@@ -2107,139 +2101,6 @@ export function ActivePractice(props: {
           <Text style={styles.xpInline}>Reward +{toXp(drill)} XP</Text>
         </View>
       </Animated.View>
-
-      {showDrillCompletionTransition && drillCompletionTransition ? (
-        <View testID="active-drill-complete-transition">
-          <GlowCard style={styles.drillTransitionCard}>
-          <View style={styles.inlineRowSpace}>
-            <Text style={styles.cardLabel}>Drill Complete</Text>
-            <Text style={styles.drillTransitionXp}>+{drillCompletionTransition.gainedXp} XP</Text>
-          </View>
-          <Text style={styles.drillTransitionTitle}>{drillCompletionTransition.completedDrillName}</Text>
-          <Text style={styles.helperText}>
-            {drillCompletionTransition.isSessionFinisher
-              ? "Final drill complete. Session summary is up next."
-              : "Locked in. Here is what comes next."}
-          </Text>
-          {!drillCompletionTransition.isSessionFinisher && drillCompletionTransition.nextDrillName ? (
-            <View style={styles.drillTransitionNextCard}>
-              <Text style={styles.cardLabel}>Next Drill</Text>
-              <Text style={styles.badgeLabel}>{drillCompletionTransition.nextDrillName}</Text>
-              <Text style={styles.helperText}>
-                {Math.max(1, Math.round((drillCompletionTransition.nextDrillDurationSec ?? 0) / 60))} min
-                {drillCompletionTransition.nextDrillTargetBpm
-                  ? ` • ${drillCompletionTransition.nextDrillTargetBpm} BPM`
-                  : ""}
-              </Text>
-              {drillCompletionTransition.nextDrillCueLine ? (
-                <Text style={styles.helperText}>{drillCompletionTransition.nextDrillCueLine}</Text>
-              ) : null}
-              <Text style={styles.helperText}>
-                Prepare in {Math.max(0, transitionCountdownSec)}s
-                {drillCueMode !== "off" ? ` • ${drillCueMode} cue` : ""}
-              </Text>
-            </View>
-          ) : null}
-          </GlowCard>
-        </View>
-      ) : null}
-
-      <GlowCard>
-        <View style={styles.inlineRowSpace}>
-          <View>
-            <Text style={styles.cardLabel}>Metronome Rig</Text>
-            <Text style={styles.helperText}>
-              {metronomeEnabled ? "Click track is live and ready." : "Click track is muted."}
-            </Text>
-          </View>
-          <AppChip
-            selected={metronomeEnabled}
-            style={metronomeEnabled ? styles.metronomeToggleOn : styles.metronomeToggleOff}
-            onPress={onMetronomeToggle}
-          >
-            <Text style={styles.pillButtonText}>{metronomeEnabled ? "Live" : "Muted"}</Text>
-          </AppChip>
-        </View>
-
-        <View style={styles.metronomeDeck}>
-          <TouchableOpacity
-            style={[styles.metronomeStepButton, styles.metronomeStepButtonAccent]}
-            onPress={() => onMetronomeStep(-5)}
-          >
-            <Text style={styles.metronomeStepSymbol}>−</Text>
-            <Text style={styles.metronomeStepLabel}>5 BPM</Text>
-          </TouchableOpacity>
-          <View style={styles.bpmPill}>
-            <Text style={styles.metronomeBpmLabel}>{metronomeBpm}</Text>
-            <Text style={styles.metronomeBpmUnit}>BPM</Text>
-            <Text style={styles.helperText}>
-              {drill.targetBpm ? `Drill target ${drill.targetBpm} BPM` : "Use the tempo that keeps the rep clean"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.metronomeStepButton, styles.metronomeStepButtonAccent]}
-            onPress={() => onMetronomeStep(5)}
-          >
-            <Text style={styles.metronomeStepSymbol}>+</Text>
-            <Text style={styles.metronomeStepLabel}>5 BPM</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.metronomeStatusRow}>
-          <Text style={styles.helperText}>
-            {metronomeEnabled ? "Click is active for steady time." : "Click is muted for silent rehearsal."}
-          </Text>
-          <Text style={styles.metronomeStatusText}>{metronomeEnabled ? "Tap tempo feel" : "Silent rehearsal"}</Text>
-        </View>
-        {randomCueLabel ? (
-          <Animated.View style={[styles.randomCueCard, { transform: [{ scale: cueScale }] }]}>
-            <Text style={styles.randomCueLabel}>Now: {randomCueLabel}</Text>
-            {randomCueNextLabel ? (
-              <Text style={styles.helperText}>Upcoming: {randomCueNextLabel}</Text>
-            ) : null}
-            {randomCuePulseWindowActive ? <Text style={styles.helperText}>Cue incoming</Text> : null}
-            <Text style={styles.helperText}>Next trigger in {Math.max(0, randomCueBeatsRemaining)} beats</Text>
-          </Animated.View>
-        ) : null}
-      </GlowCard>
-
-      <GlowCard style={styles.practiceAidCard}>
-        <View style={styles.inlineRowSpace}>
-          <Text style={styles.cardLabel}>Practice Aids</Text>
-          <Text style={styles.helperText}>Tap to toggle</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.practiceAidRow}
-          onPress={onToggleFocusMode}
-          testID="active-focus-toggle"
-        >
-          <View style={styles.practiceAidBody}>
-            <Text style={styles.badgeLabel}>{focusAidCopy.title}</Text>
-            <Text style={styles.helperText}>{focusAidCopy.description}</Text>
-          </View>
-          <AppChip selected={focusModeEnabled}>
-            <Text style={styles.pillButtonText}>{focusAidCopy.statusLabel}</Text>
-          </AppChip>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.practiceAidRow}
-          onPress={onToggleBeatPulseLocked}
-          testID="active-beat-pulse-toggle"
-        >
-          <View style={styles.practiceAidLead}>
-            <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
-            <View style={styles.practiceAidBody}>
-              <Text style={styles.badgeLabel}>{beatPulseCopy.title}</Text>
-              <Text style={styles.helperText}>{beatPulseCopy.description}</Text>
-            </View>
-          </View>
-          <AppChip selected={beatPulseLocked && metronomeEnabled}>
-            <Text style={styles.pillButtonText}>{beatPulseCopy.statusLabel}</Text>
-          </AppChip>
-        </TouchableOpacity>
-      </GlowCard>
-
-      <Text style={styles.microcopy}>{microcopy}</Text>
 
       <View style={styles.controlsRow}>
         <TouchableOpacity style={styles.controlButton} onPress={onPauseToggle} testID="active-pause-toggle">
@@ -2253,6 +2114,121 @@ export function ActivePractice(props: {
           <Text style={styles.controlButtonText}>Skip</Text>
         </TouchableOpacity>
       </View>
+
+      {showDrillCompletionTransition && drillCompletionTransition ? (
+        <View testID="active-drill-complete-transition">
+          <GlowCard style={styles.drillTransitionCard}>
+            <View style={styles.inlineRowSpace}>
+              <Text style={styles.cardLabel}>Drill Complete</Text>
+              <Text style={styles.drillTransitionXp}>+{drillCompletionTransition.gainedXp} XP</Text>
+            </View>
+            <Text style={styles.drillTransitionTitle}>{drillCompletionTransition.completedDrillName}</Text>
+            {!drillCompletionTransition.isSessionFinisher && drillCompletionTransition.nextDrillName ? (
+              <View style={styles.drillTransitionSummaryRow}>
+                <View style={styles.drillTransitionSummaryBody}>
+                  <Text style={styles.badgeLabel}>Next: {drillCompletionTransition.nextDrillName}</Text>
+                  <Text style={styles.helperText}>
+                    {Math.max(1, Math.round((drillCompletionTransition.nextDrillDurationSec ?? 0) / 60))} min
+                    {drillCompletionTransition.nextDrillTargetBpm
+                      ? ` • ${drillCompletionTransition.nextDrillTargetBpm} BPM`
+                      : ""}
+                    {drillCueMode !== "off" ? ` • ${drillCueMode} cue` : ""}
+                  </Text>
+                </View>
+                <Text style={styles.drillTransitionCountdown}>
+                  {Math.max(0, transitionCountdownSec)}s
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.helperText}>Final drill complete. Session summary is up next.</Text>
+            )}
+          </GlowCard>
+        </View>
+      ) : null}
+
+      <GlowCard style={styles.activeRigCard}>
+        <View style={styles.inlineRowSpace}>
+          <View style={styles.activeRigLead}>
+            <Text style={styles.cardLabel}>Practice Rig</Text>
+            <Text style={styles.helperText}>
+              {metronomeEnabled ? "Metronome live for steady time." : "Metronome muted for silent rehearsal."}
+            </Text>
+          </View>
+          <AppChip
+            selected={metronomeEnabled}
+            style={metronomeEnabled ? styles.metronomeToggleOn : styles.metronomeToggleOff}
+            onPress={onMetronomeToggle}
+          >
+            <Text style={styles.pillButtonText}>{metronomeEnabled ? "Live" : "Muted"}</Text>
+          </AppChip>
+        </View>
+
+        <View style={styles.metronomeDeckCompact}>
+          <TouchableOpacity
+            style={[styles.metronomeStepButtonCompact, styles.metronomeStepButtonAccent]}
+            onPress={() => onMetronomeStep(-5)}
+          >
+            <Text style={styles.metronomeStepSymbol}>−</Text>
+          </TouchableOpacity>
+          <View style={styles.bpmPillCompact}>
+            <Text style={styles.metronomeBpmLabel}>{metronomeBpm}</Text>
+            <Text style={styles.metronomeCompactMeta}>
+              {drill.targetBpm ? `Target ${drill.targetBpm} BPM` : "Set the clean practice tempo"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.metronomeStepButtonCompact, styles.metronomeStepButtonAccent]}
+            onPress={() => onMetronomeStep(5)}
+          >
+            <Text style={styles.metronomeStepSymbol}>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        {randomCueLabel ? (
+          <Animated.View style={[styles.randomCueCard, styles.randomCueCardCompact, { transform: [{ scale: cueScale }] }]}>
+            <Text style={styles.randomCueLabel}>Now: {randomCueLabel}</Text>
+            <Text style={styles.helperText}>
+              {randomCueNextLabel ? `Next ${randomCueNextLabel} • ` : ""}
+              {Math.max(0, randomCueBeatsRemaining)} beats
+              {randomCuePulseWindowActive ? " • cue incoming" : ""}
+            </Text>
+          </Animated.View>
+        ) : null}
+
+        <View style={styles.practiceAidCompactGroup}>
+          <TouchableOpacity
+            style={styles.practiceAidCompactRow}
+            onPress={onToggleFocusMode}
+            testID="active-focus-toggle"
+          >
+            <View style={styles.practiceAidCompactBody}>
+              <Text style={styles.badgeLabel}>{focusAidCopy.title}</Text>
+              <Text style={styles.practiceAidCompactText}>{focusAidCopy.description}</Text>
+            </View>
+            <AppChip selected={focusModeEnabled}>
+              <Text style={styles.pillButtonText}>{focusAidCopy.statusLabel}</Text>
+            </AppChip>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.practiceAidCompactRow}
+            onPress={onToggleBeatPulseLocked}
+            testID="active-beat-pulse-toggle"
+          >
+            <View style={styles.practiceAidLead}>
+              <View style={[styles.beatDot, beatFlash && metronomeEnabled && beatPulseLocked ? styles.beatDotActive : null]} />
+              <View style={styles.practiceAidCompactBody}>
+                <Text style={styles.badgeLabel}>{beatPulseCopy.title}</Text>
+                <Text style={styles.practiceAidCompactText}>{beatPulseCopy.description}</Text>
+              </View>
+            </View>
+            <AppChip selected={beatPulseLocked && metronomeEnabled}>
+              <Text style={styles.pillButtonText}>{beatPulseCopy.statusLabel}</Text>
+            </AppChip>
+          </TouchableOpacity>
+        </View>
+      </GlowCard>
+
+      <Text style={styles.microcopy}>{microcopy}</Text>
     </View>
   );
 }
@@ -2665,22 +2641,30 @@ export const styles = StyleSheet.create({
   builderCueBarsRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   drillXp: { color: COLORS.xp, fontWeight: "800", fontSize: 18, minWidth: 70, textAlign: "right", marginTop: 2 },
   drillXpCompact: { minWidth: 0, textAlign: "left", marginTop: 4 },
-  activeCard: { alignItems: "center", justifyContent: "center", paddingVertical: 12 },
+  activeHeaderBlock: { gap: 8 },
+  activeCard: { alignItems: "center", justifyContent: "center", paddingVertical: 6 },
   activeCardHighlight: { shadowColor: COLORS.accent, shadowOpacity: 0.24, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
-  activeXpCard: { gap: 8 },
-  drillTransitionCard: { gap: 10, borderColor: "rgba(230,126,0,0.3)", backgroundColor: "rgba(230,126,0,0.08)" },
+  drillTransitionCard: { gap: 8, borderColor: "rgba(230,126,0,0.26)", backgroundColor: "rgba(230,126,0,0.06)", paddingVertical: 14 },
   drillTransitionXp: { color: COLORS.accent, fontSize: 15, fontWeight: "800" },
-  drillTransitionTitle: { color: COLORS.text, fontSize: 24, lineHeight: 28, fontWeight: "800" },
-  drillTransitionNextCard: { borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, padding: 12, gap: 4 },
+  drillTransitionTitle: { color: COLORS.text, fontSize: 20, lineHeight: 24, fontWeight: "800" },
+  drillTransitionSummaryRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  drillTransitionSummaryBody: { flex: 1, gap: 2 },
+  drillTransitionCountdown: { color: COLORS.accent, fontSize: 22, fontWeight: "800" },
   timerOverlay: { position: "absolute", alignItems: "center", justifyContent: "center", gap: 4 },
   timerValue: { color: COLORS.text, fontSize: 72, fontWeight: "900", letterSpacing: 1.2 },
   timerNowLabel: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
   timerLabel: { color: COLORS.text, fontSize: 18, fontWeight: "700", textAlign: "center", maxWidth: 220 },
   xpInline: { color: COLORS.xp, fontWeight: "700" },
-  microcopy: { color: COLORS.muted, textAlign: "center", fontSize: 14, lineHeight: 20, paddingHorizontal: 18 },
-  controlsRow: { flexDirection: "row", gap: 12 },
-  activeTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  controlButton: { flex: 1, minHeight: 50, borderRadius: 14, backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider, alignItems: "center", justifyContent: "center" },
+  microcopy: { color: COLORS.muted, textAlign: "center", fontSize: 13, lineHeight: 18, paddingHorizontal: 12 },
+  controlsRow: { flexDirection: "row", gap: 12, marginTop: -2 },
+  activeTopRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  activeTopMeta: { flex: 1, gap: 2 },
+  activeHeaderSubline: { color: COLORS.muted, fontSize: 14, lineHeight: 18 },
+  activeProgressMeta: { alignItems: "flex-end", gap: 1 },
+  activeProgressPercent: { color: COLORS.accent, fontSize: 18, fontWeight: "800" },
+  activeProgressLabel: { color: COLORS.muted, fontSize: 11, fontWeight: "700", letterSpacing: 0.6, textTransform: "uppercase" },
+  activeXpHint: { color: COLORS.muted, fontSize: 12, lineHeight: 16 },
+  controlButton: { flex: 1, minHeight: 54, borderRadius: 14, backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider, alignItems: "center", justifyContent: "center" },
   controlButtonSecondary: { backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider },
   controlButtonText: { color: COLORS.text, fontWeight: "800", fontSize: 15 },
   rewardGlow: { position: "absolute", top: 86, alignSelf: "center", width: 300, height: 300, borderRadius: 150, backgroundColor: COLORS.accent },
@@ -2776,12 +2760,18 @@ export const styles = StyleSheet.create({
   errorText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
   metronomeBpmLabel: { color: COLORS.text, fontSize: 34, lineHeight: 36, fontWeight: "800" },
   metronomeBpmUnit: { color: COLORS.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
+  activeRigCard: { gap: 12, borderColor: COLORS.divider, backgroundColor: "rgba(255,255,255,0.02)" },
+  activeRigLead: { flex: 1, gap: 2 },
   metronomeDeck: { flexDirection: "row", alignItems: "stretch", justifyContent: "space-between", gap: 10 },
+  metronomeDeckCompact: { flexDirection: "row", alignItems: "center", gap: 10 },
   metronomeStepButton: { width: 68, borderRadius: RADII.card, borderWidth: 1, borderColor: "rgba(230,126,0,0.25)", backgroundColor: "rgba(230,126,0,0.08)", alignItems: "center", justifyContent: "center", gap: 2, paddingVertical: 12 },
+  metronomeStepButtonCompact: { width: 54, minHeight: 54, borderRadius: RADII.card, borderWidth: 1, borderColor: "rgba(230,126,0,0.22)", backgroundColor: "rgba(230,126,0,0.06)", alignItems: "center", justifyContent: "center" },
   metronomeStepButtonAccent: { shadowColor: COLORS.accent, shadowOpacity: 0.14, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
   metronomeStepSymbol: { color: COLORS.text, fontSize: 24, lineHeight: 24, fontWeight: "800" },
   metronomeStepLabel: { color: COLORS.accent, fontSize: 11, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase" },
   bpmPill: { flex: 1, minHeight: 96, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, gap: 2 },
+  bpmPillCompact: { flex: 1, minHeight: 72, borderRadius: RADII.card, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingVertical: 10, gap: 2 },
+  metronomeCompactMeta: { color: COLORS.muted, fontSize: 12, lineHeight: 16, textAlign: "center" },
   metronomeToggleOn: { borderColor: "rgba(34,197,94,0.28)", backgroundColor: "rgba(34,197,94,0.16)" },
   metronomeToggleOff: { borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft },
   metronomeStatusRow: { marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
@@ -2790,8 +2780,13 @@ export const styles = StyleSheet.create({
   practiceAidRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 2 },
   practiceAidLead: { flexDirection: "row", alignItems: "flex-start", gap: 10, flex: 1 },
   practiceAidBody: { flex: 1, gap: 2 },
+  practiceAidCompactGroup: { gap: 8, paddingTop: 2, borderTopWidth: 1, borderTopColor: COLORS.divider },
+  practiceAidCompactRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  practiceAidCompactBody: { flex: 1, gap: 1 },
+  practiceAidCompactText: { color: COLORS.muted, fontSize: 12, lineHeight: 16 },
   beatDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: COLORS.cardSoft, borderWidth: 1, borderColor: COLORS.divider },
   beatDotActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   randomCueCard: { marginTop: 10, borderRadius: RADII.chip, borderWidth: 1, borderColor: COLORS.divider, backgroundColor: COLORS.cardSoft, paddingHorizontal: 12, paddingVertical: 10, gap: 4 },
+  randomCueCardCompact: { marginTop: 0, paddingVertical: 8 },
   randomCueLabel: { color: COLORS.accentAlt, fontSize: 14, fontWeight: "800" },
 });
