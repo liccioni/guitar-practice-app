@@ -64,7 +64,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(result.profile.entitlements.planId).toBe("free");
     expect(result.profile.drillCueMode).toBe("chime");
-    expect(result.profile.featureFlags.pricing_screen).toBe(true);
+    expect(result.profile.featureFlags.pricing_screen).toBe(false);
   });
 
   it("returns empty state when async get fails", async () => {
@@ -78,7 +78,7 @@ describe("LocalStorageGateway", () => {
     expect(result.profile.unlockedBadgeIds).toEqual([]);
     expect(result.profile.entitlements.planId).toBe("free");
     expect(result.profile.drillCueMode).toBe("chime");
-    expect(result.profile.featureFlags.pricing_screen).toBe(true);
+    expect(result.profile.featureFlags.pricing_screen).toBe(false);
   });
 
   it("saves versioned envelope", async () => {
@@ -261,7 +261,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b3"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
-    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(false);
   });
 
   it("returns empty state for invalid or empty persisted payload", () => {
@@ -332,7 +332,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.unlockedBadgeIds).toEqual(["b1", "b2"]);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
-    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(false);
   });
 
   it("normalizes goal target defaults per goal type and invalid reminder format", () => {
@@ -465,7 +465,7 @@ describe("LocalStorageGateway", () => {
     expect(parsed.profile.onboarding.completed).toBe(false);
     expect(parsed.profile.entitlements.planId).toBe("free");
     expect(parsed.profile.drillCueMode).toBe("chime");
-    expect(parsed.profile.featureFlags.pricing_screen).toBe(true);
+    expect(parsed.profile.featureFlags.pricing_screen).toBe(false);
   });
 
   it("preserves valid onboarding answers and drops invalid ones", () => {
@@ -739,7 +739,7 @@ describe("LocalStorageGateway", () => {
     );
 
     expect(valid.profile.featureFlags.pricing_screen).toBe(false);
-    expect(valid.profile.featureFlags.session_overview).toBe(false);
-    expect(invalid.profile.featureFlags.pricing_screen).toBe(true);
+    expect(valid.profile.featureFlags.session_overview).toBe(true);
+    expect(invalid.profile.featureFlags.pricing_screen).toBe(false);
   });
 });

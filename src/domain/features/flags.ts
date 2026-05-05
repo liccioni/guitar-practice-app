@@ -103,7 +103,7 @@ export const FEATURE_FLAG_DEFINITIONS: readonly FeatureFlagDefinition[] = [
   },
 ] as const;
 
-export const DEFAULT_FEATURE_FLAGS: FeatureFlags = FEATURE_FLAG_DEFINITIONS.reduce(
+const BASELINE_FEATURE_FLAGS: FeatureFlags = FEATURE_FLAG_DEFINITIONS.reduce(
   (flags, definition) => {
     flags[definition.id] = definition.defaultEnabled;
     return flags;
@@ -111,9 +111,32 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = FEATURE_FLAG_DEFINITIONS.redu
   {} as FeatureFlags,
 );
 
+export const LAUNCH_CANDIDATE_FEATURE_FLAGS: FeatureFlags = {
+  ...BASELINE_FEATURE_FLAGS,
+  session_overview: true,
+  drill_complete_transition: true,
+  drill_transition_audio_cues: false,
+  dashboard_feedback_loops: true,
+  xp_visibility: true,
+  progress_signal_refresh: false,
+  dashboard_goal_reminder_card: false,
+  pricing_screen: false,
+  contextual_paywalls: false,
+  locked_premium_states: false,
+  drag_reorder_builder: false,
+  compact_builder_editor: false,
+  onboarding_handoff_v2: false,
+};
+
+export const DEFAULT_FEATURE_FLAGS: FeatureFlags = LAUNCH_CANDIDATE_FEATURE_FLAGS;
+
+const RUNTIME_FEATURE_FLAG_OVERRIDES: Partial<FeatureFlags> = {
+  ...LAUNCH_CANDIDATE_FEATURE_FLAGS,
+};
+
 export function normalizeFeatureFlags(input: unknown): FeatureFlags {
   const normalized = { ...DEFAULT_FEATURE_FLAGS };
-  if (!isPlainObject(input)) return normalized;
+  if (!isPlainObject(input)) return applyRuntimeFeatureFlagOverrides(normalized);
 
   for (const definition of FEATURE_FLAG_DEFINITIONS) {
     const rawValue = input[definition.id];
@@ -121,14 +144,21 @@ export function normalizeFeatureFlags(input: unknown): FeatureFlags {
       typeof rawValue === "boolean" ? rawValue : definition.defaultEnabled;
   }
 
-  return normalized;
+  return applyRuntimeFeatureFlagOverrides(normalized);
 }
 
 export function isFeatureFlagEnabled(
   featureFlags: FeatureFlags,
   featureFlagId: FeatureFlagId,
 ): boolean {
-  return featureFlags[featureFlagId] ?? DEFAULT_FEATURE_FLAGS[featureFlagId];
+  return applyRuntimeFeatureFlagOverrides(featureFlags)[featureFlagId];
+}
+
+function applyRuntimeFeatureFlagOverrides(featureFlags: FeatureFlags): FeatureFlags {
+  return {
+    ...featureFlags,
+    ...RUNTIME_FEATURE_FLAG_OVERRIDES,
+  };
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
